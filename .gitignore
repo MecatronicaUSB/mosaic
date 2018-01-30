@@ -1,0 +1,7 @@
+
+# VS-code settings
+.vscode
+
+# executables
+modules/fcomp/fcomp
+modules/stitch/stitch
