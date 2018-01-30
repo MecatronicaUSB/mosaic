@@ -4,10 +4,10 @@ using namespace std;
 using namespace cv;
 using namespace cv::xfeatures2d;
 
-struct warpPoly getBound(Mat H, int width, int height){
-	Rect r;
+struct WarpPoly getBound(Mat H, int width, int height){
 	vector<Point2f> points;
-    struct warpPoly bound;
+    struct WarpPoly bound;
+
 	points.push_back(Point2f(0,0));
 	points.push_back(Point2f(width,0));
 	points.push_back(Point2f(width,height));
@@ -18,33 +18,47 @@ struct warpPoly getBound(Mat H, int width, int height){
 	return bound;
 }
 
-Mat stitch(Mat object, Mat scene, Mat H){
-	Mat result;
+struct WarpPoly stitch(Mat object, Mat& scene, Mat H){
+	Mat warped;
+    Size dim;
 	Size2f offset;
 
-	struct warpPoly bound = getBound(H, object.cols, object.rows);
+	struct WarpPoly bound = getBound(H, object.cols, object.rows);
 
 	bound.rect.x < 0 ? offset.width  = -bound.rect.x : offset.width  = 0;
 	bound.rect.y < 0 ? offset.height = -bound.rect.y : offset.height = 0;
 
+	dim.width  = max(scene.cols + (int)offset.width, bound.rect.width) + max(bound.rect.x,0);
+    dim.height = max(scene.cols + (int)offset.height, bound.rect.height) + max(bound.rect.y,0);
+
 	Mat T = Mat::eye(3,3,CV_64F);
-	T.at<double>(0,2)= offset.width;
-	T.at<double>(1,2)= offset.height;
-	// Important: first transform and then translate, not inverse. (T*H)
+	T.at<double>(0,2)= -bound.rect.x;
+	T.at<double>(1,2)= -bound.rect.y;
+	// Important: first transform and then translate, not inverse way. correct form (T*H)
 	H = T*H;
-	warpPerspective(object,result,H,Size(bound.rect.width, bound.rect.height));
-    scene = translateImg(scene, offset.width, offset.height);
-    Mat mask(bound.rect.width, bound.rect.height, CV_8UC1, Scalar(0));
+	warpPerspective(object, warped, H, cv::Size(bound.rect.width, bound.rect.height));
+    //scene = translateImg(scene, offset.width, offset.height);
+    imshow("STITCH",warped);
+    waitKey(0);
+    copyMakeBorder(scene, scene, offset.height, max(0, dim.height-scene.rows-(int)offset.width),
+                                 offset.width,  max(0, dim.width-scene.cols-(int)offset.width),
+                                 BORDER_CONSTANT,Scalar(0,0,0));
 
-    vector<Point2f> hull;
-    convexHull(bound.points, hull);
-    vector<vector<Point>> contour(1, bound.points);
-    drawContours(mask, contour, 0, Scalar(255), CV_FILLED);
+    Mat mask(bound.rect.height + max(0,bound.rect.y), bound.rect.height + max(0,bound.rect.y), CV_8UC3, Scalar(0,0,0));
+    for(int i=0; i< bound.points.size(); i++){
+        bound.points[i].x += offset.width;
+        bound.points[i].y += offset.height;
+    }
 
-	cv::Mat object_warped(result,cv::Rect(offset.width, offset.height, 640, 480));
-	object.copyTo(object_warped);
-
-	return result;
+    Point pts[4] = {bound.points[0], bound.points[1], bound.points[2], bound.points[3]};
+    //drawContours(mask, pts, 0, Scalar(255,255,255), CV_FILLED);
+    fillConvexPoly( mask, pts, 4, Scalar(255,255,255) );
+    imshow("STITCH",mask);
+    waitKey(0);
+	cv::Mat object_pos(scene, cv::Rect(max(bound.rect.x,0), max(bound.rect.y,0), bound.rect.width, bound.rect.height));
+	warped.copyTo(object_pos, mask);
+    mask.release();
+	return bound;
 }
 
 // See description in header file
@@ -96,7 +110,7 @@ vector<DMatch> gridDetector(vector<KeyPoint> keypoints, vector<DMatch> matches){
 Mat translateImg(Mat img, double offsetx, double offsety){
     Mat T = (Mat_<double>(2,3) << 1, 0, offsetx, 0, 1, offsety);
     Mat result;
-    warpAffine(img,result,T,Size(img.cols+offsetx, img.rows+offsety));
+    warpAffine(img, result, T, cv::Size(img.cols+offsetx, img.rows+offsety));
     return result;
 }
 

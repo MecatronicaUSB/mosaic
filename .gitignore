@@ -2,5 +2,5 @@
 .vscode
 
 # executables
-modules/fcomp/fcomp-cv
-modules/stitch/stitch-cv
+modules/fcomp/fcomp
+modules/stitch/stitch

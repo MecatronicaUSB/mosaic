@@ -55,9 +55,10 @@ int main( int argc, char** argv ) {
     vector<vector<DMatch> > matches;
     vector<DMatch>  good_matches;
     vector<KeyPoint> keypoints[2];
+    Mat result;
     Mat descriptors[2];
     Mat img[2], img_ori[2];
-
+    struct WarpPoly bound;
     try{
         parser.ParseCLI(argc, argv);
     }
@@ -89,7 +90,7 @@ int main( int argc, char** argv ) {
         t = (double) getTickCount();
         // Check for two image flags and patchs (-i imageName)
         for(const auto img_name: args::get(op_img)){
-            img[i++] = imread(img_name, IMREAD_COLOR);
+            img[i++] = imread(img_name, IMREAD_UNCHANGED);
             if( !img[i-1].data){
                 cout<< " --(!) Error reading image "<< i << endl; 
                 cerr << parser;
@@ -105,30 +106,32 @@ int main( int argc, char** argv ) {
         }
     }
     string dir_ent;
-    // if(op_dir){
-    //     dir_ent = args::get(op_dir);
-    //     file_names = read_filenames(dir_ent);
-    //     n_iter = file_names.size()-1;
-    // }   
+    if(op_dir){
+        dir_ent = args::get(op_dir);
+        file_names = read_filenames(dir_ent);
+        n_iter = file_names.size()-1;
+        img[0] = imread(dir_ent+"/"+file_names[0],IMREAD_COLOR);
+        img[1] = imread(dir_ent+"/"+file_names[1],IMREAD_COLOR);
+    }   
     Rect detectRoi(0, 0, TARGET_WIDTH, TARGET_HEIGHT);
+    // Resize the images to 640 x 480
+    resize(img[0], img[0], Size(TARGET_WIDTH, TARGET_HEIGHT), 0, 0, CV_INTER_LINEAR);
+    resize(img[1], img[1], Size(TARGET_WIDTH, TARGET_HEIGHT), 0, 0, CV_INTER_LINEAR);
+
+    img_ori[0] = img[0].clone();
+    img_ori[1] = img[1].clone();
     t = (double) getTickCount();
     for(i=0; i<n_iter; i++){
-
-        // if(op_dir){
-        //     img[0] = imread(dir_ent+"/"+file_names[i++],IMREAD_COLOR);
-        //     img[1] = imread(dir_ent+"/"+file_names[i],IMREAD_COLOR);
-        // }
-        // Resize the images to 640 x 480
-        resize(img[0], img[0], Size(TARGET_WIDTH, TARGET_HEIGHT), 0, 0, CV_INTER_LINEAR);
-        if(i<1)
-            resize(img[1], img[1], Size(TARGET_WIDTH, TARGET_HEIGHT), 0, 0, CV_INTER_LINEAR);
-
-        img_ori[0] = img[0].clone();
-        img_ori[1] = img[1].clone();
+        if(op_dir && i>0){
+            img[0] = imread(dir_ent+"/"+file_names[i+1],IMREAD_COLOR);
+            img[1] = img_ori[0].clone();
+            resize(img[0], img[0], Size(TARGET_WIDTH, TARGET_HEIGHT), 0, 0, CV_INTER_LINEAR);
+            img_ori[0] = img[0].clone();
+        }
         // Apply pre-processing algorithm if selected (histogram stretch)
         if(op_pre){
             colorChannelStretch(img[0], img[0], 1, 99);
-            if(n_iter<2)
+            if(n_iter<1)
                 colorChannelStretch(img[1], img[1], 1, 99);
         }
         // Conver images to gray
@@ -172,8 +175,9 @@ int main( int argc, char** argv ) {
 
         Mat H = findHomography(Mat(img0), Mat(img1), CV_RANSAC);
         
-        Mat result = stitch(img_ori[0], img_ori[1], H);
-        imshow("STITCH",result);
+        bound = stitch(img_ori[0], img_ori[1], H);
+        detectRoi = bound.rect;
+        imshow("STITCH",img_ori[1]);
         waitKey(0);
 
         if(op_out){
@@ -191,7 +195,6 @@ int main( int argc, char** argv ) {
         img[0].release();
         img[1].release();
         img_ori[0].release();
-        img_ori[1].release();
         descriptors[0].release();
         descriptors[1].release();
     }
