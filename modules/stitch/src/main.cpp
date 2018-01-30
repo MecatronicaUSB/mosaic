@@ -80,11 +80,8 @@ int main( int argc, char** argv ) {
     int minHessian = 400;
     Ptr<KAZE> detector = KAZE::create();
     Ptr<DescriptorMatcher> matcher;
-    if(op_flann){
-        matcher = FlannBasedMatcher::create();
-    }else{
-        matcher = BFMatcher::create();
-    }
+
+    matcher = FlannBasedMatcher::create();
 
     // Two images as imput
     if (op_img){
@@ -107,18 +104,18 @@ int main( int argc, char** argv ) {
             return -1;
         }
     }
-    string dir_ent;
-    if(0){
-        //dir_ent = args::get(op_dir);
-        //file_names = read_filenames(dir_ent);
-        //n_iter = file_names.size()-1;
-    }
+    // string dir_ent;
+    // if(op_dir){
+    //     dir_ent = args::get(op_dir);
+    //     file_names = read_filenames(dir_ent);
+    //     n_iter = file_names.size()-1;
+    // }
     t = (double) getTickCount();
     for(i=0; i<n_iter; i++){
-        if(0){
-            img[0] = imread(dir_ent+"/"+file_names[i++],IMREAD_COLOR);
-            img[1] = imread(dir_ent+"/"+file_names[i],IMREAD_COLOR);
-        }
+        // if(op_dir){
+        //     img[0] = imread(dir_ent+"/"+file_names[i++],IMREAD_COLOR);
+        //     img[1] = imread(dir_ent+"/"+file_names[i],IMREAD_COLOR);
+        // }
         // Resize the images to 640 x 480
         resize(img[0], img[0], Size(TARGET_WIDTH, TARGET_HEIGHT), 0, 0, CV_INTER_LINEAR);
         resize(img[1], img[1], Size(TARGET_WIDTH, TARGET_HEIGHT), 0, 0, CV_INTER_LINEAR);
