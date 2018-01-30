@@ -4,48 +4,51 @@ using namespace std;
 using namespace cv;
 using namespace cv::xfeatures2d;
 
-Rect getBound(Mat H, int width, int height){
+struct warpPoly getBound(Mat H, int width, int height){
 	Rect r;
 	vector<Point2f> points;
+    struct warpPoly bound;
 	points.push_back(Point2f(0,0));
 	points.push_back(Point2f(width,0));
 	points.push_back(Point2f(width,height));
 	points.push_back(Point2f(0,height));
 
-	vector<Point2f> finalpts(4);
-	perspectiveTransform(points,finalpts, H);
-
-	return boundingRect(finalpts);
+	perspectiveTransform(points,bound.points, H);
+    bound.rect =  boundingRect(bound.points);
+	return bound;
 }
 
 Mat stitch(Mat object, Mat scene, Mat H){
 	Mat result;
-	Size dim;
 	Size2f offset;
 
-	Rect bound = getBound(H, TARGET_WIDTH, TARGET_HEIGHT);
+	struct warpPoly bound = getBound(H, object.cols, object.rows);
 
-	bound.x < 0 ? offset.width  = -bound.x : offset.width  = 0;
-	bound.y < 0 ? offset.height = -bound.y : offset.height = 0;
-
-	dim.width  = max(TARGET_WIDTH + (int)offset.width,  bound.width) + max(bound.x,0);
-	dim.height = max(TARGET_HEIGHT+ (int)offset.height, bound.height) + max(bound.y,0);
+	bound.rect.x < 0 ? offset.width  = -bound.rect.x : offset.width  = 0;
+	bound.rect.y < 0 ? offset.height = -bound.rect.y : offset.height = 0;
 
 	Mat T = Mat::eye(3,3,CV_64F);
 	T.at<double>(0,2)= offset.width;
 	T.at<double>(1,2)= offset.height;
 	// Important: first transform and then translate, not inverse. (T*H)
 	H = T*H;
-	warpPerspective(object,result,H,dim);
+	warpPerspective(object,result,H,Size(bound.rect.width, bound.rect.height));
+    scene = translateImg(scene, offset.width, offset.height);
+    Mat mask(bound.rect.width, bound.rect.height, CV_8UC1, Scalar(0));
 
-	cv::Mat half(result,cv::Rect(offset.width, offset.height, 640, 480));
-	scene.copyTo(half);
+    vector<Point2f> hull;
+    convexHull(bound.points, hull);
+    vector<vector<Point>> contour(1, bound.points);
+    drawContours(mask, contour, 0, Scalar(255), CV_FILLED);
+
+	cv::Mat object_warped(result,cv::Rect(offset.width, offset.height, 640, 480));
+	object.copyTo(object_warped);
 
 	return result;
 }
 
 // See description in header file
-std::vector<DMatch> getGoodMatches(int n_matches, std::vector<std::vector<cv::DMatch> > matches){
+vector<DMatch> getGoodMatches(int n_matches, vector<vector<DMatch> > matches){
     vector<DMatch> good_matches;
 
     for (int i = 0; i < std::min(n_matches, (int)matches.size()); i++) {
@@ -90,7 +93,15 @@ vector<DMatch> gridDetector(vector<KeyPoint> keypoints, vector<DMatch> matches){
 }
 
 // See description in header file
-std::vector<string> read_filenames(const std::string dir_ent){
+Mat translateImg(Mat img, double offsetx, double offsety){
+    Mat T = (Mat_<double>(2,3) << 1, 0, offsetx, 0, 1, offsety);
+    Mat result;
+    warpAffine(img,result,T,Size(img.cols+offsetx, img.rows+offsety));
+    return result;
+}
+
+// See description in header file
+vector<string> read_filenames(const string dir_ent){
     vector<string> file_names;
     DIR *dir;
     struct dirent *ent;

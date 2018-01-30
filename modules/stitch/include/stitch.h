@@ -5,9 +5,8 @@
  * @date 20/01/2018
  * @author Victor Garcia
  */
-
-#ifndef STITCH_H
-#define STITCH_H
+#ifndef STITCH_STITCH_H_
+#define STITCH_STITCH_H_
 
 #include "opencv2/xfeatures2d.hpp"
 #include "opencv2/features2d.hpp"
@@ -24,6 +23,11 @@
 #define TARGET_WIDTH	640   
 #define TARGET_HEIGHT	480
 
+struct warpPoly {
+  cv::Rect rect;
+  std::vector<cv::Point2f> points;
+};
+
 /**
  * @brief 
  * 
@@ -32,7 +36,7 @@
  * @param height 
  * @return cv::Rect 
  */
-cv::Rect getBound(cv::Mat H, int width, int height);
+struct warpPoly getBound(cv::Mat H, int width, int height);
 
 /**
  * @brief 
@@ -70,5 +74,14 @@ std::vector<std::string> read_filenames(const std::string dir_ent);
  */
 std::vector<cv::DMatch> gridDetector(std::vector<cv::KeyPoint> keypoints, std::vector<cv::DMatch> matches);
 
+/**
+ * @brief 
+ * 
+ * @param img 
+ * @param offsetx 
+ * @param offsety 
+ * @return Mat 
+ */
+cv::Mat translateImg(cv::Mat img, double offsetx, double offsety);
 
 #endif

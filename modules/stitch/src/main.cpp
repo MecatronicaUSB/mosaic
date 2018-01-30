@@ -1,6 +1,7 @@
+// STITCH MODULE
 /**
  * @file main.h
- * @brief Contais the main code for feature extraction and match comparison
+ * @brief Contais the main code for image stitching module
  * @version 1.0
  * @date 20/01/2018
  * @author Victor Garcia
@@ -118,8 +119,10 @@ int main( int argc, char** argv ) {
         //     img[1] = imread(dir_ent+"/"+file_names[i],IMREAD_COLOR);
         // }
         // Resize the images to 640 x 480
-        // resize(img[0], img[0], Size(TARGET_WIDTH, TARGET_HEIGHT), 0, 0, CV_INTER_LINEAR);
-        // resize(img[1], img[1], Size(TARGET_WIDTH, TARGET_HEIGHT), 0, 0, CV_INTER_LINEAR);
+        resize(img[0], img[0], Size(TARGET_WIDTH, TARGET_HEIGHT), 0, 0, CV_INTER_LINEAR);
+        if(i<1)
+            resize(img[1], img[1], Size(TARGET_WIDTH, TARGET_HEIGHT), 0, 0, CV_INTER_LINEAR);
+
         img_ori[0] = img[0].clone();
         img_ori[1] = img[1].clone();
         // Apply pre-processing algorithm if selected (histogram stretch)
@@ -159,7 +162,6 @@ int main( int argc, char** argv ) {
         cout << "Pair  "<< n_img++ <<" -- -- -- -- -- -- -- -- -- --"  << endl;
         cout << "-- Possible matches  ["<< n_matches <<"]"  << endl;
         cout << "-- Good Matches      ["<<green<<n_good<<reset<<"]"  << endl;
-        // for output command ( -o )
 
         vector<Point2f> img0, img1;
         for (int i = 0; i < good_matches.size(); i ++) {
