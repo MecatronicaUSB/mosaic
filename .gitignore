@@ -5,3 +5,6 @@
 # executables
 modules/fcomp/fcomp
 modules/stitch/stitch
+
+# data files
+modules/stitch/homography-data.txt
