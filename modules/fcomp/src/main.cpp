@@ -149,12 +149,10 @@ int main( int argc, char** argv ) {
             img[1] = imread(dir_ent+"/"+file_names[i],IMREAD_COLOR);
         }
         if(op_vid){
-            cout << i << endl;
             vid.set(CAP_PROP_POS_FRAMES,i);
             vid >> img[0];
             vid.set(CAP_PROP_POS_FRAMES,i+=step_iter);
             vid >> img[1];
-            cout << i << endl;
         }
         // Resize the images to 640 x 480
         resize(img[0], img[0], Size(TARGET_WIDTH, TARGET_HEIGHT), 0, 0, CV_INTER_LINEAR);
