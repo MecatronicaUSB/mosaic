@@ -109,7 +109,7 @@ int main( int argc, char** argv ) {
     if(op_dir){
         dir_ent = args::get(op_dir);
         file_names = read_filenames(dir_ent);
-        n_iter = file_names.size()-1;
+        n_iter = file_names.size()-3;
         img[0] = imread(dir_ent+"/"+file_names[0],IMREAD_COLOR);
         img[1] = imread(dir_ent+"/"+file_names[1],IMREAD_COLOR);
     }   
@@ -124,7 +124,7 @@ int main( int argc, char** argv ) {
     for(i=0; i<n_iter; i++){
         if(op_dir && i>0){
             img[0] = imread(dir_ent+"/"+file_names[i+1],IMREAD_COLOR);
-            img[1] = img_ori[0].clone();
+            img[1] = img_ori[1].clone();
             resize(img[0], img[0], Size(TARGET_WIDTH, TARGET_HEIGHT), 0, 0, CV_INTER_LINEAR);
             img_ori[0] = img[0].clone();
         }
@@ -139,8 +139,6 @@ int main( int argc, char** argv ) {
         cvtColor(img[1],img[1],COLOR_BGR2GRAY);
 
         // Detect the keypoints using desired Detector and compute the descriptors
-        keypoints[0].clear();
-        keypoints[1].clear();
         detector->detectAndCompute( img[0], Mat(), keypoints[0], descriptors[0] );
         detector->detectAndCompute( img[1](detectRoi), Mat(), keypoints[1], descriptors[1] );
 
@@ -174,9 +172,14 @@ int main( int argc, char** argv ) {
         }
 
         Mat H = findHomography(Mat(img0), Mat(img1), CV_RANSAC);
-        
+        if(H.empty()){
+            cout << "not enought keypoints to calculate homography matrix. Exiting..." <<  endl;
+            break;
+        }
+
         bound = stitch(img_ori[0], img_ori[1], H);
         detectRoi = bound.rect;
+        
         imshow("STITCH",img_ori[1]);
         waitKey(0);
 
@@ -195,10 +198,13 @@ int main( int argc, char** argv ) {
         img[0].release();
         img[1].release();
         img_ori[0].release();
+        keypoints[0].clear();
+        keypoints[1].clear();
         descriptors[0].release();
         descriptors[1].release();
     }
-
+    imwrite("mosaic0001.jpg",img_ori[1]);
+    img_ori[1].release();
     cout << "\nTotal "<< n_img <<" -- -- -- -- -- -- -- -- -- --"  << endl;
     cout << "-- Total Possible matches  ["<< tot_matches <<"]"  << endl;
     cout << "-- Total Good Matches      ["<<green<<tot_good<<reset<<"]"  << endl;

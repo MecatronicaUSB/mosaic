@@ -28,8 +28,10 @@ struct WarpPoly stitch(Mat object, Mat& scene, Mat H){
 	bound.rect.x < 0 ? offset.width  = -bound.rect.x : offset.width  = 0;
 	bound.rect.y < 0 ? offset.height = -bound.rect.y : offset.height = 0;
 
-	dim.width  = max(scene.cols + (int)offset.width, bound.rect.width) + max(bound.rect.x,0);
-    dim.height = max(scene.cols + (int)offset.height, bound.rect.height) + max(bound.rect.y,0);
+	// dim.width  = max(scene.cols + (int)offset.width, bound.rect.width) + max(bound.rect.x,0);
+    // dim.height = max(scene.cols + (int)offset.height, bound.rect.height) + max(bound.rect.y,0);
+    dim.width  = scene.cols + abs(bound.rect.x);
+    dim.height = scene.rows + abs(bound.rect.y);
 
 	Mat T = Mat::eye(3,3,CV_64F);
 	T.at<double>(0,2)= -bound.rect.x;
@@ -38,26 +40,27 @@ struct WarpPoly stitch(Mat object, Mat& scene, Mat H){
 	H = T*H;
 	warpPerspective(object, warped, H, cv::Size(bound.rect.width, bound.rect.height));
     //scene = translateImg(scene, offset.width, offset.height);
-    imshow("STITCH",warped);
-    waitKey(0);
-    copyMakeBorder(scene, scene, offset.height, max(0, dim.height-scene.rows-(int)offset.width),
-                                 offset.width,  max(0, dim.width-scene.cols-(int)offset.width),
+
+    copyMakeBorder(scene, scene, offset.height, max(0, bound.rect.height+bound.rect.y-scene.rows),
+                                 offset.width,  max(0, bound.rect.width+bound.rect.x-scene.cols),
                                  BORDER_CONSTANT,Scalar(0,0,0));
 
-    Mat mask(bound.rect.height + max(0,bound.rect.y), bound.rect.height + max(0,bound.rect.y), CV_8UC3, Scalar(0,0,0));
     for(int i=0; i< bound.points.size(); i++){
-        bound.points[i].x += offset.width;
-        bound.points[i].y += offset.height;
+        bound.points[i].x -= bound.rect.x;
+        bound.points[i].y -= bound.rect.y;
     }
 
     Point pts[4] = {bound.points[0], bound.points[1], bound.points[2], bound.points[3]};
     //drawContours(mask, pts, 0, Scalar(255,255,255), CV_FILLED);
-    fillConvexPoly( mask, pts, 4, Scalar(255,255,255) );
-    imshow("STITCH",mask);
-    waitKey(0);
+    Mat mask(bound.rect.height, bound.rect.width, CV_8UC3, Scalar(0,0,0));
+    fillConvexPoly( mask, pts, 4, Scalar(255,255,255));
+    erode( mask, mask, getStructuringElement( MORPH_ELLIPSE, Size(7, 7),Point(-1, -1)));
+
 	cv::Mat object_pos(scene, cv::Rect(max(bound.rect.x,0), max(bound.rect.y,0), bound.rect.width, bound.rect.height));
 	warped.copyTo(object_pos, mask);
     mask.release();
+    bound.rect.x = max(bound.rect.x,0);
+    bound.rect.y = max(bound.rect.y,0);
 	return bound;
 }
 
