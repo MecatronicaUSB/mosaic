@@ -11,4 +11,3 @@ file(GLOB fcomp-cv
 add_executable( fcomp ${fcomp-cv} )
 target_compile_options(fcomp PUBLIC -std=c++11)
 target_link_libraries( fcomp ${OpenCV_LIBS} )
-

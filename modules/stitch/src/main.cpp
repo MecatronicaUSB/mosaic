@@ -1,16 +1,16 @@
+// STITCH MODULE
 /**
  * @file main.h
- * @brief Contais the main code for feature extraction and match comparison
+ * @brief Contais the main code for image stitching module
  * @version 1.0
  * @date 20/01/2018
  * @author Victor Garcia
  * @title Main code
  */
 
-#include "../include/options.h"
-#include "../include/detector.h"
-#include "../include/stitch.h"
 #include "../include/preprocessing.h"
+#include "../include/options.h"
+#include "../include/stitch.h"
 
 /// Dimensions to resize images
 #define TARGET_WIDTH	640   
@@ -55,9 +55,10 @@ int main( int argc, char** argv ) {
     vector<vector<DMatch> > matches;
     vector<DMatch>  good_matches;
     vector<KeyPoint> keypoints[2];
+    Mat result;
     Mat descriptors[2];
     Mat img[2], img_ori[2];
-
+    struct WarpPoly bound;
     try{
         parser.ParseCLI(argc, argv);
     }
@@ -89,7 +90,7 @@ int main( int argc, char** argv ) {
         t = (double) getTickCount();
         // Check for two image flags and patchs (-i imageName)
         for(const auto img_name: args::get(op_img)){
-            img[i++] = imread(img_name, IMREAD_COLOR);
+            img[i++] = imread(img_name, IMREAD_UNCHANGED);
             if( !img[i-1].data){
                 cout<< " --(!) Error reading image "<< i << endl; 
                 cerr << parser;
@@ -104,37 +105,42 @@ int main( int argc, char** argv ) {
             return -1;
         }
     }
-    // string dir_ent;
-    // if(op_dir){
-    //     dir_ent = args::get(op_dir);
-    //     file_names = read_filenames(dir_ent);
-    //     n_iter = file_names.size()-1;
-    // }
+    string dir_ent;
+    if(op_dir){
+        dir_ent = args::get(op_dir);
+        file_names = read_filenames(dir_ent);
+        n_iter = file_names.size()-3;
+        img[0] = imread(dir_ent+"/"+file_names[0],IMREAD_COLOR);
+        img[1] = imread(dir_ent+"/"+file_names[1],IMREAD_COLOR);
+    }   
+    Rect detectRoi(0, 0, TARGET_WIDTH, TARGET_HEIGHT);
+    // Resize the images to 640 x 480
+    resize(img[0], img[0], Size(TARGET_WIDTH, TARGET_HEIGHT), 0, 0, CV_INTER_LINEAR);
+    resize(img[1], img[1], Size(TARGET_WIDTH, TARGET_HEIGHT), 0, 0, CV_INTER_LINEAR);
+
+    img_ori[0] = img[0].clone();
+    img_ori[1] = img[1].clone();
     t = (double) getTickCount();
     for(i=0; i<n_iter; i++){
-        // if(op_dir){
-        //     img[0] = imread(dir_ent+"/"+file_names[i++],IMREAD_COLOR);
-        //     img[1] = imread(dir_ent+"/"+file_names[i],IMREAD_COLOR);
-        // }
-        // Resize the images to 640 x 480
-        resize(img[0], img[0], Size(TARGET_WIDTH, TARGET_HEIGHT), 0, 0, CV_INTER_LINEAR);
-        resize(img[1], img[1], Size(TARGET_WIDTH, TARGET_HEIGHT), 0, 0, CV_INTER_LINEAR);
-        img_ori[0] = img[0].clone();
-        img_ori[1] = img[1].clone();
-        // Apply pre-processing algorithm if selected
+        if(op_dir && i>0){
+            img[0] = imread(dir_ent+"/"+file_names[i+1],IMREAD_COLOR);
+            img[1] = img_ori[1].clone();
+            resize(img[0], img[0], Size(TARGET_WIDTH, TARGET_HEIGHT), 0, 0, CV_INTER_LINEAR);
+            img_ori[0] = img[0].clone();
+        }
+        // Apply pre-processing algorithm if selected (histogram stretch)
         if(op_pre){
             colorChannelStretch(img[0], img[0], 1, 99);
-            colorChannelStretch(img[1], img[1], 1, 99);
+            if(n_iter<1)
+                colorChannelStretch(img[1], img[1], 1, 99);
         }
         // Conver images to gray
         cvtColor(img[0],img[0],COLOR_BGR2GRAY);
         cvtColor(img[1],img[1],COLOR_BGR2GRAY);
 
         // Detect the keypoints using desired Detector and compute the descriptors
-        keypoints[0].clear();
-        keypoints[1].clear();
         detector->detectAndCompute( img[0], Mat(), keypoints[0], descriptors[0] );
-        detector->detectAndCompute( img[1], Mat(), keypoints[1], descriptors[1] );
+        detector->detectAndCompute( img[1](detectRoi), Mat(), keypoints[1], descriptors[1] );
 
         if(!keypoints[0].size() || !keypoints[1].size()){
             cout << "No Key points Found" <<  endl;
@@ -142,7 +148,6 @@ int main( int argc, char** argv ) {
         }
 
         // Match the keypoints for input images
-        matches.clear();
         matcher->knnMatch( descriptors[0], descriptors[1], matches, 2);
         n_matches = descriptors[0].rows;
         // Discard the bad matches (outliers)
@@ -158,7 +163,6 @@ int main( int argc, char** argv ) {
         cout << "Pair  "<< n_img++ <<" -- -- -- -- -- -- -- -- -- --"  << endl;
         cout << "-- Possible matches  ["<< n_matches <<"]"  << endl;
         cout << "-- Good Matches      ["<<green<<n_good<<reset<<"]"  << endl;
-        // for output command ( -o )
 
         vector<Point2f> img0, img1;
         for (int i = 0; i < good_matches.size(); i ++) {
@@ -168,9 +172,15 @@ int main( int argc, char** argv ) {
         }
 
         Mat H = findHomography(Mat(img0), Mat(img1), CV_RANSAC);
-        
-        Mat result = stitch(img_ori[0], img_ori[1], H);
-        imshow("STITCH",result);
+        if(H.empty()){
+            cout << "not enought keypoints to calculate homography matrix. Exiting..." <<  endl;
+            break;
+        }
+        saveHomographyData(H, keypoints[0], good_matches);
+        bound = stitch(img_ori[0], img_ori[1], H);
+        detectRoi = bound.rect;
+
+        imshow("STITCH",img_ori[1]);
         waitKey(0);
 
         if(op_out){
@@ -184,12 +194,16 @@ int main( int argc, char** argv ) {
             imshow( "Good Matches", img_matches );
             waitKey(0);
         }
+        matches.clear();
         img[0].release();
         img[1].release();
+        img_ori[0].release();
+        keypoints[0].clear();
+        keypoints[1].clear();
         descriptors[0].release();
         descriptors[1].release();
     }
-
+    img_ori[1].release();
     cout << "\nTotal "<< n_img <<" -- -- -- -- -- -- -- -- -- --"  << endl;
     cout << "-- Total Possible matches  ["<< tot_matches <<"]"  << endl;
     cout << "-- Total Good Matches      ["<<green<<tot_good<<reset<<"]"  << endl;

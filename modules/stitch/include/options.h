@@ -22,7 +22,7 @@ args::Group op_matcher(sub_p, "Select the Feature Matcher:", args::Group::Valida
 
 args::Group op_data(sub_p, "Select imput data:", args::Group::Validators::AtMostOne);
 args::ValueFlagList<std::string> op_img(op_data, "ImageName", "Image imput name. Mus specify two file names (one per flag)",{'i'});
-//args::ValueFlag<std::string> op_dir(op_data,"","Directory to load the frames. (Not yet implemented)",{'d'});
+args::ValueFlag<std::string> op_dir(op_data,"","Directory to load the frames. (Not yet implemented)",{'d'});
 
 args::Group optional(parser, "(Optional)", args::Group::Validators::DontCare);
 args::Flag op_out(optional, "Output", "Only for images imput. Show output for good matches.", {'o'});
