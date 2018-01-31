@@ -140,7 +140,7 @@ vector<string> read_filenames(const string dir_ent){
     return file_names;
 }
 
-void saveHomographyData(Mat H, vector<KeyPoint> keypoints, std::vector<DMatch> matches){
+void saveHomographyData(Mat H, vector<KeyPoint> keypoints[2], std::vector<DMatch> matches){
     ofstream file;
     file.open("homography-data.txt");
 
@@ -151,9 +151,14 @@ void saveHomographyData(Mat H, vector<KeyPoint> keypoints, std::vector<DMatch> m
         }
         file << "\n";
     }
+    file << matches.size() << "\n";
     for(auto m: matches){
-        file << keypoints[m.queryIdx].pt.x << " ";
-        file << keypoints[m.queryIdx].pt.y << "\n";
+        file << keypoints[0][m.queryIdx].pt.x << " ";
+        file << keypoints[0][m.queryIdx].pt.y << "\n";
+    }
+    for(auto m: matches){
+        file << keypoints[1][m.queryIdx].pt.x << " ";
+        file << keypoints[1][m.queryIdx].pt.y << "\n";
     }
 
     file.close();

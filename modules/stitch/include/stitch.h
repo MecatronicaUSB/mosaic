@@ -91,6 +91,6 @@ cv::Mat translateImg(cv::Mat img, double offsetx, double offsety);
  * @param H 
  * @param keypoints 
  */
-void saveHomographyData(cv::Mat H, std::vector<cv::KeyPoint> keypoints, std::vector<cv::DMatch> matches);
+void saveHomographyData(cv::Mat H, std::vector<cv::KeyPoint> keypoints[2], std::vector<cv::DMatch> matches);
 
 #endif

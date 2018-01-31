@@ -163,7 +163,7 @@ int main( int argc, char** argv ) {
             cout << "not enought keypoints to calculate homography matrix. Exiting..." <<  endl;
             break;
         }
-        saveHomographyData(H, keypoints[0], good_matches);
+        saveHomographyData(H, keypoints, good_matches);
         bound = stitch(img_ori[0], img_ori[1], H);
         detectRoi = bound.rect;
 
