@@ -1,5 +1,5 @@
-# mosaic-opencv
-Monocular video based Mosaic Generation System for mobile robots implemented in OpenCV 3.2. At the moment is only implemented a performance comparison module of four feature extractors (Sift, Surf, Orb and Kaze).
+# Stitch Module
+Module to calculate the homography matrix and stitch two or more images.
 
 ## Requirements
 - *OpenCV 3.0+*
@@ -8,7 +8,7 @@ Monocular video based Mosaic Generation System for mobile robots implemented in 
 ## How to compile?
 Provided with this repo is a CMakeLists.txt file, which you can use to directly compile the code as follows:
 ```bash
-cd <mosaic-opencv_directory>
+cd <mosaic-directory>/modules/stitch
 mkdir build
 cd build
 cmake ..
@@ -17,19 +17,14 @@ make
 ## How to run?
 After compilation, run the program with the following sintax:
 ```bash
-./fcomp [IMPUT DATA] --DETECTOR -MATCHER
+./stitch [IMPUT DATA] {OPTIONS}
 ```
 Type the following command to see correct usage:
 ```bash
-./fcomp -h
+./stitch -h
 ```
 ### Usage examples:
 ```bash
-./fcomp -i image1.jpg -i image2.jpg --sift -f -o
+./stitch -i image1.jpg -i image2.jpg -o --pre --grid
 ```
-Detect and compute the features between two input images with Sift detector and Flann matcher, aditionally shows the matches points.
-
-```bash
-./fcomp -v video.mp4 --surf -b
-```
-Detect and compute the features between all the pairs of images generated from a video file, the selection method is fixed to one frame per second. Surf detector and BruteForce matcher are used.
+Match and stitch two imput images in one. Simple Color Balance (SCB-RGB) preprocessing algorithm applied, grid selection for best keypoints, and shows the output best matches.
