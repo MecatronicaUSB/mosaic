@@ -1,5 +1,5 @@
 # mosaic-2d
-Main repo for 2D mosaic generation pipeline
+Main repo for 2D mosaic generation pipeline.
 Currently under development as part of undergrad project of Víctor García
 
 ## Directory Layout
