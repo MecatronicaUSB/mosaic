@@ -136,6 +136,7 @@ int main( int argc, char** argv ) {
         double fps = vid.get(CAP_PROP_FPS);
         double fcnt = vid.get(CAP_PROP_FRAME_COUNT);
         cout << "Video opened \nFrames per second: "<< fps << "\nFrames in video:   "<<fcnt<< endl;
+        step_iter = fps;
         if(op_frate){
             step_iter = args::get(op_frate);
         }
