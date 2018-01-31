@@ -27,19 +27,6 @@ using namespace cv::xfeatures2d;
 /*
  * @function main
  * @brief Main function
- * @detail Compute the feature extraction and match using the desired algorithm.
- * Can perform the algorithm with:
- * - Two images
- * - Video
- * - A set of frames
- * Using the following extractors: 
- * - Sift
- * - Surf
- * - Orb
- * - Kaze
- * And the folowing matchers: 
- * - Brute force
- * - Flann
  */
 int main( int argc, char** argv ) {
 
