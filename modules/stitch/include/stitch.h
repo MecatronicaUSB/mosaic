@@ -42,10 +42,10 @@ struct WarpPoly getBound(cv::Mat H, int width, int height);
 /**
  * @brief 
  * 
- * @param obj 
+ * @param object 
  * @param scene 
  * @param H 
- * @return cv::Mat 
+ * @return struct WarpPoly 
  */
 struct WarpPoly stitch(cv::Mat object, cv::Mat& scene, cv::Mat H);
 
@@ -84,5 +84,13 @@ std::vector<cv::DMatch> gridDetector(std::vector<cv::KeyPoint> keypoints, std::v
  * @return Mat 
  */
 cv::Mat translateImg(cv::Mat img, double offsetx, double offsety);
+
+/**
+ * @brief 
+ * 
+ * @param H 
+ * @param keypoints 
+ */
+void saveHomographyData(cv::Mat H, std::vector<cv::KeyPoint> keypoints, std::vector<cv::DMatch> matches);
 
 #endif

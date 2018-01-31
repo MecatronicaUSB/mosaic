@@ -176,10 +176,10 @@ int main( int argc, char** argv ) {
             cout << "not enought keypoints to calculate homography matrix. Exiting..." <<  endl;
             break;
         }
-
+        saveHomographyData(H, keypoints[0], good_matches);
         bound = stitch(img_ori[0], img_ori[1], H);
         detectRoi = bound.rect;
-        
+
         imshow("STITCH",img_ori[1]);
         waitKey(0);
 
@@ -203,7 +203,6 @@ int main( int argc, char** argv ) {
         descriptors[0].release();
         descriptors[1].release();
     }
-    imwrite("mosaic0001.jpg",img_ori[1]);
     img_ori[1].release();
     cout << "\nTotal "<< n_img <<" -- -- -- -- -- -- -- -- -- --"  << endl;
     cout << "-- Total Possible matches  ["<< tot_matches <<"]"  << endl;

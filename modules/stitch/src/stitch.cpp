@@ -4,6 +4,7 @@ using namespace std;
 using namespace cv;
 using namespace cv::xfeatures2d;
 
+// See description in header file
 struct WarpPoly getBound(Mat H, int width, int height){
 	vector<Point2f> points;
     struct WarpPoly bound;
@@ -18,6 +19,7 @@ struct WarpPoly getBound(Mat H, int width, int height){
 	return bound;
 }
 
+// See description in header file
 struct WarpPoly stitch(Mat object, Mat& scene, Mat H){
 	Mat warped;
     Size dim;
@@ -28,8 +30,6 @@ struct WarpPoly stitch(Mat object, Mat& scene, Mat H){
 	bound.rect.x < 0 ? offset.width  = -bound.rect.x : offset.width  = 0;
 	bound.rect.y < 0 ? offset.height = -bound.rect.y : offset.height = 0;
 
-	// dim.width  = max(scene.cols + (int)offset.width, bound.rect.width) + max(bound.rect.x,0);
-    // dim.height = max(scene.cols + (int)offset.height, bound.rect.height) + max(bound.rect.y,0);
     dim.width  = scene.cols + abs(bound.rect.x);
     dim.height = scene.rows + abs(bound.rect.y);
 
@@ -51,7 +51,7 @@ struct WarpPoly stitch(Mat object, Mat& scene, Mat H){
     }
 
     Point pts[4] = {bound.points[0], bound.points[1], bound.points[2], bound.points[3]};
-    //drawContours(mask, pts, 0, Scalar(255,255,255), CV_FILLED);
+
     Mat mask(bound.rect.height, bound.rect.width, CV_8UC3, Scalar(0,0,0));
     fillConvexPoly( mask, pts, 4, Scalar(255,255,255));
     erode( mask, mask, getStructuringElement( MORPH_ELLIPSE, Size(7, 7),Point(-1, -1)));
@@ -61,6 +61,7 @@ struct WarpPoly stitch(Mat object, Mat& scene, Mat H){
     mask.release();
     bound.rect.x = max(bound.rect.x,0);
     bound.rect.y = max(bound.rect.y,0);
+
 	return bound;
 }
 
@@ -137,4 +138,23 @@ vector<string> read_filenames(const string dir_ent){
     file_names.erase(file_names.begin(), file_names.begin()+2);
 
     return file_names;
+}
+
+void saveHomographyData(Mat H, vector<KeyPoint> keypoints, std::vector<DMatch> matches){
+    ofstream file;
+    file.open("homography-data.txt");
+
+    for(int i=0; i<H.cols; i++){
+        for(int j=0; j<H.rows; j++){
+            file << H.at<double>(i, j);
+            file << " ";
+        }
+        file << "\n";
+    }
+    for(auto m: matches){
+        file << keypoints[m.queryIdx].pt.x << " ";
+        file << keypoints[m.queryIdx].pt.y << "\n";
+    }
+
+    file.close();
 }
