@@ -4,6 +4,8 @@ find_package( OpenCV 3.0 REQUIRED xfeatures2d)
 
 include_directories( ${OpenCV_INCLUDE_DIRS} )
 file(GLOB stitch-cv
+    "../common/*.h"
+    "../common/*.cpp"
     "include/*.h"
     "include/*.hxx"
     "src/*.cpp"

@@ -1,11 +1,12 @@
-/********************************************
- * FILE NAME: preprocessing.h               *
- * DESCRIPTION:                             *
- * VERSION:                                 *
- * AUTHORS: Victor García                   *
- ********************************************/
+/**
+ * @file utils.cpp
+ * @brief useful functions
+ * @version 1.0
+ * @date 20/01/2018
+ * @author Victor Garcia
+ */
 
-#include "../include/preprocessing.h"
+#include "utils.h"
 
 void getHistogram(cv::Mat img, int histogram[3][256]){
     int i = 0, j = 0;
@@ -64,6 +65,7 @@ void colorChannelStretch(cv::Mat imgOriginal, cv::Mat imgStretched, int lowerPer
     // Computing the histograms
     int histogram[3][256];
     getHistogram(imgOriginal, histogram);
+    printHistogram(histogram[0], "/home/victor/dataset/testHist.jpg", cv::Scalar(255,0,0));
 
     // Computing the percentiles
     int blueLowerPercentile = -1, blueHigherPercentile = -1;
@@ -72,7 +74,7 @@ void colorChannelStretch(cv::Mat imgOriginal, cv::Mat imgStretched, int lowerPer
     // Blue percentiles
     int i = 0, sum = 0;
     while ( sum < higherPercentile * imgOriginal.size().height * imgOriginal.size().width / 100 ){
-        if(sum < imgOriginal.size().height * imgOriginal.size().width / 100) blueLowerPercentile++;
+        if(sum < lowerPercentile * imgOriginal.size().height * imgOriginal.size().width / 100) blueLowerPercentile++;
         blueHigherPercentile++;
         sum += histogram[0][i];
         i++;
@@ -81,7 +83,7 @@ void colorChannelStretch(cv::Mat imgOriginal, cv::Mat imgStretched, int lowerPer
     i = 0;
     sum = 0;
     while ( sum < higherPercentile * imgOriginal.size().height * imgOriginal.size().width / 100 ){
-        if(sum < imgOriginal.size().height * imgOriginal.size().width / 100) greenLowerPercentile++;
+        if(sum < lowerPercentile * imgOriginal.size().height * imgOriginal.size().width / 100) greenLowerPercentile++;
         greenHigherPercentile++;
         sum += histogram[1][i];
         i++;
@@ -90,7 +92,7 @@ void colorChannelStretch(cv::Mat imgOriginal, cv::Mat imgStretched, int lowerPer
     i = 0;
     sum = 0;
     while ( sum < higherPercentile * imgOriginal.size().height * imgOriginal.size().width / 100 ){
-        if(sum < imgOriginal.size().height * imgOriginal.size().width / 100) redLowerPercentile++;
+        if(sum < lowerPercentile * imgOriginal.size().height * imgOriginal.size().width / 100) redLowerPercentile++;
         redHigherPercentile++;
         sum += histogram[2][i];
         i++;
@@ -114,4 +116,28 @@ void colorChannelStretch(cv::Mat imgOriginal, cv::Mat imgStretched, int lowerPer
             else imgStretched.at<cv::Vec3b>(i,j)[2] = ( 255 * ( imgOriginal.at<cv::Vec3b>(i,j)[2] - redLowerPercentile ) ) / ( redHigherPercentile - redLowerPercentile );
         }
     }
+    getHistogram(imgStretched, histogram);
+    printHistogram(histogram[0], "/home/victor/dataset/testHist2.jpg", cv::Scalar(255,0,0));
+}
+
+// See description in header file
+std::vector<std::string> read_filenames(const std::string dir_ent){
+    std::vector<std::string> file_names;
+    DIR *dir;
+    struct dirent *ent;
+
+    if ((dir = opendir(dir_ent.c_str())) != NULL) {
+        while ((ent = readdir (dir)) != NULL) {
+            file_names.push_back(std::string(ent->d_name));
+        }
+        closedir (dir);
+    } else {
+    // If the directory could not be opened
+    std::cout << "Directory could not be opened" << std::endl;
+    }
+    // Sorting the vector of strings so it is alphabetically ordered
+    std::sort(file_names.begin(), file_names.end());
+    file_names.erase(file_names.begin(), file_names.begin()+2);
+
+    return file_names;
 }

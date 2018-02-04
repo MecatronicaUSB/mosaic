@@ -59,14 +59,6 @@ struct WarpPoly stitch(cv::Mat object, cv::Mat& scene, cv::Mat H);
 std::vector<cv::DMatch> getGoodMatches(const int n_matches, const std::vector<std::vector<cv::DMatch> > matches);
 
 /**
- * @function read_filenames(std::string dir_ent)
- * @brief Get and store the name of files from a directory
- * @param dir_ent Path of the directory to read the file names
- * @return vector<std::string> Vector container the names (sorted alphabetically) of files in the directory 
- */
-std::vector<std::string> read_filenames(const std::string dir_ent);
-
-/**
  * @brief Select the best frame for each regular section of the image
  * @function gridDetector(std::vector<cv::KeyPoint> keypoints, std::vector<cv::DMatch> matches)
  * @param keypoints Opecv Keypoint data that contains the position of each keypoint 
@@ -91,6 +83,6 @@ cv::Mat translateImg(cv::Mat img, double offsetx, double offsety);
  * @param H 
  * @param keypoints 
  */
-void saveHomographyData(cv::Mat H, std::vector<cv::KeyPoint> keypoints, std::vector<cv::DMatch> matches);
+void saveHomographyData(cv::Mat H, std::vector<cv::KeyPoint> keypoints[2], std::vector<cv::DMatch> matches);
 
 #endif

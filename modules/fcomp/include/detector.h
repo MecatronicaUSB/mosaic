@@ -10,10 +10,7 @@
 #define DETECTOR_H
 
 #include <vector>
-#include <dirent.h>
 #include <iostream>
-#include <stdlib.h>
-#include <algorithm>
 #include "opencv2/xfeatures2d.hpp"
 #include "opencv2/features2d.hpp"
 #include "opencv2/core.hpp"
@@ -28,14 +25,6 @@
  * @return vector<cv::DMatch> Vector container good Opencv Matches
  */
 std::vector<cv::DMatch> getGoodMatches(const int n_matches, const std::vector<std::vector<cv::DMatch> > matches);
-
-/**
- * @function read_filenames(std::string dir_ent)
- * @brief Get and store the name of files from a directory
- * @param dir_ent Path of the directory to read the file names
- * @return vector<std::string> Vector container the names (sorted alphabetically) of files in the directory 
- */
-std::vector<std::string> read_filenames(const std::string dir_ent);
 
 /**
  * @brief 

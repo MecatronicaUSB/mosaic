@@ -8,7 +8,7 @@
  * @title Main code
  */
 
-#include "../include/preprocessing.h"
+#include "../../common/utils.h"
 #include "../include/options.h"
 #include "../include/detector.h"
 
@@ -99,7 +99,7 @@ int main( int argc, char** argv ) {
     
     // Two images as imput
     if (op_img){
-        n_iter = 1;
+        n_iter = 2;
         step_iter = 1;
         t = (double) getTickCount();
         // Check for two image flags and patchs (-i imageName)

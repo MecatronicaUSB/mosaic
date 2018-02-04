@@ -1,16 +1,18 @@
 /**
- * @file preprocessing.h
- * @brief Functions for pre-processing and enhanced images
+ * @file utils.h
+ * @brief Functions for pre-processing and enhancement images
  * @version 1.0
  * @date 20/01/2018
  * @author Victor Garcia
  */
-#ifndef HISTOGRAM_H
-#define HISTOGRAM_H
+#ifndef UTILS_H
+#define UTILS_H
 
 #include <opencv2/core.hpp>
 #include <opencv2/highgui.hpp>
 #include <opencv2/imgproc.hpp>
+#include <dirent.h>
+#include <iostream>
 #include <string>
 
 /**
@@ -61,5 +63,13 @@ void colorChannelStretch(cv::Mat imgOriginal, cv::Mat imgStretched, int lowerPer
 //      * lowerPercentile and higherPercentle must be integers between
 //        0 and 100, and lowerPercentile must be smaller than
 //        higherPercentile
+
+/**
+ * @function read_filenames(std::string dir_ent)
+ * @brief Get and store the name of files from a directory
+ * @param dir_ent Path of the directory to read the file names
+ * @return vector<std::string> Vector container the names (sorted alphabetically) of files in the directory 
+ */
+std::vector<std::string> read_filenames(const std::string dir_ent);
 
 #endif
