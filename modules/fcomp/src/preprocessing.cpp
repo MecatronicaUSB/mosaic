@@ -64,6 +64,7 @@ void colorChannelStretch(cv::Mat imgOriginal, cv::Mat imgStretched, int lowerPer
     // Computing the histograms
     int histogram[3][256];
     getHistogram(imgOriginal, histogram);
+    printHistogram(histogram[0], "/home/victor/dataset/testHist.jpg", cv::Scalar(255,0,0));
 
     // Computing the percentiles
     int blueLowerPercentile = -1, blueHigherPercentile = -1;
@@ -72,7 +73,7 @@ void colorChannelStretch(cv::Mat imgOriginal, cv::Mat imgStretched, int lowerPer
     // Blue percentiles
     int i = 0, sum = 0;
     while ( sum < higherPercentile * imgOriginal.size().height * imgOriginal.size().width / 100 ){
-        if(sum < imgOriginal.size().height * imgOriginal.size().width / 100) blueLowerPercentile++;
+        if(sum < lowerPercentile * imgOriginal.size().height * imgOriginal.size().width / 100) blueLowerPercentile++;
         blueHigherPercentile++;
         sum += histogram[0][i];
         i++;
@@ -81,7 +82,7 @@ void colorChannelStretch(cv::Mat imgOriginal, cv::Mat imgStretched, int lowerPer
     i = 0;
     sum = 0;
     while ( sum < higherPercentile * imgOriginal.size().height * imgOriginal.size().width / 100 ){
-        if(sum < imgOriginal.size().height * imgOriginal.size().width / 100) greenLowerPercentile++;
+        if(sum < lowerPercentile * imgOriginal.size().height * imgOriginal.size().width / 100) greenLowerPercentile++;
         greenHigherPercentile++;
         sum += histogram[1][i];
         i++;
@@ -90,7 +91,7 @@ void colorChannelStretch(cv::Mat imgOriginal, cv::Mat imgStretched, int lowerPer
     i = 0;
     sum = 0;
     while ( sum < higherPercentile * imgOriginal.size().height * imgOriginal.size().width / 100 ){
-        if(sum < imgOriginal.size().height * imgOriginal.size().width / 100) redLowerPercentile++;
+        if(sum < lowerPercentile * imgOriginal.size().height * imgOriginal.size().width / 100) redLowerPercentile++;
         redHigherPercentile++;
         sum += histogram[2][i];
         i++;
@@ -114,4 +115,6 @@ void colorChannelStretch(cv::Mat imgOriginal, cv::Mat imgStretched, int lowerPer
             else imgStretched.at<cv::Vec3b>(i,j)[2] = ( 255 * ( imgOriginal.at<cv::Vec3b>(i,j)[2] - redLowerPercentile ) ) / ( redHigherPercentile - redLowerPercentile );
         }
     }
+    getHistogram(imgStretched, histogram);
+    printHistogram(histogram[0], "/home/victor/dataset/testHist2.jpg", cv::Scalar(255,0,0));
 }
