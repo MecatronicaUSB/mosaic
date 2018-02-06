@@ -121,8 +121,8 @@ int main( int argc, char** argv ) {
 
         // Apply pre-processing algorithm if selected (histogram stretch)
         if(op_pre){
-            colorChannelStretch(img[0], img[0], 1, 99);
-            colorChannelStretch(img[1], img[1], 1, 99);
+            imgChannelStretch(img[0], img[0], 1, 99);
+            imgChannelStretch(img[1], img[1], 1, 99);
         }
 
         // Detect the keypoints using desired Detector and compute the descriptors
