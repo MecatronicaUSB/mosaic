@@ -115,15 +115,15 @@ int main( int argc, char** argv ) {
             resize(img[0], img[0], Size(TARGET_WIDTH, TARGET_HEIGHT), 0, 0, CV_INTER_LINEAR);
             img_ori[0] = img[0].clone();
         }
-        // Apply pre-processing algorithm if selected (histogram stretch)
-        if(op_pre){
-            colorChannelStretch(img[0], img[0], 1, 99);
-            if(n_iter<1)
-                colorChannelStretch(img[1], img[1], 1, 99);
-        }
         // Conver images to gray
         cvtColor(img[0],img[0],COLOR_BGR2GRAY);
         cvtColor(img[1],img[1],COLOR_BGR2GRAY);
+
+        // Apply pre-processing algorithm if selected (histogram stretch)
+        if(op_pre){
+            colorChannelStretch(img[0], img[0], 1, 99);
+            colorChannelStretch(img[1], img[1], 1, 99);
+        }
 
         // Detect the keypoints using desired Detector and compute the descriptors
         detector->detectAndCompute( img[0], Mat(), keypoints[0], descriptors[0] );

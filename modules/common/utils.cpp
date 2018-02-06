@@ -8,20 +8,26 @@
 
 #include "utils.h"
 
-void getHistogram(cv::Mat img, int histogram[3][256]){
-    int i = 0, j = 0;
-    // Initializing the histogram
+void getHistogram(cv::Mat img, int *histogram){    
+	int i = 0, j = 0;
+//    std::cout << "gH: Initializing histogram vector" << endl;
+    // Initializing the histogram. TODO: Check if there is a faster way
     for(i=0; i<256; i++){
-        histogram[0][i] = 0;
-        histogram[1][i] = 0;
-        histogram[2][i] = 0;
+        histogram[i] = 0;
     }
-    // Computing the histogram
-    for(i=0; i<img.size().height; i++){
-        for(j=0; j<img.size().width; j++){
-            histogram[0][img.at<cv::Vec3b>(i,j)[0]] += 1;
-            histogram[1][img.at<cv::Vec3b>(i,j)[1]] += 1;
-            histogram[2][img.at<cv::Vec3b>(i,j)[2]] += 1;
+	// by using aux variables, we decrease overhead create by multiple calls to cvMat image methods to retrieve its size
+	// TODO: is it possible to measure the impact?
+	int width, height;
+	width = img.size().width;
+	height = img.size().height;
+//    cout << "gH: Computing image histogram" << endl;
+//    cout << "gH: Image size " << width << "x" << height << endl;
+    // Computing the histogram as a cumulative of each integer value. WARNING: this will fail for any non-integer image matrix
+    for(i=0; i<height; i++){
+        for(j=0; j<width; j++){
+            unsigned char value = img.at<unsigned char>(i,j);
+            //cout << "i: " << i << " j: " << j << " > " << value << endl;
+            histogram[value] += 1;
         }
     }
 }
@@ -61,63 +67,38 @@ void printHistogram(int histogram[256], std::string filename, cv::Scalar color){
     cv::imwrite(filename, imgHist);
 }
 
-void colorChannelStretch(cv::Mat imgOriginal, cv::Mat imgStretched, int lowerPercentile, int higherPercentile){
+// Now it will operate in a single channel of the provided image. So, future implementations will require a function call per channel (still faster)
+void imgChannelStretch(cv::Mat imgOriginal, cv::Mat imgStretched, int lowerPercentile, int higherPercentile){
     // Computing the histograms
-    int histogram[3][256];
+    int histogram[256];
+//    cout << "iCS: Calling getHistogram" << endl;
     getHistogram(imgOriginal, histogram);
-    printHistogram(histogram[0], "/home/victor/dataset/testHist.jpg", cv::Scalar(255,0,0));
+//    printHistogram(histogram, "input.jpg", 255);
 
-    // Computing the percentiles
-    int blueLowerPercentile = -1, blueHigherPercentile = -1;
-    int greenLowerPercentile = -1, greenHigherPercentile = -1;
-    int redLowerPercentile = -1, redHigherPercentile = -1;
-    // Blue percentiles
-    int i = 0, sum = 0;
-    while ( sum < higherPercentile * imgOriginal.size().height * imgOriginal.size().width / 100 ){
-        if(sum < lowerPercentile * imgOriginal.size().height * imgOriginal.size().width / 100) blueLowerPercentile++;
-        blueHigherPercentile++;
-        sum += histogram[0][i];
+    // Computing the percentiles. We force invalid values as initial values (just in case)
+    int channelLowerPercentile = -1, channelHigherPercentile = -1;
+    int height = imgOriginal.size().height;
+    int width = imgOriginal.size().width;
+    // Channel percentiles
+    int i = 0;
+    float sum=0;
+	// Added aux var to reduce img.methods calls
+	float normImgSize = height * width / 100.0;
+	// while we don't reach the highPercentile threshold...    
+	// This is some fashion of CFD: cumulative function distribution
+//    cout << "iCS: Computing percentiles" << endl;
+	while ( sum < higherPercentile * normImgSize ){
+        if(sum < lowerPercentile * normImgSize) channelLowerPercentile++; //TODO: check if missing "lowerPercentile"
+        channelHigherPercentile++;
+        sum += histogram[i];
         i++;
     }
-    // Green percentiles
-    i = 0;
-    sum = 0;
-    while ( sum < higherPercentile * imgOriginal.size().height * imgOriginal.size().width / 100 ){
-        if(sum < lowerPercentile * imgOriginal.size().height * imgOriginal.size().width / 100) greenLowerPercentile++;
-        greenHigherPercentile++;
-        sum += histogram[1][i];
-        i++;
-    }
-    // Red percentiles
-    i = 0;
-    sum = 0;
-    while ( sum < higherPercentile * imgOriginal.size().height * imgOriginal.size().width / 100 ){
-        if(sum < lowerPercentile * imgOriginal.size().height * imgOriginal.size().width / 100) redLowerPercentile++;
-        redHigherPercentile++;
-        sum += histogram[2][i];
-        i++;
-    }
-
-    // Creating the modified image, imgStretched, pixel by pixel
-    int j;
-    for(i=0; i<imgOriginal.size().height; i++){
-        for(j=0; j<imgOriginal.size().width; j++){
-            // Blue channel
-            if ( imgOriginal.at<cv::Vec3b>(i,j)[0] < blueLowerPercentile) imgStretched.at<cv::Vec3b>(i,j)[0] = 0;
-            else if ( imgOriginal.at<cv::Vec3b>(i,j)[0] > blueHigherPercentile ) imgStretched.at<cv::Vec3b>(i,j)[0] = 255;
-            else imgStretched.at<cv::Vec3b>(i,j)[0] = ( 255 * ( imgOriginal.at<cv::Vec3b>(i,j)[0] - blueLowerPercentile ) ) / ( blueHigherPercentile - blueLowerPercentile );
-            // Gren channel
-            if ( imgOriginal.at<cv::Vec3b>(i,j)[1] < greenLowerPercentile) imgStretched.at<cv::Vec3b>(i,j)[1] = 0;
-            else if ( imgOriginal.at<cv::Vec3b>(i,j)[1] > greenHigherPercentile ) imgStretched.at<cv::Vec3b>(i,j)[1] = 255;
-            else imgStretched.at<cv::Vec3b>(i,j)[1] = ( 255 * ( imgOriginal.at<cv::Vec3b>(i,j)[1] - greenLowerPercentile ) ) / ( greenHigherPercentile - greenLowerPercentile );
-            // Red channel
-            if ( imgOriginal.at<cv::Vec3b>(i,j)[2] < redLowerPercentile) imgStretched.at<cv::Vec3b>(i,j)[2] = 0;
-            else if ( imgOriginal.at<cv::Vec3b>(i,j)[2] > redHigherPercentile ) imgStretched.at<cv::Vec3b>(i,j)[2] = 255;
-            else imgStretched.at<cv::Vec3b>(i,j)[2] = ( 255 * ( imgOriginal.at<cv::Vec3b>(i,j)[2] - redLowerPercentile ) ) / ( redHigherPercentile - redLowerPercentile );
-        }
-    }
-    getHistogram(imgStretched, histogram);
-    printHistogram(histogram[0], "/home/victor/dataset/testHist2.jpg", cv::Scalar(255,0,0));
+    int j, m;
+    cv::Scalar b;
+    m = 255 / ( channelHigherPercentile - channelLowerPercentile );
+    b = channelLowerPercentile;
+    imgStretched -= b;
+    imgStretched *= m;
 }
 
 // See description in header file

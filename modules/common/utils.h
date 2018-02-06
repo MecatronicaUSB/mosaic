@@ -21,7 +21,7 @@
  * @param img OpenCV Matrix container input image
  * @param histogram Integer matrix to store the histogram
  */
-void getHistogram(cv::Mat img, int histogram[3][256]);
+void getHistogram(cv::Mat img, int* histogram);
 // Histogram[3][256].
 //      Histogram[0] corresponds to the Blue channel
 //      Histogram[1] corresponds to the Green channel
@@ -51,7 +51,7 @@ void printHistogram(int histogram[256], std::string filename, cv::Scalar color);
  * 0 and 100.\n
  * \e lowerPercentile must be smaller than \e higherPercentile
  */
-void colorChannelStretch(cv::Mat imgOriginal, cv::Mat imgStretched, int lowerPercentile, int higherPercentile);
+void imgChannelStretch(cv::Mat imgOriginal, cv::Mat imgStretched, int lowerPercentile, int higherPercentile);
 // Transform imgOriginal so that, for each channel histogram, its
 // lowerPercentile and higherPercentile values are moved to 0 and 255,
 // respectively. Values in between are linearly scaled. Values smaller
