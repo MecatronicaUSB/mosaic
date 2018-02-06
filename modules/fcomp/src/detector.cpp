@@ -7,6 +7,11 @@ using namespace cv::xfeatures2d;
 #define TARGET_WIDTH	640   
 #define TARGET_HEIGHT	480 
 
+// TODO: Cite proper ref to work where was introduced the idea of image tiling for further extraction of features on each tile
+/// Number of columns and rows for image tiling
+#define GRID_COLUMNS	10
+#define GRID_ROWS		10
+
 // See description in header file
 std::vector<DMatch> getGoodMatches(int n_matches, std::vector<std::vector<cv::DMatch> > matches){
     vector<DMatch> good_matches;
@@ -24,15 +29,17 @@ std::vector<DMatch> getGoodMatches(int n_matches, std::vector<std::vector<cv::DM
 
 // See description in header file
 vector<DMatch> gridDetector(vector<KeyPoint> keypoints, vector<DMatch> matches){
-    int stepx=TARGET_WIDTH/10, stepy=TARGET_HEIGHT/10;
-    vector<DMatch> grid_matches;
-    int best_distance = 100;
-    DMatch best_match;
+	/// TODO: use temporal float variable, and later apply integer cast when employed as image index
+	/// check if stepx/stepy can be provided as function arguments
+    int stepx=TARGET_WIDTH/GRID_COLUMNS, stepy=TARGET_HEIGHT/GRID_ROWS;
+    vector<DMatch> grid_matches;	// vector containing matches obtained with grid/tiling approach
+    int best_distance = 100;	// forced initial value for best_distance (default value may be ignored as it is not employed)
+    DMatch best_match;	// current best match
     
     for(int i=0; i<10; i++){
         for(int j=0; j<10; j++){
             best_distance = 100;
-            for (auto m: matches) {
+            for (auto m: matches) {	// booom, using 'auto' like a pro...
                 //-- Get the keypoints from the good matches
                 if(keypoints[m.queryIdx].pt.x >= stepx*i && keypoints[m.queryIdx].pt.x < stepx*(i+1) &&
                 keypoints[m.queryIdx].pt.y >= stepy*j && keypoints[m.queryIdx].pt.y < stepy*(j+1)){
