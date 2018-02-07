@@ -1,5 +1,6 @@
 # VS-code settings
-.vscode
+.vscode/c_cpp_properties.json
+.vscode/settings.json
 
 # executables
 modules/fcomp/fcomp

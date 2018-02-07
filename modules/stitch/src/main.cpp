@@ -152,10 +152,10 @@ int main( int argc, char** argv ) {
         cout << "-- Good Matches      ["<<green<<n_good<<reset<<"]"  << endl;
 
         vector<Point2f> img0, img1;
-        for (int i = 0; i < good_matches.size(); i ++) {
+        for (auto good: good_matches) {
             //-- Get the keypoints from the good matches
-            img0.push_back(keypoints[0][good_matches[i].queryIdx].pt);
-            img1.push_back(keypoints[1][good_matches[i].trainIdx].pt);
+            img0.push_back(keypoints[0][good.queryIdx].pt);
+            img1.push_back(keypoints[1][good.trainIdx].pt);
         }
 
         Mat H = findHomography(Mat(img0), Mat(img1), CV_RANSAC);
