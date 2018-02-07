@@ -163,23 +163,16 @@ int main( int argc, char** argv ) {
             cout << "not enought keypoints to calculate homography matrix. Exiting..." <<  endl;
             break;
         }
-        saveHomographyData(H, keypoints, good_matches);
+        //saveHomographyData(H, keypoints, good_matches);
         bound = stitch(img_ori[0], img_ori[1], H);
         detectRoi = bound.rect;
 
-        imshow("STITCH",img_ori[1]);
-        waitKey(0);
-
-        if(op_out){
-            Mat img_matches;
-            // Draw only "good" matches
-            drawMatches( img[0], keypoints[0], img[1], keypoints[1],
-                        good_matches, img_matches, Scalar::all(-1), Scalar::all(-1),
-                        vector<char>(), DrawMatchesFlags::NOT_DRAW_SINGLE_POINTS );
-            // Show matches
-            namedWindow("Good Matches", WINDOW_NORMAL);
-            imshow( "Good Matches", img_matches );
+        if(op_out && !op_img){
+            imshow("STITCH",img_ori[1]);
+            t = 1000 * ((double) getTickCount() - t) / getTickFrequency();        
+            cout << "   Execution time: " << t << " ms" <<endl;
             waitKey(0);
+            t = (double) getTickCount();
         }
         matches.clear();
         img[0].release();
@@ -190,12 +183,10 @@ int main( int argc, char** argv ) {
         descriptors[0].release();
         descriptors[1].release();
     }
-    img_ori[1].release();
-    cout << "\nTotal "<< n_img <<" -- -- -- -- -- -- -- -- -- --"  << endl;
-    cout << "-- Total Possible matches  ["<< tot_matches <<"]"  << endl;
-    cout << "-- Total Good Matches      ["<<green<<tot_good<<reset<<"]"  << endl;
+    imshow("STITCH",img_ori[1]);
     t = 1000 * ((double) getTickCount() - t) / getTickFrequency();        
     cout << "   Execution time: " << t << " ms" <<endl;
-
+    waitKey(0);
+    img_ori[1].release();
     return 0;
 }

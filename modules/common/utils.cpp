@@ -20,8 +20,7 @@ void getHistogram(cv::Mat img, int *histogram){
 	int width, height;
 	width = img.size().width;
 	height = img.size().height;
-//    cout << "gH: Computing image histogram" << endl;
-//    cout << "gH: Image size " << width << "x" << height << endl;
+    
     // Computing the histogram as a cumulative of each integer value. WARNING: this will fail for any non-integer image matrix
     for(i=0; i<height; i++){
         for(j=0; j<width; j++){
@@ -71,9 +70,8 @@ void printHistogram(int histogram[256], std::string filename, cv::Scalar color){
 void imgChannelStretch(cv::Mat imgOriginal, cv::Mat imgStretched, int lowerPercentile, int higherPercentile){
     // Computing the histograms
     int histogram[256];
-//    cout << "iCS: Calling getHistogram" << endl;
+
     getHistogram(imgOriginal, histogram);
-//    printHistogram(histogram, "input.jpg", 255);
 
     // Computing the percentiles. We force invalid values as initial values (just in case)
     int channelLowerPercentile = -1, channelHigherPercentile = -1;
@@ -82,18 +80,17 @@ void imgChannelStretch(cv::Mat imgOriginal, cv::Mat imgStretched, int lowerPerce
     // Channel percentiles
     int i = 0;
     float sum=0;
-	// Added aux var to reduce img.methods calls
+
 	float normImgSize = height * width / 100.0;
 	// while we don't reach the highPercentile threshold...    
 	// This is some fashion of CFD: cumulative function distribution
-//    cout << "iCS: Computing percentiles" << endl;
 	while ( sum < higherPercentile * normImgSize ){
-        if(sum < lowerPercentile * normImgSize) channelLowerPercentile++; //TODO: check if missing "lowerPercentile"
+        if(sum < lowerPercentile * normImgSize) channelLowerPercentile++;
         channelHigherPercentile++;
-        sum += histogram[i];
-        i++;
+        sum += histogram[i++];
     }
-    int j, m;
+    int j;
+    float m;
     cv::Scalar b;
     m = 255 / ( channelHigherPercentile - channelLowerPercentile );
     b = channelLowerPercentile;
