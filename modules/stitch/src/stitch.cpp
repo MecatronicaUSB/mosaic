@@ -54,7 +54,7 @@ struct WarpPoly stitch(Mat object, Mat& scene, Mat H){
 
     Mat mask(bound.rect.height, bound.rect.width, CV_8UC3, Scalar(0,0,0));
     fillConvexPoly( mask, pts, 4, Scalar(255,255,255));
-    erode( mask, mask, getStructuringElement( MORPH_ELLIPSE, Size(7, 7),Point(-1, -1)));
+    erode( mask, mask, getStructuringElement( MORPH_RECT, Size(7, 7),Point(-1, -1)));
 
 	cv::Mat object_pos(scene, cv::Rect(max(bound.rect.x,0), max(bound.rect.y,0), bound.rect.width, bound.rect.height));
 	warped.copyTo(object_pos, mask);
