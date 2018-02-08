@@ -119,11 +119,3 @@ std::vector<std::string> read_filenames(const std::string dir_ent){
 
     return file_names;
 }
-
-float calcDeformation(std::vector<cv::Point2f> points, cv::Mat H){
-    float deformation;
-
-    
-
-    return deformation;
-}

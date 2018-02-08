@@ -31,7 +31,7 @@
  * @param height 
  * @return cv::Rect 
  */
-std::vector<cv::Point2f> getBound(cv::Mat H, int width, int height);
+std::vector<cv::Point2f> getBoundPoints(cv::Mat H, int width, int height);
 
 /**
  * @brief 
@@ -78,5 +78,22 @@ cv::Mat translateImg(cv::Mat img, double offsetx, double offsety);
  * @param keypoints 
  */
 void saveHomographyData(cv::Mat H, std::vector<cv::KeyPoint> keypoints[2], std::vector<cv::DMatch> matches);
+
+/**
+ * @brief Function to evaluate if the transformed image is distorted
+ * @param H Opencv Matrix containing Homography matrix
+ * @param width Width of input image
+ * @param height Height of input image
+ * @return bool Boolean value, true if the image is not distorted enough, false otherwise
+ */
+bool imageDistortion(cv::Mat H, int width, int height);
+
+/**
+ * @brief Calculate the distance between two input points
+ * @param pt1 OpenCV floating point coordinate
+ * @param pt2 OpenCV floating point coordinate
+ * @return float Distance between points
+ */
+float getDistance(cv::Point2f pt1, cv::Point2f pt2);
 
 #endif

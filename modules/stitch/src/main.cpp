@@ -152,12 +152,12 @@ int main( int argc, char** argv ) {
         cout << "-- Good Matches      ["<<green<<n_good<<reset<<"]"  << endl;
 
         vector<Point2f> img0, img1;
-        for (auto good: good_matches) {
+        for (DMatch good: good_matches) {
             //-- Get the keypoints from the good matches
             img0.push_back(keypoints[0][good.queryIdx].pt);
             img1.push_back(keypoints[1][good.trainIdx].pt);
         }
-        cout << "teste1"<< endl;
+
         Mat H = findHomography(Mat(img0), Mat(img1), CV_RANSAC);
         if(H.empty()){
             cout << "not enought keypoints to calculate homography matrix. Exiting..." <<  endl;
@@ -165,7 +165,7 @@ int main( int argc, char** argv ) {
         }
         //saveHomographyData(H, keypoints, good_matches);
         detectRoi = stitch(img_ori[0], img_ori[1], H);
-        cout << "teste2"<< endl;
+
         if(op_out && !op_img){
             imshow("STITCH",img_ori[1]);
             t = 1000 * ((double) getTickCount() - t) / getTickFrequency();        

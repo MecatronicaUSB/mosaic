@@ -1,10 +1,11 @@
 #include "../include/stitch.h"
+#include <cmath> 
 
 using namespace std;
 using namespace cv;
 
 // See description in header file
-vector<Point2f> getBound(Mat H, int width, int height){
+vector<Point2f> getBoundPoints(Mat H, int width, int height){
 	vector<Point2f> points, final_points;
     Rect bound;
 
@@ -12,6 +13,8 @@ vector<Point2f> getBound(Mat H, int width, int height){
 	points.push_back(Point2f(width,0));
 	points.push_back(Point2f(width,height));
 	points.push_back(Point2f(0,height));
+    // center point
+    points.push_back(Point2f(width/2, height/2));
 
 	perspectiveTransform(points,final_points, H);
 	return final_points;
@@ -23,7 +26,7 @@ Rect stitch(Mat object, Mat& scene, Mat H){
     Size dim;
 	Size2f offset;
 
-	vector<Point2f> bound_points = getBound(H, object.cols, object.rows);
+	vector<Point2f> bound_points = getBoundPoints(H, object.cols, object.rows);
     Rect bound_rect =  boundingRect(bound_points);
 	bound_rect.x < 0 ? offset.width  = -bound_rect.x : offset.width  = 0;
 	bound_rect.y < 0 ? offset.height = -bound_rect.y : offset.height = 0;
@@ -59,7 +62,7 @@ Rect stitch(Mat object, Mat& scene, Mat H){
     mask.release();
     bound_rect.x = max(bound_rect.x,0);
     bound_rect.y = max(bound_rect.y,0);
-    cout << "test_stitch"<< endl;
+
 	return bound_rect;
 }
 
@@ -89,7 +92,7 @@ vector<DMatch> gridDetector(vector<KeyPoint> keypoints, vector<DMatch> matches){
         for(int j=0; j<10; j++){
             k=0;
             best_distance = 100;
-            for (auto m: matches) {
+            for (DMatch m: matches) {
                 //-- Get the keypoints from the good matches
                 if(keypoints[m.queryIdx].pt.x >= stepx*i && keypoints[m.queryIdx].pt.x < stepx*(i+1) &&
                 keypoints[m.queryIdx].pt.y >= stepy*j && keypoints[m.queryIdx].pt.y < stepy*(j+1)){
@@ -116,6 +119,7 @@ Mat translateImg(Mat img, double offsetx, double offsety){
     return result;
 }
 
+// See description in header file
 void saveHomographyData(Mat H, vector<KeyPoint> keypoints[2], std::vector<DMatch> matches){
     ofstream file;
     file.open("homography-data.txt");
@@ -138,4 +142,37 @@ void saveHomographyData(Mat H, vector<KeyPoint> keypoints[2], std::vector<DMatch
     }
 
     file.close();
+}
+
+// See description in header file
+bool imageDistorted(Mat H, int width, int height){
+    float deformation, area;
+    vector<Point2f> bound_points = getBoundPoints(H, width, height);
+    float semi_diag[4], ratio[2];
+
+    for(int i=0; i<4; i++){
+        // 5th point correspond to center of image
+        // Getting the distance between corner points to the center (all semi diagonal distances)
+        semi_diag[i] = getDistance(bound_points[i], bound_points[4]);
+    }
+    // ratio beween semi diagonals
+    ratio[0] = max(semi_diag[0]/semi_diag[2], semi_diag[2]/semi_diag[0]);
+    ratio[1] = max(semi_diag[1]/semi_diag[3], semi_diag[3]/semi_diag[1]);
+
+    // Area of distorted images
+    area = contourArea(bound_points);
+
+    // 3 initial threshold value, must be ajusted in future tests 
+    if(area > 3*width*height)
+        return false;
+    // 4 initial threshold value, must be ajusted in future tests 
+    if(ratio[0] > 4 || ratio[1] > 4)
+        return false;
+
+    return true;
+}
+
+// See description in header file
+float getDistance(Point2f pt1, Point2f pt2){
+    return sqrt(pow((pt1.x - pt2.x),2) + pow((pt1.y - pt2.y),2));
 }
