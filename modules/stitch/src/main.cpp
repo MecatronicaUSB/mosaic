@@ -45,7 +45,7 @@ int main( int argc, char** argv ) {
     Mat result;
     Mat descriptors[2];
     Mat img[2], img_ori[2];
-    struct WarpPoly bound;
+
     try{
         parser.ParseCLI(argc, argv);
     }
@@ -157,16 +157,15 @@ int main( int argc, char** argv ) {
             img0.push_back(keypoints[0][good.queryIdx].pt);
             img1.push_back(keypoints[1][good.trainIdx].pt);
         }
-
+        cout << "teste1"<< endl;
         Mat H = findHomography(Mat(img0), Mat(img1), CV_RANSAC);
         if(H.empty()){
             cout << "not enought keypoints to calculate homography matrix. Exiting..." <<  endl;
-            break;
+            return 0;
         }
         //saveHomographyData(H, keypoints, good_matches);
-        bound = stitch(img_ori[0], img_ori[1], H);
-        detectRoi = bound.rect;
-
+        detectRoi = stitch(img_ori[0], img_ori[1], H);
+        cout << "teste2"<< endl;
         if(op_out && !op_img){
             imshow("STITCH",img_ori[1]);
             t = 1000 * ((double) getTickCount() - t) / getTickFrequency();        

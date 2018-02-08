@@ -23,12 +23,6 @@
 #define TARGET_WIDTH	640   
 #define TARGET_HEIGHT	480
 
-/** @brief  Struct to save the corners and bounding rectangle of warped image*/
-struct WarpPoly {
-  cv::Rect rect;
-  std::vector<cv::Point2f> points;
-};
-
 /**
  * @brief 
  * 
@@ -37,7 +31,7 @@ struct WarpPoly {
  * @param height 
  * @return cv::Rect 
  */
-struct WarpPoly getBound(cv::Mat H, int width, int height);
+std::vector<cv::Point2f> getBound(cv::Mat H, int width, int height);
 
 /**
  * @brief 
@@ -47,7 +41,7 @@ struct WarpPoly getBound(cv::Mat H, int width, int height);
  * @param H 
  * @return struct WarpPoly 
  */
-struct WarpPoly stitch(cv::Mat object, cv::Mat& scene, cv::Mat H);
+cv::Rect stitch(cv::Mat object, cv::Mat& scene, cv::Mat H);
 
 /**
  * @function getGoodMatches(int n_matches, std::vector<cv::DMatch> matches)
