@@ -39,16 +39,16 @@ Rect stitch(Mat object, Mat& scene, Mat H){
 	T.at<double>(1,2)= -bound_rect.y;
 	// Important: first transform and then translate, not inverse way. correct form (T*H)
 	H = T*H;
-	warpPerspective(object, warped, H, cv::Size(bound_rect.width, bound_rect.height));
+	warpPerspective(object, warped, H, Size(bound_rect.width, bound_rect.height));
     //scene = translateImg(scene, offset.width, offset.height);
 
     copyMakeBorder(scene, scene, offset.height, max(0, bound_rect.height+bound_rect.y-scene.rows),
                                  offset.width,  max(0, bound_rect.width+bound_rect.x-scene.cols),
                                  BORDER_CONSTANT,Scalar(0,0,0));
 
-    for(int i=0; i< bound_points.size(); i++){
-        bound_points[i].x -= bound_rect.x;
-        bound_points[i].y -= bound_rect.y;
+    for(Point2f pt: bound_points){
+        pt.x -= bound_rect.x;
+        pt.y -= bound_rect.y;
     }
 
     Point pts[4] = {bound_points[0], bound_points[1], bound_points[2], bound_points[3]};
@@ -60,8 +60,13 @@ Rect stitch(Mat object, Mat& scene, Mat H){
 	cv::Mat object_pos(scene, cv::Rect(max(bound_rect.x,0), max(bound_rect.y,0), bound_rect.width, bound_rect.height));
 	warped.copyTo(object_pos, mask);
     mask.release();
+
+    // object_pos -= warped*200;
+    // object_pos += warped;
+
     bound_rect.x = max(bound_rect.x,0);
     bound_rect.y = max(bound_rect.y,0);
+
 
 	return bound_rect;
 }
