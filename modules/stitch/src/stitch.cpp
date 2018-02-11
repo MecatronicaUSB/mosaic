@@ -1,145 +1,11 @@
 #include "../include/stitch.hpp"
-#include <cmath> 
 
 using namespace std;
 using namespace cv;
+using namespace xfeatures2d;
 
-m2d::Stitcher::Stitcher(bool _grid, bool _pre, int _width, int _height, int _detector, int _matcher){
-    grid = _grid;
-    scb_pre = _pre;
-    frame_size.width = TARGET_WIDTH;
-    frame_size.height = TARGET_HEIGHT;
-
-    switch( _detector ) {
-    case USE_KAZE:
-        detector = KAZE::create();
-        break;
-    case USE_AKAZE:
-        detector = AKAZE::create();
-    }
-
-    switch( _matcher ) {
-    case USE_BRUTE_FORCE:
-        matcher = BFMatcher::create();
-        break;
-    case USE_FLANN:
-        matcher = FlannBasedMatcher::create();
-    }
-
-	border_points.push_back(Point2f(0,0));
-	border_points.push_back(Point2f(frame_size.width,0));
-	border_points.push_back(Point2f(frame_size.width, frame_size.height));
-	border_points.push_back(Point2f(0, frame_size.height));
-    // center point
-    border_points.push_back(Point2f(frame_size.width/2, frame_size.height/2));
-}
-
-//perspectiveTransform(points,bound_points, H);
-
-
-// See description in header file
-Rect stitch(Mat object, Mat& scene, Mat H){
-	Mat warped;
-    Size dim;
-	Size2f offset;
-
-	vector<Point2f> bound_points = getBoundPoints(H, object.cols, object.rows);
-    Rect bound_rect =  boundingRect(bound_points);
-	bound_rect.x < 0 ? offset.width  = -bound_rect.x : offset.width  = 0;
-	bound_rect.y < 0 ? offset.height = -bound_rect.y : offset.height = 0;
-
-    dim.width  = scene.cols + abs(bound_rect.x);
-    dim.height = scene.rows + abs(bound_rect.y);
-
-	Mat T = Mat::eye(3,3,CV_64F);
-	T.at<double>(0,2)= -bound_rect.x;
-	T.at<double>(1,2)= -bound_rect.y;
-	// Important: first transform and then translate, not inverse way. correct form (T*H)
-	H = T*H;
-	warpPerspective(object, warped, H, Size(bound_rect.width, bound_rect.height));
-    //scene = translateImg(scene, offset.width, offset.height);
-
-    copyMakeBorder(scene, scene, offset.height, max(0, bound_rect.height+bound_rect.y-scene.rows),
-                                 offset.width,  max(0, bound_rect.width+bound_rect.x-scene.cols),
-                                 BORDER_CONSTANT,Scalar(0,0,0));
-
-    for(Point2f& pt: bound_points){
-        pt.x -= bound_rect.x;
-        pt.y -= bound_rect.y;
-    }
-
-    Point pts[4] = {bound_points[0], bound_points[1], bound_points[2], bound_points[3]};
-
-    Mat mask(bound_rect.height, bound_rect.width, CV_8UC3, Scalar(0,0,0));
-    fillConvexPoly( mask, pts, 4, Scalar(255,255,255));
-    erode( mask, mask, getStructuringElement( MORPH_RECT, Size(7, 7),Point(-1, -1)));
-
-	cv::Mat object_pos(scene, cv::Rect(max(bound_rect.x,0), max(bound_rect.y,0), bound_rect.width, bound_rect.height));
-    warped.copyTo(object_pos, mask);
-    mask.release();
-
-    // object_pos -= warped*200;
-    // object_pos += warped;
-
-    bound_rect.x = max(bound_rect.x,0);
-    bound_rect.y = max(bound_rect.y,0);
-
-
-	return bound_rect;
-}
-
-// See description in header file
-vector<DMatch> getGoodMatches(int n_matches, vector<vector<DMatch> > matches){
-    vector<DMatch> good_matches;
-
-    for (int i = 0; i < std::min(n_matches, (int)matches.size()); i++) {
-        if ((matches[i][0].distance < 0.5 * (matches[i][1].distance)) &&
-            ((int) matches[i].size() <= 2 && (int) matches[i].size() > 0)) {
-            // take the first result only if its distance is smaller than 0.5*second_best_dist
-            // that means this descriptor is ignored if the second distance is bigger or of similar
-            good_matches.push_back(matches[i][0]);
-        }
-    }
-    return good_matches;
-}
-
-// See description in header file
-vector<DMatch> gridDetector(vector<KeyPoint> keypoints, vector<DMatch> matches){
-    int stepx=TARGET_WIDTH/10, stepy=TARGET_HEIGHT/10;
-    vector<DMatch> grid_matches;
-    int k=0, best_distance = 100;
-    DMatch best_match;
-    
-    for(int i=0; i<10; i++){
-        for(int j=0; j<10; j++){
-            k=0;
-            best_distance = 100;
-            for (DMatch m: matches) {
-                //-- Get the keypoints from the good matches
-                if(keypoints[m.queryIdx].pt.x >= stepx*i && keypoints[m.queryIdx].pt.x < stepx*(i+1) &&
-                keypoints[m.queryIdx].pt.y >= stepy*j && keypoints[m.queryIdx].pt.y < stepy*(j+1)){
-                    if(m.distance < best_distance){
-                        best_distance = m.distance;
-                        best_match = m;
-                    }
-                    matches.erase(matches.begin() + k);  
-                }
-                k++;
-            }
-            if(best_distance != 100)
-                grid_matches.push_back(best_match);
-        }
-    }
-    return grid_matches;
-}
-
-// See description in header file
-Mat translateImg(Mat img, double offsetx, double offsety){
-    Mat T = (Mat_<double>(2,3) << 1, 0, offsetx, 0, 1, offsety);
-    Mat result;
-    warpAffine(img, result, T, cv::Size(img.cols+offsetx, img.rows+offsety));
-    return result;
-}
+namespace m2d //!< mosaic 2d namespace
+{
 
 // See description in header file
 void saveHomographyData(Mat H, vector<KeyPoint> keypoints[2], std::vector<DMatch> matches){
@@ -167,48 +33,310 @@ void saveHomographyData(Mat H, vector<KeyPoint> keypoints[2], std::vector<DMatch
 }
 
 // See description in header file
-bool imageDistorted(Mat H, int width, int height){
+float getDistance(Point2f pt1, Point2f pt2){
+    return sqrt(pow((pt1.x - pt2.x),2) + pow((pt1.y - pt2.y),2));
+}
+
+// See description in header file
+m2d::Stitcher::Stitcher(bool _grid, bool _pre, int _width, int _height, int _detector, int _matcher){
+    use_grid = _grid;
+    apply_pre = _pre;
+    frame_size.width = TARGET_WIDTH;
+    frame_size.height = TARGET_HEIGHT;
+    n_cells = 10;
+
+    switch( _detector ) {
+    case USE_KAZE:
+        detector = KAZE::create();
+        break;
+    case USE_AKAZE:
+        detector = AKAZE::create();
+        break;
+    case USE_SIFT:
+        detector = SIFT::create();
+        break;
+    case USE_SURF:
+        detector = SURF::create();
+        break;
+    }
+
+    switch( _matcher ) {
+    case USE_BRUTE_FORCE:
+        matcher = BFMatcher::create();
+        break;
+    case USE_FLANN:
+        matcher = FlannBasedMatcher::create();
+    }
+
+    // corner points
+	border_points.push_back(Point2f(0,0));
+	border_points.push_back(Point2f(frame_size.width,0));
+	border_points.push_back(Point2f(frame_size.width, frame_size.height));
+	border_points.push_back(Point2f(0, frame_size.height));
+    // center point
+    border_points.push_back(Point2f(frame_size.width/2, frame_size.height/2));
+
+}
+
+// See description in header file
+bool Stitcher::stitch(Mat object){
+	Mat warp_img;
+	vector<float> warp_offset;
+
+    resize(object, object, Size(frame_size.width, frame_size.height));
+    object_ori = object.clone();
+
+    // Conver object image to gray
+    cvtColor(object,object,COLOR_BGR2GRAY);
+
+    if(apply_pre){
+        imgChannelStretch(object, object, 1, 99);
+        imgChannelStretch(scene, scene, 1, 99);
+    }
+
+    // Detect the keypoints using desired Detector and compute the descriptors
+    detector->detectAndCompute( object, Mat(), keypoints[OBJECT], descriptors[OBJECT] );
+    detector->detectAndCompute( scene(bound_rect), Mat(), keypoints[SCENE], descriptors[SCENE] );
+
+    if(!keypoints[OBJECT].size() || !keypoints[SCENE].size()){
+        cout << "No Key points Found" <<  endl;
+        return false;
+    }
+
+    // Match the keypoints for input images
+    matcher->knnMatch( descriptors[OBJECT], descriptors[SCENE], matches, 2);
+
+    getGoodMatches();
+
+    // imshow("test",scene);
+    // imshow("test2",object);
+    // waitKey(0);
+    cout << matches.size() << "\t"<<good_matches.size()<< endl;
+    if(use_grid){
+        gridDetector();
+    }
+    cout << matches.size() << "\t"<<good_matches.size()<< endl;
+            Mat img_matches;
+            // Draw only "good" matches
+            drawMatches( object_ori, keypoints[OBJECT], scene_ori, keypoints[SCENE],
+                        good_matches, img_matches, Scalar::all(-1), Scalar::all(-1),
+                        vector<char>(), DrawMatchesFlags::NOT_DRAW_SINGLE_POINTS );
+            // Show matches
+            namedWindow("Good Matches", WINDOW_NORMAL);
+            imshow( "Good Matches", img_matches );
+            waitKey(0);
+
+    positionFromKeypoints();
+
+    // TODO: implement own findHomography function
+    H = findHomography(Mat(keypoints_coord[OBJECT]), Mat(keypoints_coord[SCENE]), CV_RANSAC);
+
+    if(H.empty()){
+        cout << "not enought keypoints to calculate homography matrix. Exiting..." <<  endl;
+        return false;
+    }
+    if(!goodframe()){
+        return false;
+    }
+
+	warpPerspective(object_ori, warp_img, H, Size(bound_rect.width, bound_rect.height));
+
+    warp_offset = getWarpOffet();
+    copyMakeBorder(scene_ori, scene_ori, warp_offset[TOP], warp_offset[BOTTOM],
+                                 warp_offset[LEFT], warp_offset[RIGHT],
+                                 BORDER_CONSTANT,Scalar(0,0,0));
+
+    blendToScene(warp_img);
+
+    cleanData();
+
+    return true;
+}
+
+// See description in header file
+void Stitcher::setDetector(int _detector){
+    switch( _detector ) {
+    case USE_KAZE:
+        detector = KAZE::create();
+        break;
+    case USE_AKAZE:
+        detector = AKAZE::create();
+    }
+}
+
+// See description in header file
+void Stitcher::setMatcher(int _matcher){
+    switch( _matcher ) {
+    case USE_BRUTE_FORCE:
+        matcher = BFMatcher::create();
+        break;
+    case USE_FLANN:
+        matcher = FlannBasedMatcher::create();
+    }
+}
+
+// See description in header file
+void Stitcher::setScene(Mat _scene){
+    scene = _scene;
+    resize(scene, scene, Size(frame_size.width, frame_size.height));
+    scene_ori = scene.clone();
+    cvtColor(scene, scene,COLOR_BGR2GRAY);
+    bound_rect = Rect(0, 0, frame_size.width, frame_size.height);
+}
+
+// See description in header file
+bool Stitcher::goodframe(){
     float deformation, area, keypoints_area;
-    vector<Point2f> bound_points = getBoundPoints(H, width, height);
     float semi_diag[4], ratio[2];
+
+    perspectiveTransform(border_points, warp_points, H);
+    bound_rect = boundingRect(warp_points);
 
     for(int i=0; i<4; i++){
         // 5th point correspond to center of image
         // Getting the distance between corner points to the center (all semi diagonal distances)
-        semi_diag[i] = getDistance(bound_points[i], bound_points[4]);
+        semi_diag[i] = getDistance(warp_points[i], warp_points[4]);
     }
     // ratio beween semi diagonals
     ratio[0] = max(semi_diag[0]/semi_diag[2], semi_diag[2]/semi_diag[0]);
     ratio[1] = max(semi_diag[1]/semi_diag[3], semi_diag[3]/semi_diag[1]);
 
     // Area of distorted images
-    area = contourArea(bound_points);
+    area = contourArea(warp_points);
 
     // enclosing area with good keypoints
+    keypoints_area = boundAreaKeypoints();
 
     // 3 initial threshold value, must be ajusted in future tests 
-    if(area > 3*width*height)
+    if(area > 3*frame_size.width*frame_size.height)
         return false;
     // 4 initial threshold value, must be ajusted in future tests 
     if(ratio[0] > 4 || ratio[1] > 4)
         return false;
-    
 
     return true;
 }
 
 // See description in header file
-float getDistance(Point2f pt1, Point2f pt2){
-    return sqrt(pow((pt1.x - pt2.x),2) + pow((pt1.y - pt2.y),2));
+void Stitcher::getGoodMatches(){
+
+    for (vector<DMatch> match: matches) {
+        if ((match[0].distance < 0.5 * (match[1].distance)) &&
+            ((int) match.size() <= 2 && (int) match.size() > 0)) {
+            // take the first result only if its distance is smaller than 0.5*second_best_dist
+            // that means this descriptor is ignored if the second distance is bigger or of similar
+            good_matches.push_back(match[0]);
+        }
+    }
 }
 
 // See description in header file
-float boundAreaKeypoints(vector<KeyPoint> keypoints, vector<DMatch> matches){
+void Stitcher::gridDetector(){
+    vector<DMatch> grid_matches;
+    DMatch best_match;
+    int k=0, best_distance = 100;
+    int stepx = frame_size.width / n_cells;
+    int stepy = frame_size.height/ n_cells;
+    
+    for(int i=0; i<10; i++){
+        for(int j=0; j<10; j++){
+            k=0;
+            best_distance = 100;
+            for (DMatch match: good_matches) {
+                //-- Get the keypoints from the good matches
+                if(keypoints[OBJECT][match.queryIdx].pt.x >= stepx*i && keypoints[OBJECT][match.queryIdx].pt.x < stepx*(i+1) &&
+                keypoints[OBJECT][match.queryIdx].pt.y >= stepy*j && keypoints[OBJECT][match.queryIdx].pt.y < stepy*(j+1)){
+                    if(match.distance < best_distance){
+                        best_distance = match.distance;
+                        best_match = match;
+                    }
+                    matches.erase(matches.begin() + k);  
+                }
+                k++;
+            }
+            if(best_distance != 100)
+                grid_matches.push_back(best_match);
+        }
+    }
+    good_matches = grid_matches;
+}
+
+// See description in header file
+float Stitcher::boundAreaKeypoints(){
     vector<Point2f> points, hull;
-    for(DMatch m: matches){
-        points.push_back(keypoints[m.queryIdx].pt);
+    for(DMatch match: good_matches){
+        points.push_back(keypoints[OBJECT][match.queryIdx].pt);
     }
     convexHull(points, hull);
 
     return contourArea(hull);
+}
+
+// See description in header file
+void  Stitcher::positionFromKeypoints(){
+    for (DMatch good: good_matches) {
+        //-- Get the keypoints from the good matches
+        keypoints_coord[OBJECT].push_back(keypoints[OBJECT][good.queryIdx].pt);
+        keypoints_coord[SCENE].push_back(keypoints[SCENE][good.trainIdx].pt);
+    }
+}
+
+// See description in header file
+vector<float> Stitcher::getWarpOffet(){
+    vector<float> warp_offset(4);
+
+    warp_offset[TOP] = (max(0.f,-bound_rect.y));
+    warp_offset[RIGHT] = max(0.f, bound_rect.y + bound_rect.height - scene.rows);
+    warp_offset[LEFT] = (max(0.f,-bound_rect.x));
+    warp_offset[RIGHT] = max(0.f, bound_rect.x + bound_rect.width - scene.cols);
+
+	Mat T = Mat::eye(3,3,CV_64F);
+	T.at<double>(0,2)= -bound_rect.x;
+	T.at<double>(1,2)= -bound_rect.y;
+
+	// Important: first transform and then translate, not inverse way. correct form: (T*H)
+	H = T*H;
+
+    return warp_offset;
+}
+
+// See description in header file
+void Stitcher::blendToScene(Mat _warp_img){
+    for(Point2f& pt: warp_points){
+        pt.x -= bound_rect.x;
+        pt.y -= bound_rect.y;
+    }
+
+    Point points_array[4] = {warp_points[0], warp_points[1], warp_points[2], warp_points[3]};
+
+    Mat mask(bound_rect.height, bound_rect.width, CV_8UC3, Scalar(0,0,0));
+    fillConvexPoly( mask, points_array, 4, Scalar(255,255,255));
+    erode( mask, mask, getStructuringElement( MORPH_RECT, Size(7, 7),Point(-1, -1)));
+
+	cv::Mat object_position(scene_ori, cv::Rect(max(bound_rect.x,0.f),
+                                       max(bound_rect.y,0.f),
+                                       bound_rect.width,
+                                       bound_rect.height));
+
+    _warp_img.copyTo(object_position, mask);
+
+    bound_rect.x = max(bound_rect.x,0.f);
+    bound_rect.y = max(bound_rect.y,0.f);
+    // object_pos -= warped*200;
+    // object_pos += warped;
+    mask.release();
+}
+
+// See description in header file
+void Stitcher::cleanData(){
+        matches.clear();
+        good_matches.clear();
+        object.release();
+        object_ori.release();
+        keypoints[OBJECT].clear();
+        keypoints[SCENE].clear();
+        descriptors[OBJECT].release();
+        descriptors[SCENE].release();
+}
+
 }

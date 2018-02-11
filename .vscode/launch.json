@@ -1,12 +1,15 @@
 { 
     "version": "0.2.0", 
     "configurations": [
+
         {
             "name": "(gdb) Launch FCOMP",
             "type": "cppdbg",
             "request": "launch",
-            "program": "${workspaceRoot}/modules/fcomp",
-            "args": [],
+            "program": "${workspaceRoot}/modules/fcomp/fcomp",
+            "args": ["-i", "/home/victor/dataset/frames/MVI_0752/fout0004.jpg", "-i",
+                    "/home/victor/dataset/frames/MVI_0752/fout0005.jpg", "--kaze",
+                    "--grid", "--pre", "-o", "-b"],
             "stopAtEntry": false,
             "cwd": "${workspaceRoot}",
             "environment": [],
@@ -24,7 +27,7 @@
             "name": "(gdb) Launch STITCH",
             "type": "cppdbg",
             "request": "launch",
-            "program": "${workspaceRoot}/modules/stitch",
+            "program": "${workspaceRoot}/modules/stitch/stitch",
             "args": [],
             "stopAtEntry": false,
             "cwd": "${workspaceRoot}",

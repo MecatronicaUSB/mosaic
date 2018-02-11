@@ -8,7 +8,6 @@
  * @title Main code
  */
 
-#include "../../common/utils.h"
 #include "../include/options.h"
 #include "../include/stitch.hpp"
 
@@ -30,22 +29,16 @@ using namespace cv::xfeatures2d;
  */
 int main( int argc, char** argv ) {
 
-    double tot_matches=0, tot_good =0;
     double t;
+    long tot_matches=0, tot_good =0;
     int n_matches=0, n_good=0;
     int i=0, n_img=0;
     int n_iter = 0, step_iter = 0;
+    Mat img[2];
+    vector<string> file_names;
 
     parser.Prog(argv[0]);
-
-    vector<string> file_names;
-    vector<vector<DMatch> > matches;
-    vector<DMatch>  good_matches;
-    vector<KeyPoint> keypoints[2];
-    Mat result;
-    Mat descriptors[2];
-    Mat img[2], img_ori[2];
-
+  
     try{
         parser.ParseCLI(argc, argv);
     }
@@ -56,7 +49,6 @@ int main( int argc, char** argv ) {
     catch (args::ParseError e){
         std::cerr << e.what() << std::endl;
         std::cerr << "Use -h, --help command to see usage" << std::endl;
-        //std::cerr << parser;
         return 1;
     }
     catch (args::ValidationError e){
@@ -64,21 +56,47 @@ int main( int argc, char** argv ) {
         std::cerr << "Use -h, --help command to see usage" << std::endl;
         return 1;
     }
-    
+
+    // Veobose section -----
+    cout << "Built with OpenCV " << CV_VERSION << endl;
+    cout << "\tTwo images as imput\t" << endl;
+    cout << "\tFeature extractor:\t" << "KAZE" << endl;
+    cout << "\tFeature Matcher:\t" << "FLANN" << endl;
+    cout << boolalpha;
+    cout << "\tApply preprodessing:\t"<< op_pre << endl;
+    cout << "\tUse grid detection:\t"<< op_grid << endl;
+
+
+    // Create Stitcher class based on input options
+    m2d::Stitcher mosaic(
+        op_grid,                                            // use grid
+        op_pre,                                             // apply histsretch algorithm
+        TARGET_WIDTH,                                       // frame width
+        TARGET_HEIGHT,                                      // frame heigt
+        op_akaze ? m2d::USE_AKAZE : m2d::USE_KAZE,          // select feature extractor
+        op_flann ? m2d::USE_FLANN : m2d::USE_BRUTE_FORCE    // select feature matcher
+    );
+    // m2d::Stitcher mosaic(
+    //     1,                                            // use grid
+    //     1,                                             // apply histsretch algorithm
+    //     TARGET_WIDTH,                                       // frame width
+    //     TARGET_HEIGHT,                                      // frame heigt
+    //     0,          // select feature extractor
+    //     1    // select feature matcher
+    // );
     // Two images as imput
     if (op_img){
         n_iter = 1;
         t = (double) getTickCount();
         // Check for two image flags and patchs (-i imageName)
-        for(const auto img_name: args::get(op_img)){
-            img[i++] = imread(img_name, IMREAD_UNCHANGED);
+        for(const string img_name: args::get(op_img)){
+            img[i++] = imread(img_name, IMREAD_COLOR);
             if( !img[i-1].data){
                 cout<< " --(!) Error reading image "<< i << endl; 
                 cerr << parser;
                 return -1;
             }
-            cout<< " -- Loaded image "<< img_name << endl;
-            // Two images loaded successfully
+            //cout<< " -- Loaded image "<< img_name << endl;
         }
         if(i<2){
             cout<< " -- Insuficient imput data " << endl;
@@ -90,54 +108,22 @@ int main( int argc, char** argv ) {
     if(op_dir){
         dir_ent = args::get(op_dir);
         file_names = read_filenames(dir_ent);
-        n_iter = file_names.size()-3;
-        img[0] = imread(dir_ent+"/"+file_names[0],IMREAD_COLOR);
-        img[1] = imread(dir_ent+"/"+file_names[1],IMREAD_COLOR);
-    }   
-    Rect detectRoi(0, 0, TARGET_WIDTH, TARGET_HEIGHT);
-    // Resize the images to 640 x 480
-    resize(img[0], img[0], Size(TARGET_WIDTH, TARGET_HEIGHT), 0, 0, CV_INTER_LINEAR);
-    resize(img[1], img[1], Size(TARGET_WIDTH, TARGET_HEIGHT), 0, 0, CV_INTER_LINEAR);
+        n_iter = file_names.size();
+        img[m2d::ReferenceImg::SCENE] = imread(dir_ent+"/"+file_names[0],IMREAD_COLOR);
+    } 
 
-    img_ori[0] = img[0].clone();
-    img_ori[1] = img[1].clone();
     t = (double) getTickCount();
+    mosaic.setScene(img[m2d::ReferenceImg::SCENE]);
+
     for(i=0; i<n_iter; i++){
         if(op_dir && i>0){
-            img[0] = imread(dir_ent+"/"+file_names[i+1],IMREAD_COLOR);
-            img[1] = img_ori[1].clone();
-            resize(img[0], img[0], Size(TARGET_WIDTH, TARGET_HEIGHT), 0, 0, CV_INTER_LINEAR);
-            img_ori[0] = img[0].clone();
-        }
-        // Conver images to gray
-        cvtColor(img[0],img[0],COLOR_BGR2GRAY);
-        cvtColor(img[1],img[1],COLOR_BGR2GRAY);
-
-        // Apply pre-processing algorithm if selected (histogram stretch)
-        if(op_pre){
-            imgChannelStretch(img[0], img[0], 1, 99);
-            imgChannelStretch(img[1], img[1], 1, 99);
+            img[m2d::ReferenceImg::OBJECT] = imread(dir_ent+"/"+file_names[i],IMREAD_COLOR);
         }
 
-        // Detect the keypoints using desired Detector and compute the descriptors
-        detector->detectAndCompute( img[0], Mat(), keypoints[0], descriptors[0] );
-        detector->detectAndCompute( img[1](detectRoi), Mat(), keypoints[1], descriptors[1] );
-
-        if(!keypoints[0].size() || !keypoints[1].size()){
-            cout << "No Key points Found" <<  endl;
-            return -1;
-        }
-
-        // Match the keypoints for input images
-        matcher->knnMatch( descriptors[0], descriptors[1], matches, 2);
-        n_matches = descriptors[0].rows;
-        // Discard the bad matches (outliers)
-        good_matches = getGoodMatches(n_matches - 1, matches);
-        if(op_grid){
-            good_matches = gridDetector(keypoints[0], good_matches);
-        }
-
-        n_good = good_matches.size();
+        mosaic.stitch(img[m2d::ReferenceImg::OBJECT]);
+        
+        n_matches = mosaic.matches.size();
+        n_good = mosaic.good_matches.size();
         tot_matches+=n_matches;
         tot_good+=n_good;
 
@@ -145,41 +131,18 @@ int main( int argc, char** argv ) {
         cout << "-- Possible matches  ["<< n_matches <<"]"  << endl;
         cout << "-- Good Matches      ["<<green<<n_good<<reset<<"]"  << endl;
 
-        vector<Point2f> img0, img1;
-        for (DMatch good: good_matches) {
-            //-- Get the keypoints from the good matches
-            img0.push_back(keypoints[0][good.queryIdx].pt);
-            img1.push_back(keypoints[1][good.trainIdx].pt);
-        }
-
-        Mat H = findHomography(Mat(img0), Mat(img1), CV_RANSAC);
-        if(H.empty()){
-            cout << "not enought keypoints to calculate homography matrix. Exiting..." <<  endl;
-            return 0;
-        }
-        //saveHomographyData(H, keypoints, good_matches);
-        detectRoi = stitch(img_ori[0], img_ori[1], H);
-
         if(op_out && !op_img){
-            imshow("STITCH",img_ori[1]);
+            imshow("STITCH",mosaic.scene_ori);
             t = 1000 * ((double) getTickCount() - t) / getTickFrequency();        
             cout << "   Execution time: " << t << " ms" <<endl;
             waitKey(0);
             t = (double) getTickCount();
         }
-        matches.clear();
-        img[0].release();
-        img[1].release();
-        img_ori[0].release();
-        keypoints[0].clear();
-        keypoints[1].clear();
-        descriptors[0].release();
-        descriptors[1].release();
+
     }
-    imshow("STITCH",img_ori[1]);
+    imshow("STITCH",mosaic.scene_ori);
     t = 1000 * ((double) getTickCount() - t) / getTickFrequency();        
     cout << "   Execution time: " << t << " ms" <<endl;
     waitKey(0);
-    img_ori[1].release();
     return 0;
 }

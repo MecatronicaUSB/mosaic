@@ -14,7 +14,7 @@
 args::ArgumentParser parser("Feature Detectors comparison", "Author: Victor Garcia");
 args::HelpFlag help(parser, "help", "Display this help menu", {'h', "help"});
 
-args::Group sub_p(parser, "", args::Group::Validators::AllOrNone);
+args::Group sub_p(parser, "", args::Group::Validators::AtLeastOne);
 
 args::Group op_feature(sub_p, "Select the Feature Extractor and Descriptor:", args::Group::Validators::AtLeastOne);
 args::Flag op_sift(op_feature, "SIFT", "Use SIFT Extractor and Descriptor", {"sift"});

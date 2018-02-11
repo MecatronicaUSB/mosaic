@@ -8,9 +8,7 @@
 #ifndef STITCH_STITCH_HPP_
 #define STITCH_STITCH_HPP_
 
-using namespace std;
-using namespace cv;
-
+#include "../../common/utils.h"
 #include "opencv2/xfeatures2d.hpp"
 #include "opencv2/features2d.hpp"
 #include "opencv2/imgcodecs.hpp"
@@ -21,25 +19,40 @@ using namespace cv;
 #include <dirent.h>
 #include <stdlib.h>
 #include <iostream>
+#include <cmath> 
 #include <vector>
+
+using namespace std;
+using namespace cv;
 
 const int TARGET_WIDTH	= 640;   
 const int TARGET_HEIGHT	= 480;
 
-namespace m2d
+namespace m2d //!< mosaic 2d namespace
 {
-
-enum referenceImg{
-    OBJECT,
-    SCENE
+/// Reference frame enumeration
+enum ReferenceImg{
+    SCENE,
+    OBJECT
 };
-enum detector{
+/// Keypoint detector and descriptor to use
+enum Detector{
     USE_KAZE,
-    USE_AKAZE
+    USE_AKAZE,
+    USE_SIFT,
+    USE_SURF
 };
-enum matcher{
+/// Keypoint matcher to use
+enum Matcher{
     USE_BRUTE_FORCE,
     USE_FLANN
+};
+/// offset to move scene after transform object
+enum WarpOffset{
+    TOP,
+    BOTTOM,
+    LEFT,
+    RIGHT
 };
 
 /**
@@ -69,12 +82,19 @@ float getDistance(cv::Point2f, cv::Point2f);
 class Stitcher {
     public:
         // ---------- Atributes
-        Mat img[2];         //!< 
-        Mat img_ori[2];     //!<
-        Size frame_size;                    //!< dimensions of frames       
-        bool grid;
-        int grid_cells;     //!< number (n) of cell divisions in grid detector. (nxn)
-        bool scb_pre;
+        int n_img;
+        Mat object;                             //!< 
+        Mat scene;                              //!< 
+        Mat object_ori;                         //!<
+        Mat scene_ori;                          //!<
+        Size frame_size;                        //!< dimensions of frames       
+        bool use_grid;                          //!<
+        int n_cells;                            //!< number (n) of cell divisions in grid detector. (nxn)
+        bool apply_pre;                         //!<
+        vector<vector<cv::DMatch> > matches;    //!< Vector of OpenCV Matches                     
+        vector<cv::DMatch> good_matches;        //!< Vector of OpenCV good Matches (after discard outliers)
+        vector<KeyPoint> keypoints[2];          //!< Array of Vectors containing OpenCV Keypoints
+        vector<Point2f> keypoints_coord[2];     //!< X and Y coordinates of keypoints in image
         // ---------- Methods
         /**
          * @brief 
@@ -90,20 +110,15 @@ class Stitcher {
          * @brief
          * @param int 
          */
-        void setFeaturesMatcher(int);
-        /**
-         * @brief
-         * @param int 
-         */
-        void setGrid(int);
+        void setMatcher(int);
         /**
          * @brief
          */
-        void setScene(Mat);
+        void setScene(Mat _scene);
         /**
          * @brief 
          */
-        void Stitch();
+        bool stitch(Mat _object);
         /**
          * @brief 
          * @return bool
@@ -112,24 +127,14 @@ class Stitcher {
 
     private:
         // ---------- Atributes
-
-        Mat H;                              //!< Homography matrix
-        Ptr<Feature2D> detector;            //!<    
-        Ptr<DescriptorMatcher> matcher;     //!<
-        vector<cv::DMatch> matches;         //!<                          
-        vector<cv::DMatch> good_matches;    //!<     
-        vector<KeyPoint> keypoints;         //!<   
-        Mat descriptors[2];                 //!< 
-        vector<Point2f> warp_points;
-        vector<Point2f> border_points;
-        Rect bound_rect;
+        Mat H;                                  //!< Homography matrix
+        Ptr<Feature2D> detector;                //!< Pointer to OpenCV feature extractor
+        Ptr<DescriptorMatcher> matcher;         //!< Pointer to OpenCV feature Matcher
+        Mat descriptors[2];                     //!< Array of OpenCV Matrix conaining feature descriptors
+        vector<Point2f> warp_points;            //!< Vector of points after apply homography transformation
+        vector<Point2f> border_points;          //!< Vector of points in corners of original frame
+        Rect2f bound_rect;                      //!< Minimum bounding rect of warped image (H*objectImg) 
         // ---------- Methods
-        /**
-         * @brief 
-         * @param Mat 
-         * @return vector<cv::Point2f> 
-         */
-        void getBoundPoints(Mat H);
         /**
          * @brief
          * @param vector<vector<cv::DMatch> > 
@@ -142,14 +147,31 @@ class Stitcher {
          * @param vector<cv::DMatch> 
          * @return vector<cv::DMatch> 
          */
-        vector<cv::DMatch> gridDetector(vector<KeyPoint>, vector<cv::DMatch>);
+        void gridDetector();
         /**
          * @brief 
          * @param keypoints 
          * @param matches 
          * @return float 
          */
-        float boundAreaKeypoints(vector<KeyPoint>, vector<cv::DMatch>);
+        float boundAreaKeypoints();
+        /**
+         * @brief 
+         */
+        void positionFromKeypoints();
+        /**
+         * @brief
+         * @return vector<float> 
+         */
+        vector<float> getWarpOffet();
+        /**
+         * @brief 
+         */
+        void blendToScene(Mat _warp_img);
+        /**
+         * @brief 
+         */
+        void cleanData();
 };
 }
 
