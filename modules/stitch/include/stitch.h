@@ -96,4 +96,12 @@ bool imageDistortion(cv::Mat H, int width, int height);
  */
 float getDistance(cv::Point2f pt1, cv::Point2f pt2);
 
+/**
+ * @brief Calculates the minimum enclosing area of image with good key points
+ * @param keypoints 
+ * @param matches 
+ * @return float Area 
+ */
+float boundAreaKeypoints(std::vector<cv::KeyPoint> keypoints, std::vector<cv::DMatch> matches);
+
 #endif

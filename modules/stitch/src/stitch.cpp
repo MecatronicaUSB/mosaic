@@ -46,7 +46,7 @@ Rect stitch(Mat object, Mat& scene, Mat H){
                                  offset.width,  max(0, bound_rect.width+bound_rect.x-scene.cols),
                                  BORDER_CONSTANT,Scalar(0,0,0));
 
-    for(Point2f pt: bound_points){
+    for(Point2f& pt: bound_points){
         pt.x -= bound_rect.x;
         pt.y -= bound_rect.y;
     }
@@ -58,7 +58,7 @@ Rect stitch(Mat object, Mat& scene, Mat H){
     erode( mask, mask, getStructuringElement( MORPH_RECT, Size(7, 7),Point(-1, -1)));
 
 	cv::Mat object_pos(scene, cv::Rect(max(bound_rect.x,0), max(bound_rect.y,0), bound_rect.width, bound_rect.height));
-	warped.copyTo(object_pos, mask);
+    warped.copyTo(object_pos, mask);
     mask.release();
 
     // object_pos -= warped*200;
@@ -142,8 +142,8 @@ void saveHomographyData(Mat H, vector<KeyPoint> keypoints[2], std::vector<DMatch
         file << keypoints[0][m.queryIdx].pt.y << "\n";
     }
     for(auto m: matches){
-        file << keypoints[1][m.queryIdx].pt.x << " ";
-        file << keypoints[1][m.queryIdx].pt.y << "\n";
+        file << keypoints[1][m.trainIdx].pt.x << " ";
+        file << keypoints[1][m.trainIdx].pt.y << "\n";
     }
 
     file.close();
@@ -151,7 +151,7 @@ void saveHomographyData(Mat H, vector<KeyPoint> keypoints[2], std::vector<DMatch
 
 // See description in header file
 bool imageDistorted(Mat H, int width, int height){
-    float deformation, area;
+    float deformation, area, keypoints_area;
     vector<Point2f> bound_points = getBoundPoints(H, width, height);
     float semi_diag[4], ratio[2];
 
@@ -167,12 +167,15 @@ bool imageDistorted(Mat H, int width, int height){
     // Area of distorted images
     area = contourArea(bound_points);
 
+    // enclosing area with good keypoints
+
     // 3 initial threshold value, must be ajusted in future tests 
     if(area > 3*width*height)
         return false;
     // 4 initial threshold value, must be ajusted in future tests 
     if(ratio[0] > 4 || ratio[1] > 4)
         return false;
+    
 
     return true;
 }
@@ -180,4 +183,15 @@ bool imageDistorted(Mat H, int width, int height){
 // See description in header file
 float getDistance(Point2f pt1, Point2f pt2){
     return sqrt(pow((pt1.x - pt2.x),2) + pow((pt1.y - pt2.y),2));
+}
+
+// See description in header file
+float boundAreaKeypoints(vector<KeyPoint> keypoints, vector<DMatch> matches){
+    vector<Point2f> points, hull;
+    for(DMatch m: matches){
+        points.push_back(keypoints[m.queryIdx].pt);
+    }
+    convexHull(points, hull);
+
+    return contourArea(hull);
 }
