@@ -1,24 +1,41 @@
-#include "../include/stitch.h"
+#include "../include/stitch.hpp"
 #include <cmath> 
 
 using namespace std;
 using namespace cv;
 
-// See description in header file
-vector<Point2f> getBoundPoints(Mat H, int width, int height){
-	vector<Point2f> points, final_points;
-    Rect bound;
+m2d::Stitcher::Stitcher(bool _grid, bool _pre, int _width, int _height, int _detector, int _matcher){
+    grid = _grid;
+    scb_pre = _pre;
+    frame_size.width = TARGET_WIDTH;
+    frame_size.height = TARGET_HEIGHT;
 
-	points.push_back(Point2f(0,0));
-	points.push_back(Point2f(width,0));
-	points.push_back(Point2f(width,height));
-	points.push_back(Point2f(0,height));
+    switch( _detector ) {
+    case USE_KAZE:
+        detector = KAZE::create();
+        break;
+    case USE_AKAZE:
+        detector = AKAZE::create();
+    }
+
+    switch( _matcher ) {
+    case USE_BRUTE_FORCE:
+        matcher = BFMatcher::create();
+        break;
+    case USE_FLANN:
+        matcher = FlannBasedMatcher::create();
+    }
+
+	border_points.push_back(Point2f(0,0));
+	border_points.push_back(Point2f(frame_size.width,0));
+	border_points.push_back(Point2f(frame_size.width, frame_size.height));
+	border_points.push_back(Point2f(0, frame_size.height));
     // center point
-    points.push_back(Point2f(width/2, height/2));
-
-	perspectiveTransform(points,final_points, H);
-	return final_points;
+    border_points.push_back(Point2f(frame_size.width/2, frame_size.height/2));
 }
+
+//perspectiveTransform(points,bound_points, H);
+
 
 // See description in header file
 Rect stitch(Mat object, Mat& scene, Mat H){

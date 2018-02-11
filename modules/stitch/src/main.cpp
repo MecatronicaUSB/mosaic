@@ -10,7 +10,7 @@
 
 #include "../../common/utils.h"
 #include "../include/options.h"
-#include "../include/stitch.h"
+#include "../include/stitch.hpp"
 
 /// Dimensions to resize images
 #define TARGET_WIDTH	640   
@@ -64,13 +64,7 @@ int main( int argc, char** argv ) {
         std::cerr << "Use -h, --help command to see usage" << std::endl;
         return 1;
     }
-   
-    int minHessian = 400;
-    Ptr<KAZE> detector = KAZE::create();
-    Ptr<DescriptorMatcher> matcher;
-
-    matcher = FlannBasedMatcher::create();
-
+    
     // Two images as imput
     if (op_img){
         n_iter = 1;
