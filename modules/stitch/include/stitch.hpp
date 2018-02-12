@@ -1,7 +1,7 @@
 /**
  * @file stitch.hpp
- * @brief Independet Functions
- * @version 1.0
+ * @brief Mosaic2d Namespace and Classes
+ * @version 0.2
  * @date 10/02/2018
  * @author Victor Garcia
  */
@@ -47,7 +47,7 @@ enum Matcher{
     USE_BRUTE_FORCE,
     USE_FLANN
 };
-/// offset to move scene after transform object
+/// offset of padding to add in scene after object transformation
 enum WarpOffset{
     TOP,
     BOTTOM,
@@ -56,78 +56,92 @@ enum WarpOffset{
 };
 
 /**
- * @brief 
- * 
- * @param H 
- * @param keypoints 
- * @param matches 
+ * @brief Save the homography matrix and heypoints in a txt file
+ * @param H OpenCV Matrix containing Homography transformation
+ * @param keypoints Vector with OpenCV Keypoints
+ * @param matches Vector with OpenCV Matches
  */
 void saveHomographyData(cv::Mat H, vector<KeyPoint> keypoints[2], vector<cv::DMatch> matches);
 /**
- * @brief 
- * 
- * @param keypoints 
- * @param matches 
- * @return float 
+ * @brief Calculate the minimun bounding area containing good keypoints 
+ * @param keypoints Vector with OpenCV Keypoints
+ * @param matches Vector with OpenCV Matches
+ * @return float Area with good keypoints inside
  */
 float boundAreaKeypoints(std::vector<cv::KeyPoint> keypoints, std::vector<cv::DMatch> matches);
 /**
- * @brief
- * @param cv::Point2f 
- * @param cv::Point2f 
- * @return float 
+ * @brief Calculate the euclidean distance between two given vector in 2D
+ * @param cv::Point2f First floating point OpenCV coordinate 
+ * @param cv::Point2f Second floating point OpenCV coordinate 
+ * @return float Distance betwenn two vector
  */
 float getDistance(cv::Point2f, cv::Point2f);
 
 class Stitcher {
     public:
         // ---------- Atributes
-        int n_img;
-        Mat object;                             //!< 
-        Mat scene;                              //!< 
-        Mat object_ori;                         //!<
-        Mat scene_ori;                          //!<
+        int n_img;                              //!< Number of images in current mosaic
+        int cell_div;                           //!< number (n) of cell divisions in grid detector (if used)
+        Mat H;                                  //!< Last transformation homography matrix
+        Mat object;                             //!< Image to add in the mosaic
+        Mat scene;                              //!< mosaic image 
+        Mat object_color;                       //!< Original image to add in the mosaic
+        Mat scene_color;                        //!< Original mosaic image 
         Size frame_size;                        //!< dimensions of frames       
-        bool use_grid;                          //!<
-        int n_cells;                            //!< number (n) of cell divisions in grid detector. (nxn)
-        bool apply_pre;                         //!<
+        bool use_grid;                          //!< flag to use or not the grid detection
+        bool apply_pre;                         //!< flag to apply or not SCB preprocessing algorithm
         vector<vector<cv::DMatch> > matches;    //!< Vector of OpenCV Matches                     
         vector<cv::DMatch> good_matches;        //!< Vector of OpenCV good Matches (after discard outliers)
         vector<KeyPoint> keypoints[2];          //!< Array of Vectors containing OpenCV Keypoints
         vector<Point2f> keypoints_coord[2];     //!< X and Y coordinates of keypoints in image
         // ---------- Methods
         /**
-         * @brief 
+         * @brief Default Stitcher constructor
+         * 
+         * @param _grid flag to use grid detection
+         * @param _pre flag to apply or not SCB preprocessing algorith
+         * @param _width width of input images
+         * @param _height width of input images
+         * @param _detector enum value to set the desired feature Detector and descriptor
+         * @param _matcher enum value to set the desired feature matcher
          */
         Stitcher(bool _grid = false, bool _pre = false, int _width = TARGET_WIDTH, int _height = TARGET_HEIGHT,
                  int _detector = USE_KAZE, int _matcher = USE_BRUTE_FORCE);
         /**
-         * @brief
-         * @param int 
+         * @brief Change the feature Detector and descriptor to use
+         * @param int enum value of desired feature Detector and descriptor
          */
         void setDetector(int);
         /**
-         * @brief
-         * @param int 
+         * @brief Change the feature matcher to use
+         * @param int enum value of desired feature matcher
          */
         void setMatcher(int);
         /**
-         * @brief
+         * @brief Set the initial scene image
+         * @param _scene OpenCV Matrix containing the initial image
          */
         void setScene(Mat _scene);
         /**
-         * @brief 
+         * @brief Warp and stitch the object image in the current scene
+         * @param _object OpenCV Matrix containing the image to add to scene
+         * @return bool Return true if the stitch was successful, false otherwise
          */
         bool stitch(Mat _object);
         /**
-         * @brief 
-         * @return bool
+         * @brief Measures the image distortion of next object image
+         * @detail
+         * Metrics:
+         * - Semi-diagonals ratio
+         * - Area
+         * - Minimum bounding area covered by keypoints
+         * @return bool Return true if the image is good enough, false otherwise
          */
         bool goodframe();
 
     private:
         // ---------- Atributes
-        Mat H;                                  //!< Homography matrix
+        bool old_scene = false;                 //!< flag to know if scene image is a mosaic or a new image
         Ptr<Feature2D> detector;                //!< Pointer to OpenCV feature extractor
         Ptr<DescriptorMatcher> matcher;         //!< Pointer to OpenCV feature Matcher
         Mat descriptors[2];                     //!< Array of OpenCV Matrix conaining feature descriptors
@@ -136,40 +150,34 @@ class Stitcher {
         Rect2f bound_rect;                      //!< Minimum bounding rect of warped image (H*objectImg) 
         // ---------- Methods
         /**
-         * @brief
-         * @param vector<vector<cv::DMatch> > 
-         * @return vector<cv::DMatch> 
+         * @brief Discard outliers from initial matches vector
          */
         void getGoodMatches();
         /**
-         * @brief 
-         * @param keypoints 
-         * @param vector<cv::DMatch> 
-         * @return vector<cv::DMatch> 
+         * @brief Select the best keypoint for each cell in the defined grid
          */
         void gridDetector();
         /**
-         * @brief 
-         * @param keypoints 
-         * @param matches 
-         * @return float 
+         * @brief Calculates the minimum bounding area covered by keypoints
+         * @return float Area
          */
         float boundAreaKeypoints();
         /**
-         * @brief 
+         * @brief transform a vector of OpenCV Keypoints to vectors of OpenCV Points
          */
         void positionFromKeypoints();
         /**
-         * @brief
-         * @return vector<float> 
+         * @brief Computes the size of pads in the scene based on the transformation of object image
+         * @return vector<float> Padd size for each side of scene image
          */
         vector<float> getWarpOffet();
         /**
-         * @brief 
+         * @brief Blend the warped object image to the scene
+         * @param _warp_img Input OpenCV Matrix containing warped object image
          */
         void blendToScene(Mat _warp_img);
         /**
-         * @brief 
+         * @brief Clear the used vectors and OpenCV matrix used
          */
         void cleanData();
 };

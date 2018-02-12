@@ -1,3 +1,11 @@
+/**
+ * @file stitch.cpp
+ * @brief Implementation of stitch class and Mosaic2d Namespace functions 
+ * @version 0.2
+ * @date 10/02/2018
+ * @author Victor Garcia
+ */
+
 #include "../include/stitch.hpp"
 
 using namespace std;
@@ -43,7 +51,7 @@ m2d::Stitcher::Stitcher(bool _grid, bool _pre, int _width, int _height, int _det
     apply_pre = _pre;
     frame_size.width = TARGET_WIDTH;
     frame_size.height = TARGET_HEIGHT;
-    n_cells = 10;
+    cells_div = 10;
 
     switch( _detector ) {
     case USE_KAZE:
@@ -79,81 +87,6 @@ m2d::Stitcher::Stitcher(bool _grid, bool _pre, int _width, int _height, int _det
 }
 
 // See description in header file
-bool Stitcher::stitch(Mat object){
-	Mat warp_img;
-	vector<float> warp_offset;
-
-    resize(object, object, Size(frame_size.width, frame_size.height));
-    object_ori = object.clone();
-
-    // Conver object image to gray
-    cvtColor(object,object,COLOR_BGR2GRAY);
-
-    if(apply_pre){
-        imgChannelStretch(object, object, 1, 99);
-        imgChannelStretch(scene, scene, 1, 99);
-    }
-
-    // Detect the keypoints using desired Detector and compute the descriptors
-    detector->detectAndCompute( object, Mat(), keypoints[OBJECT], descriptors[OBJECT] );
-    detector->detectAndCompute( scene(bound_rect), Mat(), keypoints[SCENE], descriptors[SCENE] );
-
-    if(!keypoints[OBJECT].size() || !keypoints[SCENE].size()){
-        cout << "No Key points Found" <<  endl;
-        return false;
-    }
-
-    // Match the keypoints for input images
-    matcher->knnMatch( descriptors[OBJECT], descriptors[SCENE], matches, 2);
-
-    getGoodMatches();
-
-    // imshow("test",scene);
-    // imshow("test2",object);
-    // waitKey(0);
-    cout << matches.size() << "\t"<<good_matches.size()<< endl;
-    if(use_grid){
-        gridDetector();
-    }
-    cout << matches.size() << "\t"<<good_matches.size()<< endl;
-            Mat img_matches;
-            // Draw only "good" matches
-            drawMatches( object_ori, keypoints[OBJECT], scene_ori, keypoints[SCENE],
-                        good_matches, img_matches, Scalar::all(-1), Scalar::all(-1),
-                        vector<char>(), DrawMatchesFlags::NOT_DRAW_SINGLE_POINTS );
-            // Show matches
-            namedWindow("Good Matches", WINDOW_NORMAL);
-            imshow( "Good Matches", img_matches );
-            waitKey(0);
-
-    positionFromKeypoints();
-
-    // TODO: implement own findHomography function
-    H = findHomography(Mat(keypoints_coord[OBJECT]), Mat(keypoints_coord[SCENE]), CV_RANSAC);
-
-    if(H.empty()){
-        cout << "not enought keypoints to calculate homography matrix. Exiting..." <<  endl;
-        return false;
-    }
-    if(!goodframe()){
-        return false;
-    }
-
-	warpPerspective(object_ori, warp_img, H, Size(bound_rect.width, bound_rect.height));
-
-    warp_offset = getWarpOffet();
-    copyMakeBorder(scene_ori, scene_ori, warp_offset[TOP], warp_offset[BOTTOM],
-                                 warp_offset[LEFT], warp_offset[RIGHT],
-                                 BORDER_CONSTANT,Scalar(0,0,0));
-
-    blendToScene(warp_img);
-
-    cleanData();
-
-    return true;
-}
-
-// See description in header file
 void Stitcher::setDetector(int _detector){
     switch( _detector ) {
     case USE_KAZE:
@@ -177,11 +110,74 @@ void Stitcher::setMatcher(int _matcher){
 
 // See description in header file
 void Stitcher::setScene(Mat _scene){
-    scene = _scene;
-    resize(scene, scene, Size(frame_size.width, frame_size.height));
-    scene_ori = scene.clone();
-    cvtColor(scene, scene,COLOR_BGR2GRAY);
+    old_scene = false;
+    scene_color = _scene.clone();
+    resize(scene_color, scene, Size(frame_size.width, frame_size.height));
+    cvtColor(scene, scene, COLOR_BGR2GRAY);
     bound_rect = Rect(0, 0, frame_size.width, frame_size.height);
+}
+
+// See description in header file
+bool Stitcher::stitch(Mat object){
+	Mat warp_img;
+	vector<float> warp_offset;
+    if(old_scene){
+        scene = scene_color.clone();
+        cvtColor(scene, scene,COLOR_BGR2GRAY);
+    }
+
+    resize(object, object, Size(frame_size.width, frame_size.height));
+    object_color = object.clone();
+
+    // Conver object image to gray
+    cvtColor(object,object,COLOR_BGR2GRAY);
+
+    if(apply_pre){
+        imgChannelStretch(object, object, 1, 99);
+        imgChannelStretch(scene, scene, 1, 99);
+    }
+
+    // Detect the keypoints using desired Detector and compute the descriptors
+    detector->detectAndCompute( object, Mat(), keypoints[OBJECT], descriptors[OBJECT] );
+    detector->detectAndCompute( scene(bound_rect), Mat(), keypoints[SCENE], descriptors[SCENE] );
+
+    if(!keypoints[OBJECT].size() || !keypoints[SCENE].size()){
+        cout << "No Key points Found" <<  endl;
+        return false;
+    }
+
+    // Match the keypoints for input images
+    matcher->knnMatch( descriptors[OBJECT], descriptors[SCENE], matches, 2);
+    
+    getGoodMatches();
+    
+    if(use_grid){
+        gridDetector();
+    }
+
+    positionFromKeypoints();
+
+    // TODO: implement own findHomography function
+    H = findHomography(Mat(keypoints_coord[OBJECT]), Mat(keypoints_coord[SCENE]), CV_RANSAC);
+
+    if(H.empty()){
+        cout << "not enought keypoints to calculate homography matrix. Exiting..." <<  endl;
+        return false;
+    }
+    if(!goodframe()){
+        return false;
+    }
+    warp_offset = getWarpOffet();
+	warpPerspective(object_color, warp_img, H, Size(bound_rect.width, bound_rect.height));
+
+    copyMakeBorder(scene_color, scene_color, warp_offset[TOP], warp_offset[BOTTOM],
+                                         warp_offset[LEFT], warp_offset[RIGHT],
+                                         BORDER_CONSTANT,Scalar(0,0,0));
+
+    blendToScene(warp_img);
+    old_scene = true;
+    cleanData();
+    return true;
 }
 
 // See description in header file
@@ -235,8 +231,8 @@ void Stitcher::gridDetector(){
     vector<DMatch> grid_matches;
     DMatch best_match;
     int k=0, best_distance = 100;
-    int stepx = frame_size.width / n_cells;
-    int stepy = frame_size.height/ n_cells;
+    int stepx = frame_size.width / cells_div;
+    int stepy = frame_size.height/ cells_div;
     
     for(int i=0; i<10; i++){
         for(int j=0; j<10; j++){
@@ -283,11 +279,12 @@ void  Stitcher::positionFromKeypoints(){
 
 // See description in header file
 vector<float> Stitcher::getWarpOffet(){
+
     vector<float> warp_offset(4);
 
-    warp_offset[TOP] = (max(0.f,-bound_rect.y));
-    warp_offset[RIGHT] = max(0.f, bound_rect.y + bound_rect.height - scene.rows);
-    warp_offset[LEFT] = (max(0.f,-bound_rect.x));
+    warp_offset[TOP] = max(0.f,-bound_rect.y);
+    warp_offset[BOTTOM] = max(0.f, bound_rect.y + bound_rect.height - scene.rows);
+    warp_offset[LEFT] = max(0.f,-bound_rect.x);
     warp_offset[RIGHT] = max(0.f, bound_rect.x + bound_rect.width - scene.cols);
 
 	Mat T = Mat::eye(3,3,CV_64F);
@@ -296,12 +293,12 @@ vector<float> Stitcher::getWarpOffet(){
 
 	// Important: first transform and then translate, not inverse way. correct form: (T*H)
 	H = T*H;
-
     return warp_offset;
 }
 
 // See description in header file
 void Stitcher::blendToScene(Mat _warp_img){
+
     for(Point2f& pt: warp_points){
         pt.x -= bound_rect.x;
         pt.y -= bound_rect.y;
@@ -312,16 +309,15 @@ void Stitcher::blendToScene(Mat _warp_img){
     Mat mask(bound_rect.height, bound_rect.width, CV_8UC3, Scalar(0,0,0));
     fillConvexPoly( mask, points_array, 4, Scalar(255,255,255));
     erode( mask, mask, getStructuringElement( MORPH_RECT, Size(7, 7),Point(-1, -1)));
-
-	cv::Mat object_position(scene_ori, cv::Rect(max(bound_rect.x,0.f),
-                                       max(bound_rect.y,0.f),
-                                       bound_rect.width,
-                                       bound_rect.height));
+    bound_rect.x = max(bound_rect.x,0.f);
+    bound_rect.y = max(bound_rect.y,0.f);
+	cv::Mat object_position(scene_color, cv::Rect(bound_rect.x,
+                                                bound_rect.y,
+                                                bound_rect.width,
+                                                bound_rect.height));
 
     _warp_img.copyTo(object_position, mask);
 
-    bound_rect.x = max(bound_rect.x,0.f);
-    bound_rect.y = max(bound_rect.y,0.f);
     // object_pos -= warped*200;
     // object_pos += warped;
     mask.release();
@@ -332,9 +328,11 @@ void Stitcher::cleanData(){
         matches.clear();
         good_matches.clear();
         object.release();
-        object_ori.release();
+        object_color.release();
         keypoints[OBJECT].clear();
         keypoints[SCENE].clear();
+        keypoints_coord[OBJECT].clear();
+        keypoints_coord[SCENE].clear();
         descriptors[OBJECT].release();
         descriptors[SCENE].release();
 }

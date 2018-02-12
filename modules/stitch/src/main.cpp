@@ -1,9 +1,9 @@
 // STITCH MODULE
 /**
- * @file main.h
+ * @file main.cpp
  * @brief Contais the main code for image stitching module
- * @version 1.0
- * @date 20/01/2018
+ * @version 0.2
+ * @date 10/02/2018
  * @author Victor Garcia
  * @title Main code
  */
@@ -30,7 +30,6 @@ using namespace cv::xfeatures2d;
 int main( int argc, char** argv ) {
 
     double t;
-    long tot_matches=0, tot_good =0;
     int n_matches=0, n_good=0;
     int i=0, n_img=0;
     int n_iter = 0, step_iter = 0;
@@ -76,14 +75,7 @@ int main( int argc, char** argv ) {
         op_akaze ? m2d::USE_AKAZE : m2d::USE_KAZE,          // select feature extractor
         op_flann ? m2d::USE_FLANN : m2d::USE_BRUTE_FORCE    // select feature matcher
     );
-    // m2d::Stitcher mosaic(
-    //     1,                                            // use grid
-    //     1,                                             // apply histsretch algorithm
-    //     TARGET_WIDTH,                                       // frame width
-    //     TARGET_HEIGHT,                                      // frame heigt
-    //     0,          // select feature extractor
-    //     1    // select feature matcher
-    // );
+
     // Two images as imput
     if (op_img){
         n_iter = 1;
@@ -110,29 +102,29 @@ int main( int argc, char** argv ) {
         file_names = read_filenames(dir_ent);
         n_iter = file_names.size();
         img[m2d::ReferenceImg::SCENE] = imread(dir_ent+"/"+file_names[0],IMREAD_COLOR);
-    } 
+    }
 
     t = (double) getTickCount();
     mosaic.setScene(img[m2d::ReferenceImg::SCENE]);
 
     for(i=0; i<n_iter; i++){
-        if(op_dir && i>0){
-            img[m2d::ReferenceImg::OBJECT] = imread(dir_ent+"/"+file_names[i],IMREAD_COLOR);
+        if(op_dir){
+            img[m2d::ReferenceImg::OBJECT] = imread(dir_ent+"/"+file_names[i+1],IMREAD_COLOR);
         }
 
-        mosaic.stitch(img[m2d::ReferenceImg::OBJECT]);
-        
+        if(!mosaic.stitch(img[m2d::ReferenceImg::OBJECT])){
+            cout<< "Couldn't Stitch images. Exiting..." << endl;
+            return -1;
+        }
         n_matches = mosaic.matches.size();
         n_good = mosaic.good_matches.size();
-        tot_matches+=n_matches;
-        tot_good+=n_good;
 
         cout << "Pair  "<< n_img++ <<" -- -- -- -- -- -- -- -- -- --"  << endl;
         cout << "-- Possible matches  ["<< n_matches <<"]"  << endl;
         cout << "-- Good Matches      ["<<green<<n_good<<reset<<"]"  << endl;
 
         if(op_out && !op_img){
-            imshow("STITCH",mosaic.scene_ori);
+            imshow("STITCH",mosaic.scene_color);
             t = 1000 * ((double) getTickCount() - t) / getTickFrequency();        
             cout << "   Execution time: " << t << " ms" <<endl;
             waitKey(0);
@@ -140,7 +132,8 @@ int main( int argc, char** argv ) {
         }
 
     }
-    imshow("STITCH",mosaic.scene_ori);
+    imshow("STITCH",mosaic.scene_color);
+    imwrite("/home/victor/dataset/output/mosaic0002.jpg",mosaic.scene_color);
     t = 1000 * ((double) getTickCount() - t) / getTickFrequency();        
     cout << "   Execution time: " << t << " ms" <<endl;
     waitKey(0);
