@@ -16,6 +16,15 @@ namespace m2d //!< mosaic 2d namespace
 
 Frame::Frame(Mat _img, bool _key){
     img[COLOR] = _img.clone();
+    cvtColor(img[COLOR], img[GRAY], CV_BGR2GRAY);
+}
+
+SubMosaic::SubMosaic(){
+
+}
+
+Mosaic::Mosaic(){
+    
 }
 
 }

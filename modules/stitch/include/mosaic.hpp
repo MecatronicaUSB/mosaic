@@ -38,6 +38,11 @@ enum FrameRef{
     NEXT
 };
 
+struct Hierarchy{
+    SubMosaic* sub_m;
+    float overlap;
+};
+
 class Frame{
     public:
         Mat H;
@@ -49,17 +54,23 @@ class Frame{
         bool key;
 
         Frame(Mat _img, bool _key = false) : key(_key){};
+        void setHReference(Mat _H);
+        void calcDistortion();
 };
 
 class SubMosaic{
     public:
         int n_frames;
-        vector<Frame*> frames;
+        Mat avH;
         Frame* key_frame;
+        vector<Frame*> frames;
+        vector<struct Hierarchy> neighbors;
+        Stitcher stitcher;
 
         SubMosaic();
         vector<Frame*> findNeighbors(Frame* _frame);
-        Stitcher stitcher;
+        void setFrameRerence(Frame* _frame);
+        void calcAverageH();
 
 };
 
