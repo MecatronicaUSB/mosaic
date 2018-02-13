@@ -72,7 +72,6 @@ int main( int argc, char** argv ) {
     cout << boolalpha;
     cout << "\tApply preprocessing:\t"<< op_pre << endl;
     cout << "\tUse grid detection:\t"<< op_grid << endl;
-    while(1);
 
     // Create Stitcher class based on input options
     m2d::Stitcher mosaic(
