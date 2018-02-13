@@ -9,6 +9,7 @@
 #define SUB_MOSAIC_
 
 #include "../../common/utils.h"
+#include "../include/stitch.hpp"
 #include "opencv2/xfeatures2d.hpp"
 #include "opencv2/features2d.hpp"
 #include "opencv2/imgcodecs.hpp"
@@ -28,61 +29,46 @@ using namespace cv;
 namespace m2d
 {
 
-enum FrameImg{
-    COLOR,
-    GRAY
-};
-
-enum FrameRef{
-    PREV,
-    NEXT
-};
-
-struct Hierarchy{
-    SubMosaic* sub_m;
-    float overlap;
-};
-
-class Frame{
-    public:
-        Mat H;
-        Rect bound_rect;
-        vector<Mat> img = vector<Mat>(2);
-        vector<Point2f> points;
-        vector<Frame*> neighbors;
-        Frame* key_frame;
-        bool key;
-
-        Frame(Mat _img, bool _key = false) : key(_key){};
-        void setHReference(Mat _H);
-        void calcDistortion();
-};
-
 class SubMosaic{
     public:
         int n_frames;
-        Mat avH;
-        Frame* key_frame;
-        vector<Frame*> frames;
+        struct Hierarchy{
+            SubMosaic* mosaic;
+            float overlap;
+        };
         vector<struct Hierarchy> neighbors;
-        Stitcher stitcher;
+        vector<Frame*> frames;
+        Frame* key_frame;
+        Stitcher* stitcher;
+        Mat avH;
+        Mat final_scene;
 
-        SubMosaic();
-        vector<Frame*> findNeighbors(Frame* _frame);
-        void setFrameRerence(Frame* _frame);
+        void setRerenceFrame(Mat _scene);
+        bool add2Mosaic(Mat _object);
         void calcAverageH();
+        vector<Frame*> findNeighbors(Frame* _frame);
 
 };
 
-class Mosaic{
-    public:
-        int n_frames;
-        int n_subs;
-        vector<SubMosaic*> sub_mosaic;
+//TODO-----
+// class Mosaic{
+//     public:
+//         int n_frames;
+//         int n_subs;
+//         vector<SubMosaic*> sub_mosaic;
+//         Stitcher* stitcher;
 
-        Mosaic();
-        SubMosaic addSubMosaic(SubMosaic _sub_mosaic);
-};
+//         Mosaic();
+//         SubMosaic* addSubMosaic(SubMosaic* _sub_mosaic);
+// };
+
+/**
+ * @brief Save the homography matrix and heypoints in a txt file
+ * @param H OpenCV Matrix containing Homography transformation
+ * @param keypoints Vector with OpenCV Keypoints
+ * @param matches Vector with OpenCV Matches
+ */
+void saveHomographyData(cv::Mat H, vector<KeyPoint> keypoints[2], vector<cv::DMatch> matches);
 
 }
 

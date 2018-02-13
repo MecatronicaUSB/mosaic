@@ -10,6 +10,7 @@
 
 #include "../include/options.h"
 #include "../include/stitch.hpp"
+#include "../include/mosaic.hpp"
 
 /// Dimensions to resize images
 #define TARGET_WIDTH	640   
@@ -20,7 +21,6 @@ const std::string reset("\033[0m");
 
 /// User namespaces
 using namespace std;
-using namespace cv;
 using namespace cv::xfeatures2d;
 
 /*
@@ -33,7 +33,7 @@ int main( int argc, char** argv ) {
     int n_matches=0, n_good=0;
     int i=0, n_img=0;
     int n_iter = 0, step_iter = 0;
-    Mat img[2];
+    cv::Mat img[2];
     vector<string> file_names;
 
     parser.Prog(argv[0]);
@@ -65,9 +65,8 @@ int main( int argc, char** argv ) {
     cout << "\tApply preprodessing:\t"<< op_pre << endl;
     cout << "\tUse grid detection:\t"<< op_grid << endl;
 
-
-    // Create Stitcher class based on input options
-    m2d::Stitcher mosaic(
+    m2d::SubMosaic sub_mosaic;
+    sub_mosaic.stitcher = new m2d::Stitcher(
         op_grid,                                            // use grid
         op_pre,                                             // apply histsretch algorithm
         TARGET_WIDTH,                                       // frame width
@@ -75,6 +74,17 @@ int main( int argc, char** argv ) {
         op_akaze ? m2d::USE_AKAZE : m2d::USE_KAZE,          // select feature extractor
         op_flann ? m2d::USE_FLANN : m2d::USE_BRUTE_FORCE    // select feature matcher
     );
+    //sub_mosaic.st = &stitcher;
+
+    // Create Stitcher class based on input options
+    // m2d::Stitcher mosaic(
+    //     op_grid,                                            // use grid
+    //     op_pre,                                             // apply histsretch algorithm
+    //     TARGET_WIDTH,                                       // frame width
+    //     TARGET_HEIGHT,                                      // frame heigt
+    //     op_akaze ? m2d::USE_AKAZE : m2d::USE_KAZE,          // select feature extractor
+    //     op_flann ? m2d::USE_FLANN : m2d::USE_BRUTE_FORCE    // select feature matcher
+    // );
 
     // Two images as imput
     if (op_img){
@@ -105,27 +115,27 @@ int main( int argc, char** argv ) {
     }
 
     t = (double) getTickCount();
-    mosaic.setScene(img[m2d::SCENE]);
+    sub_mosaic.setRerenceFrame(img[m2d::SCENE]);
 
-    for(i=0; i<19; i++){
+    for(i=0; i<5; i++){
         if(op_dir){
             img[m2d::OBJECT] = imread(dir_ent+"/"+file_names[i+1],IMREAD_COLOR);
         }
 
-        if(!mosaic.stitch(img[m2d::OBJECT])){
+        if(!sub_mosaic.add2Mosaic(img[m2d::OBJECT])){
             cout<< "Couldn't Stitch images. Exiting..." << endl;
             return -1;
         }
-        imwrite("/home/victor/dataset/output/mosaicFTrack0003.jpg",mosaic.img[m2d::SCENE_COLOR]);
-        n_matches = mosaic.matches.size();
-        n_good = mosaic.good_matches.size();
+        //imwrite("/home/victor/dataset/output/mosaicFTrack0003.jpg",mosaic.img[m2d::SCENE_COLOR]);
+        n_matches = sub_mosaic.stitcher->matches.size();
+        n_good = sub_mosaic.stitcher->good_matches.size();
 
         cout << "Pair  "<< n_img++ <<" -- -- -- -- -- -- -- -- -- --"  << endl;
         cout << "-- Possible matches  ["<< n_matches <<"]"  << endl;
         cout << "-- Good Matches      ["<<green<<n_good<<reset<<"]"  << endl;
 
         if(op_out && !op_img){
-            imshow("STITCH",mosaic.img[m2d::SCENE_COLOR]);
+            imshow("STITCH",sub_mosaic.final_scene);
             t = 1000 * ((double) getTickCount() - t) / getTickFrequency();        
             cout << "   Execution time: " << t << " ms" <<endl;
             waitKey(0);
@@ -133,7 +143,7 @@ int main( int argc, char** argv ) {
         }
 
     }
-    imshow("STITCH",mosaic.img[m2d::SCENE_COLOR]);
+    imshow("STITCH",sub_mosaic.final_scene);
     
     t = 1000 * ((double) getTickCount() - t) / getTickFrequency();        
     cout << "   Execution time: " << t << " ms" <<endl;
