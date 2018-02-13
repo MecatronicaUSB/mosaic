@@ -48,23 +48,31 @@ int main( int argc, char** argv ) {
     catch (args::ParseError e){
         std::cerr << e.what() << std::endl;
         std::cerr << "Use -h, --help command to see usage" << std::endl;
+        //std::cout << parser; // to relaunch parser options in console
         return 1;
     }
     catch (args::ValidationError e){
-        std::cerr << "Bad imput commands" << std::endl;
+        std::cerr << "Bad input commands" << std::endl;
         std::cerr << "Use -h, --help command to see usage" << std::endl;
+        //std::cout << parser; // to relaunch parser options in console
         return 1;
     }
 
     // Veobose section -----
     cout << "Built with OpenCV " << CV_VERSION << endl;
-    cout << "\tTwo images as imput\t" << endl;
-    cout << "\tFeature extractor:\t" << "KAZE" << endl;
-    cout << "\tFeature Matcher:\t" << "FLANN" << endl;
+    op_img ?   // this flag is activated from argument parser
+    cout << "\tTwo images as input\t" << endl:
+    cout << "\tDirectory as input\t" << endl;
+    op_akaze ? // this flag is activated from argument parser
+    cout << "\tFeature extractor:\t" << "AKAZE" << endl:
+    cout << "\tFeature extractor:\t" << "KAZE\t(Default)" << endl;
+    op_flann ? // this flag is activated from argument parser
+    cout << "\tFeature Matcher:\t" << "FLANN" << endl:
+    cout << "\tFeature Matcher:\t" << "BRUTE FORCE (Default)" << endl;
     cout << boolalpha;
-    cout << "\tApply preprodessing:\t"<< op_pre << endl;
+    cout << "\tApply preprocessing:\t"<< op_pre << endl;
     cout << "\tUse grid detection:\t"<< op_grid << endl;
-
+    while(1);
 
     // Create Stitcher class based on input options
     m2d::Stitcher mosaic(

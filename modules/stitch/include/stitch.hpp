@@ -81,7 +81,7 @@ class Stitcher {
     public:
         // ---------- Atributes
         int n_img;                              //!< Number of images in current mosaic
-        int cell_div;                           //!< number (n) of cell divisions in grid detector (if used)
+        int cells_div;                          //!< number (n) of cell divisions in grid detector (if used)
         Mat H;                                  //!< Last transformation homography matrix
         Mat object;                             //!< Image to add in the mosaic
         Mat scene;                              //!< mosaic image 
