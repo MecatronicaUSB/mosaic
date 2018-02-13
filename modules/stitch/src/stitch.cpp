@@ -46,7 +46,7 @@ float getDistance(Point2f pt1, Point2f pt2){
 }
 
 // See description in header file
-m2d::Stitcher::Stitcher(bool _grid, bool _pre, int _width, int _height, int _detector, int _matcher){
+Stitcher::Stitcher(bool _grid, bool _pre, int _width, int _height, int _detector, int _matcher){
     use_grid = _grid;
     apply_pre = _pre;
     frame_size.width = TARGET_WIDTH;

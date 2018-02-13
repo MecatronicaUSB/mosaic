@@ -31,7 +31,7 @@ const int TARGET_HEIGHT	= 480;
 namespace m2d //!< mosaic 2d namespace
 {
 /// Reference frame enumeration
-enum RefImg{
+enum StitcherRef{
     SCENE,
     OBJECT,
     SCENE_COLOR,
