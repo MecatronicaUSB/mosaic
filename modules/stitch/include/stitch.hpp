@@ -31,9 +31,13 @@ const int TARGET_HEIGHT	= 480;
 namespace m2d //!< mosaic 2d namespace
 {
 /// Reference frame enumeration
-enum ReferenceImg{
+enum RefImg{
     SCENE,
-    OBJECT
+    OBJECT,
+    SCENE_COLOR,
+    OBJECT_COLOR,
+    OLD_OBJECT,
+    SCENE_KEYPOINTS
 };
 /// Keypoint detector and descriptor to use
 enum Detector{
@@ -80,13 +84,12 @@ float getDistance(cv::Point2f, cv::Point2f);
 class Stitcher {
     public:
         // ---------- Atributes
+        Mat scene_keypoints;
+        Mat old_H;
         int n_img;                              //!< Number of images in current mosaic
-        int cell_div;                           //!< number (n) of cell divisions in grid detector (if used)
+        int cells_div;                          //!< number (n) of cell divisions in grid detector (if used)
         Mat H;                                  //!< Last transformation homography matrix
-        Mat object;                             //!< Image to add in the mosaic
-        Mat scene;                              //!< mosaic image 
-        Mat object_color;                       //!< Original image to add in the mosaic
-        Mat scene_color;                        //!< Original mosaic image 
+        vector<Mat> img = vector<Mat>(5);       //!< 
         Size frame_size;                        //!< dimensions of frames       
         bool use_grid;                          //!< flag to use or not the grid detection
         bool apply_pre;                         //!< flag to apply or not SCB preprocessing algorithm
@@ -166,6 +169,11 @@ class Stitcher {
          * @brief transform a vector of OpenCV Keypoints to vectors of OpenCV Points
          */
         void positionFromKeypoints();
+        /**
+         * @brief 
+         * 
+         */
+        void drawKeipoints();
         /**
          * @brief Computes the size of pads in the scene based on the transformation of object image
          * @return vector<float> Padd size for each side of scene image

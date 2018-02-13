@@ -101,21 +101,22 @@ int main( int argc, char** argv ) {
         dir_ent = args::get(op_dir);
         file_names = read_filenames(dir_ent);
         n_iter = file_names.size();
-        img[m2d::ReferenceImg::SCENE] = imread(dir_ent+"/"+file_names[0],IMREAD_COLOR);
+        img[m2d::SCENE] = imread(dir_ent+"/"+file_names[0],IMREAD_COLOR);
     }
 
     t = (double) getTickCount();
-    mosaic.setScene(img[m2d::ReferenceImg::SCENE]);
+    mosaic.setScene(img[m2d::SCENE]);
 
-    for(i=0; i<n_iter; i++){
+    for(i=0; i<19; i++){
         if(op_dir){
-            img[m2d::ReferenceImg::OBJECT] = imread(dir_ent+"/"+file_names[i+1],IMREAD_COLOR);
+            img[m2d::OBJECT] = imread(dir_ent+"/"+file_names[i+1],IMREAD_COLOR);
         }
 
-        if(!mosaic.stitch(img[m2d::ReferenceImg::OBJECT])){
+        if(!mosaic.stitch(img[m2d::OBJECT])){
             cout<< "Couldn't Stitch images. Exiting..." << endl;
             return -1;
         }
+        imwrite("/home/victor/dataset/output/mosaicFTrack0003.jpg",mosaic.img[m2d::SCENE_COLOR]);
         n_matches = mosaic.matches.size();
         n_good = mosaic.good_matches.size();
 
@@ -124,7 +125,7 @@ int main( int argc, char** argv ) {
         cout << "-- Good Matches      ["<<green<<n_good<<reset<<"]"  << endl;
 
         if(op_out && !op_img){
-            imshow("STITCH",mosaic.scene_color);
+            imshow("STITCH",mosaic.img[m2d::SCENE_COLOR]);
             t = 1000 * ((double) getTickCount() - t) / getTickFrequency();        
             cout << "   Execution time: " << t << " ms" <<endl;
             waitKey(0);
@@ -132,8 +133,8 @@ int main( int argc, char** argv ) {
         }
 
     }
-    imshow("STITCH",mosaic.scene_color);
-    imwrite("/home/victor/dataset/output/mosaic0002.jpg",mosaic.scene_color);
+    imshow("STITCH",mosaic.img[m2d::SCENE_COLOR]);
+    
     t = 1000 * ((double) getTickCount() - t) / getTickFrequency();        
     cout << "   Execution time: " << t << " ms" <<endl;
     waitKey(0);
