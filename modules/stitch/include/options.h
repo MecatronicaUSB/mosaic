@@ -20,7 +20,7 @@ args::Flag op_flann(op_matcher, "Flann", "Flann force matcher", {'f',"flann"});
 
 args::Group op_feature(parser, "Select the Feature Extractor and Descriptor:", args::Group::Validators::AtMostOne);
 args::Flag op_kaze(op_feature, "KAZE", "Use KAZE Extractor and Descriptor (default)", {"kaze"});
-args::Flag op_akaze(op_feature, "AKAZE", "Use A-KAZE Extractor and Descriptor", {"akaze"});
+args::Flag op_surf(op_feature, "SURF", "Use SURF Extractor and Descriptor", {"surf"});
 
 args::Group op_data(parser, "Select imput data:", args::Group::Validators::AtLeastOne);
 args::ValueFlagList<std::string> op_img(op_data, "image-name", "Image imput name. Mus specify two file names (one per flag)",{'i'});

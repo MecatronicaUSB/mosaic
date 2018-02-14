@@ -63,8 +63,8 @@ int main( int argc, char** argv ) {
     op_img ?   // this flag is activated from argument parser
     cout << "\tTwo images as input\t" << endl:
     cout << "\tDirectory as input\t" << endl;
-    op_akaze ? // this flag is activated from argument parser
-    cout << "\tFeature extractor:\t" << "AKAZE" << endl:
+    op_surf ? // this flag is activated from argument parser
+    cout << "\tFeature extractor:\t" << "SURF" << endl:
     cout << "\tFeature extractor:\t" << "KAZE\t(Default)" << endl;
     op_flann ? // this flag is activated from argument parser
     cout << "\tFeature Matcher:\t" << "FLANN" << endl:
@@ -79,7 +79,7 @@ int main( int argc, char** argv ) {
         op_pre,                                             // apply histsretch algorithm
         TARGET_WIDTH,                                       // frame width
         TARGET_HEIGHT,                                      // frame heigt
-        op_akaze ? m2d::USE_AKAZE : m2d::USE_KAZE,          // select feature extractor
+        op_surf ? m2d::USE_SURF : m2d::USE_KAZE,          // select feature extractor
         op_flann ? m2d::USE_FLANN : m2d::USE_BRUTE_FORCE    // select feature matcher
     );
     //sub_mosaic.st = &stitcher;
