@@ -15,17 +15,17 @@ namespace m2d //!< mosaic 2d namespace
 {
 
 void SubMosaic::setRerenceFrame(Mat _scene){
-    n_frames = 0;
-    frames.push_back(new Frame(_scene, true));
+    frames.push_back(new Frame(_scene.clone(), true));
+    n_frames++;
     key_frame = frames[0];
     final_scene = _scene.clone();
 }
 
 bool SubMosaic::add2Mosaic(Mat _object){
-    frames.push_back(new Frame(_object));
+    frames.push_back(new Frame(_object.clone()));
     n_frames++;
-    cout << frames.size() <<  endl;
-    return stitcher->stitch(frames[n_frames], frames[n_frames-1], final_scene);
+
+    return stitcher->stitch(frames[n_frames-1], frames[n_frames-2], final_scene);
 }
 
 void saveHomographyData(Mat H, vector<KeyPoint> keypoints[2], std::vector<DMatch> matches){

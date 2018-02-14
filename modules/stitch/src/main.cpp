@@ -117,7 +117,7 @@ int main( int argc, char** argv ) {
     t = (double) getTickCount();
     sub_mosaic.setRerenceFrame(img[m2d::SCENE]);
 
-    for(i=0; i<5; i++){
+    for(i=0; i<n_iter; i++){
         if(op_dir){
             img[m2d::OBJECT] = imread(dir_ent+"/"+file_names[i+1],IMREAD_COLOR);
         }

@@ -182,7 +182,7 @@ class Stitcher {
          * @brief Computes the size of pads in the scene based on the transformation of object image
          * @return vector<float> Padd size for each side of scene image
          */
-        vector<float> getWarpOffet(Mat _H);
+        vector<float> getWarpOffet(Mat _H, Size _scene_dims);
         /**
          * @brief Blend the warped object image to the scene
          * @param _warp_img Input OpenCV Matrix containing warped object image

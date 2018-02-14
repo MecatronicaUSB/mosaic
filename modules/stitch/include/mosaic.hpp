@@ -43,6 +43,7 @@ class SubMosaic{
         Mat avH;
         Mat final_scene;
 
+        SubMosaic() : n_frames(0){};
         void setRerenceFrame(Mat _scene);
         bool add2Mosaic(Mat _object);
         void calcAverageH();

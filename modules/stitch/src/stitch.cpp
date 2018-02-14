@@ -156,7 +156,7 @@ bool Stitcher::stitch(Frame *_object, Frame *_scene, Mat &_final_scene){
         imgChannelStretch(img[OBJECT]->gray, img[OBJECT]->gray, 1, 99);
         imgChannelStretch(img[SCENE]->gray, img[SCENE]->gray, 1, 99);
     }
-    
+
     // Detect the keypoints using desired Detector and compute the descriptors
     detector->detectAndCompute( img[OBJECT]->gray, Mat(), keypoints[OBJECT], descriptors[OBJECT] );
     detector->detectAndCompute( img[SCENE]->gray, Mat(), keypoints[SCENE], descriptors[SCENE] );
@@ -192,7 +192,7 @@ bool Stitcher::stitch(Frame *_object, Frame *_scene, Mat &_final_scene){
         return false;
     }
 
-    warp_offset = getWarpOffet(img[OBJECT]->H);
+    warp_offset = getWarpOffet(img[OBJECT]->H, _final_scene.size());
 
     // Create padd in scene based on offset in transformed image. when transformed image moves 
     // to negatives values a new padding is created in unexisting sides to achieve a correct stitch
@@ -274,27 +274,28 @@ void Stitcher::drawKeipoints(){
 }
 
 // See description in header file
-vector<float> Stitcher::getWarpOffet(Mat _H){
+vector<float> Stitcher::getWarpOffet(Mat _H, Size _scene_dims){
     vector<float> warp_offset(4);
     Rect2f aux_rect;
     perspectiveTransform(img[OBJECT]->bound_points, img[OBJECT]->bound_points, _H);
     aux_rect = boundingRect(img[OBJECT]->bound_points);
 
     warp_offset[TOP] = max(0.f,-aux_rect.y);
-    warp_offset[BOTTOM] = max(0.f, aux_rect.y + aux_rect.height - img[SCENE]->color.rows);
+    warp_offset[BOTTOM] = max(0.f, aux_rect.y + aux_rect.height - _scene_dims.height);
     warp_offset[LEFT] = max(0.f,-aux_rect.x);
-    warp_offset[RIGHT] = max(0.f, aux_rect.x + aux_rect.width - img[SCENE]->color.cols);
+    warp_offset[RIGHT] = max(0.f, aux_rect.x + aux_rect.width - _scene_dims.width);
+
+    Mat T = Mat::eye(3,3,CV_64F);
+	T.at<double>(0,2)= -aux_rect.x;
+	T.at<double>(1,2)= -aux_rect.y;
+    img[OBJECT]->bound_rect = aux_rect;
+	// Important: first transform and then translate, not inverse way. correct form: (T*H)
+	offset_H = T*img[OBJECT]->H;
 
     Mat offset_T = Mat::eye(3,3,CV_64F);
     offset_T.at<double>(0,2)= warp_offset[LEFT];
 	offset_T.at<double>(1,2)= warp_offset[TOP];
     img[OBJECT]->H = offset_T*img[OBJECT]->H;
-
-	offset_T.at<double>(0,2)= -aux_rect.x;
-	offset_T.at<double>(1,2)= -aux_rect.y;
-    img[OBJECT]->bound_rect = aux_rect;
-	// Important: first transform and then translate, not inverse way. correct form: (T*H)
-	offset_H = offset_T*img[OBJECT]->H;
 
     return warp_offset;
 }
@@ -317,6 +318,7 @@ void Stitcher::blend2Scene(Mat &_final_scene){
 
     Mat mask(img[OBJECT]->bound_rect.height, img[OBJECT]->bound_rect.width, CV_8UC3, Scalar(0,0,0));
     fillConvexPoly( mask, points_array, 4, Scalar(255,255,255));
+
     erode( mask, mask, getStructuringElement( MORPH_RECT, Size(7, 7),Point(-1, -1)));
     img[OBJECT]->bound_rect.x = max(img[OBJECT]->bound_rect.x,0.f);
     img[OBJECT]->bound_rect.y = max(img[OBJECT]->bound_rect.y,0.f);
