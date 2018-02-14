@@ -98,7 +98,7 @@ int main( int argc, char** argv ) {
     for(i=0; i < file_names.size(); i++){
 
         img = imread(file_names[i],IMREAD_COLOR);
-        cout<<file_names[i]<< i << endl; 
+
         if(!img.data){
             cout<< " --(!) Error reading image "<< i << endl; 
             return -1;
