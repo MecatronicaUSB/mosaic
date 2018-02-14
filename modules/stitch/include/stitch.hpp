@@ -31,7 +31,7 @@ const int TARGET_HEIGHT	= 480;
 namespace m2d //!< mosaic 2d namespace
 {
 /// Reference frame enumeration
-enum ReferenceImg{
+enum ImgRef{
     SCENE,
     OBJECT
 };
@@ -55,45 +55,56 @@ enum WarpOffset{
     RIGHT
 };
 
-/**
- * @brief Save the homography matrix and heypoints in a txt file
- * @param H OpenCV Matrix containing Homography transformation
- * @param keypoints Vector with OpenCV Keypoints
- * @param matches Vector with OpenCV Matches
- */
-void saveHomographyData(cv::Mat H, vector<KeyPoint> keypoints[2], vector<cv::DMatch> matches);
-/**
- * @brief Calculate the minimun bounding area containing good keypoints 
- * @param keypoints Vector with OpenCV Keypoints
- * @param matches Vector with OpenCV Matches
- * @return float Area with good keypoints inside
- */
-float boundAreaKeypoints(std::vector<cv::KeyPoint> keypoints, std::vector<cv::DMatch> matches);
-/**
- * @brief Calculate the euclidean distance between two given vector in 2D
- * @param cv::Point2f First floating point OpenCV coordinate 
- * @param cv::Point2f Second floating point OpenCV coordinate 
- * @return float Distance betwenn two vector
- */
-float getDistance(cv::Point2f, cv::Point2f);
+enum FrameRef{
+    PREV,
+    NEXT
+};
+
+class Frame{
+    public:
+        Mat H;
+        Rect2f bound_rect;
+        Mat color;
+        Mat gray;
+        vector<Point2f> bound_points;
+        vector<Point2f> keypoints_pos[2];
+        vector<Frame*> neighbors;
+        Frame *key_frame;
+        bool key;
+
+        Frame(Mat _img,  bool _key = false, int _width = TARGET_WIDTH, int _height = TARGET_HEIGHT);
+        void setHReference(Mat _H);
+        void trackKeypoints();
+        bool isGoodFrame();
+        /**
+         * @brief Calculate the minimun bounding area containing good keypoints 
+         * @param keypoints Vector with OpenCV Keypoints
+         * @param matches Vector with OpenCV Matches
+         * @return float Area with good keypoints inside
+         */
+        float boundAreaKeypoints();
+        /**
+         * @brief Calculate the euclidean distance between two given vector in 2D
+         * @param cv::Point2f First floating point OpenCV coordinate 
+         * @param cv::Point2f Second floating point OpenCV coordinate 
+         * @return float Distance betwenn two vector
+         */
+        float getDistance(Point2f _pt1, Point2f _pt2);
+
+};
 
 class Stitcher {
     public:
         // ---------- Atributes
-        int n_img;                              //!< Number of images in current mosaic
+        Mat offset_H;
+        Mat scene_keypoints;
         int cells_div;                          //!< number (n) of cell divisions in grid detector (if used)
-        Mat H;                                  //!< Last transformation homography matrix
-        Mat object;                             //!< Image to add in the mosaic
-        Mat scene;                              //!< mosaic image 
-        Mat object_color;                       //!< Original image to add in the mosaic
-        Mat scene_color;                        //!< Original mosaic image 
-        Size frame_size;                        //!< dimensions of frames       
+        vector<Frame*> img = vector<Frame*>(2); //!<     
         bool use_grid;                          //!< flag to use or not the grid detection
         bool apply_pre;                         //!< flag to apply or not SCB preprocessing algorithm
         vector<vector<cv::DMatch> > matches;    //!< Vector of OpenCV Matches                     
         vector<cv::DMatch> good_matches;        //!< Vector of OpenCV good Matches (after discard outliers)
         vector<KeyPoint> keypoints[2];          //!< Array of Vectors containing OpenCV Keypoints
-        vector<Point2f> keypoints_coord[2];     //!< X and Y coordinates of keypoints in image
         // ---------- Methods
         /**
          * @brief Default Stitcher constructor
@@ -121,13 +132,13 @@ class Stitcher {
          * @brief Set the initial scene image
          * @param _scene OpenCV Matrix containing the initial image
          */
-        void setScene(Mat _scene);
+        void setScene(Frame *_frame);
         /**
          * @brief Warp and stitch the object image in the current scene
          * @param _object OpenCV Matrix containing the image to add to scene
          * @return bool Return true if the stitch was successful, false otherwise
          */
-        bool stitch(Mat _object);
+        bool stitch(Frame *_object, Frame *_scene, Mat& _final_scene);
         /**
          * @brief Measures the image distortion of next object image
          * @detail
@@ -141,13 +152,9 @@ class Stitcher {
 
     private:
         // ---------- Atributes
-        bool old_scene = false;                 //!< flag to know if scene image is a mosaic or a new image
         Ptr<Feature2D> detector;                //!< Pointer to OpenCV feature extractor
         Ptr<DescriptorMatcher> matcher;         //!< Pointer to OpenCV feature Matcher
         Mat descriptors[2];                     //!< Array of OpenCV Matrix conaining feature descriptors
-        vector<Point2f> warp_points;            //!< Vector of points after apply homography transformation
-        vector<Point2f> border_points;          //!< Vector of points in corners of original frame
-        Rect2f bound_rect;                      //!< Minimum bounding rect of warped image (H*objectImg) 
         // ---------- Methods
         /**
          * @brief Discard outliers from initial matches vector
@@ -167,20 +174,26 @@ class Stitcher {
          */
         void positionFromKeypoints();
         /**
+         * @brief 
+         * 
+         */
+        void drawKeipoints();
+        /**
          * @brief Computes the size of pads in the scene based on the transformation of object image
          * @return vector<float> Padd size for each side of scene image
          */
-        vector<float> getWarpOffet();
+        vector<float> getWarpOffet(Mat _H, Size _scene_dims);
         /**
          * @brief Blend the warped object image to the scene
          * @param _warp_img Input OpenCV Matrix containing warped object image
          */
-        void blendToScene(Mat _warp_img);
+        void blend2Scene(Mat &_final_scene);
         /**
          * @brief Clear the used vectors and OpenCV matrix used
          */
         void cleanData();
 };
+
 }
 
 #endif
