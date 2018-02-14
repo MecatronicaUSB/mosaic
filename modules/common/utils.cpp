@@ -106,7 +106,7 @@ std::vector<std::string> read_filenames(const std::string dir_ent){
 
     if ((dir = opendir(dir_ent.c_str())) != NULL) {
         while ((ent = readdir (dir)) != NULL) {
-            file_names.push_back(std::string(ent->d_name));
+            file_names.push_back(dir_ent+'/'+std::string(ent->d_name));
         }
         closedir (dir);
     } else {

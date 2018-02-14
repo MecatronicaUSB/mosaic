@@ -15,80 +15,8 @@ using namespace xfeatures2d;
 namespace m2d //!< mosaic 2d namespace
 {
 
-Frame::Frame(Mat _img, bool _key, int _width, int _height){
-    if(_img.size().width != _width || _img.size().height != _height)
-        resize(_img, _img, Size(_width, _height));
-    
-    color = _img.clone();
-    cvtColor(color, gray, CV_BGR2GRAY);
-
-    bound_rect = Rect2f(0, 0, _width, _height);
-    // corner points
-	bound_points.push_back(Point2f(0, 0));
-	bound_points.push_back(Point2f(_width, 0));
-	bound_points.push_back(Point2f(_width, _height));
-	bound_points.push_back(Point2f(0, _height));
-    // center point
-    bound_points.push_back(Point2f(_width/2, _height/2));
-
-    H = Mat::eye(3, 3, CV_64F);
-
-    key = _key;
-}
-
-void Frame::trackKeypoints(){
-    perspectiveTransform(keypoints_pos[NEXT], keypoints_pos[NEXT], H);
-}
-
 // See description in header file
-float Frame::getDistance(Point2f _pt1, Point2f _pt2){
-    return sqrt(pow((_pt1.x - _pt2.x),2) + pow((_pt1.y - _pt2.y),2));
-}
-
-// See description in header file
-bool Frame::isGoodFrame(){
-    float deformation, area, keypoints_area;
-    float semi_diag[4], ratio[2];
-
-    for(int i=0; i<4; i++){
-        // 5th point correspond to center of image
-        // Getting the distance between corner points to the center (all semi diagonal distances)
-        semi_diag[i] = getDistance(bound_points[i], bound_points[4]);
-    }
-    // ratio beween semi diagonals
-    ratio[0] = max(semi_diag[0]/semi_diag[2], semi_diag[2]/semi_diag[0]);
-    ratio[1] = max(semi_diag[1]/semi_diag[3], semi_diag[3]/semi_diag[1]);
-
-    // Area of distorted images
-    area = contourArea(bound_points);
-
-    // enclosing area with good keypoints
-    keypoints_area = boundAreaKeypoints();
-
-    // 3 initial threshold value, must be ajusted in future tests 
-    if(area > 3*color.cols*color.rows)
-        return false;
-    // 4 initial threshold value, must be ajusted in future tests 
-    if(ratio[0] > 4 || ratio[1] > 4)
-        return false;
-
-    if(keypoints_area < 0.2*color.cols*color.rows)
-        return false;
-
-    return true;
-}
-
-// See description in header file
-float Frame::boundAreaKeypoints(){
-    vector<Point2f> hull;
-
-    convexHull(keypoints_pos[PREV], hull);
-
-    return contourArea(hull);
-}
-
-// See description in header file
-Stitcher::Stitcher(bool _grid, bool _pre, int _width, int _height, int _detector, int _matcher){
+Stitcher::Stitcher(bool _grid, bool _pre, int _detector, int _matcher){
     use_grid = _grid;
     apply_pre = _pre;
     cells_div = 10;
@@ -201,8 +129,11 @@ bool Stitcher::stitch(Frame *_object, Frame *_scene, Mat &_final_scene){
                                                BORDER_CONSTANT,Scalar(0,0,0));
 
     blend2Scene(_final_scene);
-    //drawKeipoints();
+
+    drawKeipoints(warp_offset, _final_scene);
+
     cleanData();
+
     return true;
 }
 
@@ -261,15 +192,20 @@ void  Stitcher::positionFromKeypoints(){
 }
 
 // See description in header file
-void Stitcher::drawKeipoints(){
-    // vector<Point2f> aux_kp[2];
-    // aux_kp[0] = keypoints_coord[SCENE];
-    // //perspectiveTransform(keypoints_coord[OBJECT], aux_kp[1], old_H);
-    // img[SCENE_KEYPOINTS] = img[SCENE_COLOR].clone();
-    // for(int j=0; j<aux_kp[0].size(); j++){
-    //     circle(img[SCENE_KEYPOINTS], aux_kp[0][j], 3, Scalar(255, 0, 0), -1);
-    //     circle(img[SCENE_KEYPOINTS], aux_kp[1][j], 3, Scalar(0, 0, 255), -1);
-    // }
+void Stitcher::drawKeipoints(vector<float> _warp_offset, Mat &_final_scene){
+    vector<Point2f> aux_kp[2];
+
+    aux_kp[0] = img[SCENE]->keypoints_pos[NEXT];
+    for(Point2f &pt: aux_kp[0]){
+        pt.x += _warp_offset[LEFT];
+        pt.y += _warp_offset[TOP];
+    }
+
+    perspectiveTransform(img[OBJECT]->keypoints_pos[PREV], aux_kp[1], img[OBJECT]->H);
+    for(int j=0; j<aux_kp[0].size(); j++){
+        circle(_final_scene, aux_kp[0][j], 3, Scalar(255, 0, 0), -1);
+        circle(_final_scene, aux_kp[1][j], 3, Scalar(0, 0, 255), -1);
+    }
 
 }
 

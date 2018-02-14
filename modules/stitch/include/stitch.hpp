@@ -5,10 +5,10 @@
  * @date 10/02/2018
  * @author Victor Garcia
  */
-#ifndef STITCH_STITCH_HPP_
-#define STITCH_STITCH_HPP_
+#pragma once
 
 #include "../../common/utils.h"
+#include "../include/mosaic.hpp"
 #include "opencv2/xfeatures2d.hpp"
 #include "opencv2/features2d.hpp"
 #include "opencv2/imgcodecs.hpp"
@@ -25,8 +25,6 @@
 using namespace std;
 using namespace cv;
 
-const int TARGET_WIDTH	= 640;   
-const int TARGET_HEIGHT	= 480;
 
 namespace m2d //!< mosaic 2d namespace
 {
@@ -60,65 +58,7 @@ enum FrameRef{
     NEXT
 };
 
-/**
- * @brief All data for each image in a mosaic
- * @detail Contains All data of each image refered to current sub-mosaic or mosaic
- */
-class Frame{
-    public:
-        // ---------- Atributes
-        bool key;                         //!< Flag to specify reference frame
-        Mat H;                            //!< Homography matrix based on previous frame
-        Rect2f bound_rect;                //!< Minimum bounding rectangle of transformed image
-        Mat color;                        //!< OpenCV Matrix containing the original image
-        Mat gray;                         //!< OpenCV Matrix containing a gray scale version of image
-        vector<Point2f> bound_points;     //!< Points of the transformmed image (initially at corners)
-        vector<Point2f> keypoints_pos[2]; //!< Position (X,Y) of good keypoints in image 
-        vector<Frame*> neighbors;         //!< Vector containing all spatially close Frames (Pointers)
-
-        // ---------- Methods
-        /**
-         * @brief Default class constructor
-         * @param _img OpenCV Matrix containing the BGR version of image
-         * @param _key Flag to assign this frame as reference (usefull for SubMosaic Class)
-         * @param _width Width to resize the image (Speed purpose)
-         * @param _height Height to resize the image (Speed purpose)
-         */
-        Frame(Mat _img,  bool _key = false, int _width = TARGET_WIDTH, int _height = TARGET_HEIGHT);
-        /**
-         * @brief Change the reference for Homography matrix (Not yet implemented)
-         * @param _H Homography matrix
-         */
-        void setHReference(Mat _H);
-        /**
-         * @brief Transform coordimates of keypoints by own homography matrix
-         * @detail Usefull to detect keypoints in original image and thack them to the transformed one
-         */
-        void trackKeypoints();
-        /**
-         * @brief Check if the frame is too much distorted
-         * @detail The distortion is besed on follow criteria:
-         * - Ratio of semi-diagonals distance. \n
-         * - Area. \n
-         * - Mininum area covered by good keypoints. \n
-         * @return true if the frame is good enought 
-         * @return false otherwise
-         */
-        bool isGoodFrame();
-        /**
-         * @brief Calculate the minimun bounding area containing good keypoints 
-         * @return float Area with good keypoints inside
-         */
-        float boundAreaKeypoints();
-        /**
-         * @brief Calculate the euclidean distance between two given vector in 2D
-         * @param _pt1 First floating point OpenCV coordinate 
-         * @param _pt2 Second floating point OpenCV coordinate 
-         * @return float Distance betwenn two points
-         */
-        float getDistance(Point2f _pt1, Point2f _pt2);
-
-};
+class Frame;
 
 class Stitcher {
     public:
@@ -143,7 +83,7 @@ class Stitcher {
          * @param _detector enum value to set the desired feature Detector and descriptor
          * @param _matcher enum value to set the desired feature matcher
          */
-        Stitcher(bool _grid = false, bool _pre = false, int _width = TARGET_WIDTH, int _height = TARGET_HEIGHT,
+        Stitcher(bool _grid = false, bool _pre = false,
                  int _detector = USE_KAZE, int _matcher = USE_BRUTE_FORCE);
         /**
          * @brief Change the feature Detector and descriptor to use
@@ -201,7 +141,7 @@ class Stitcher {
          * @brief 
          * 
          */
-        void drawKeipoints();
+        void drawKeipoints(vector<float> _warp_offset, Mat &_final_scene);
         /**
          * @brief Computes the size of pads in the scene based on the transformation of object image
          * @param _H Homography matrix
@@ -221,5 +161,3 @@ class Stitcher {
 };
 
 }
-
-#endif

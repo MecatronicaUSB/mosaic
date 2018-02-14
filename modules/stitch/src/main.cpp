@@ -32,8 +32,7 @@ int main( int argc, char** argv ) {
     double t;
     int n_matches=0, n_good=0;
     int i=0, n_img=0;
-    int n_iter = 0, step_iter = 0;
-    cv::Mat img[2];
+    cv::Mat img;
     vector<string> file_names;
 
     parser.Prog(argv[0]);
@@ -77,84 +76,58 @@ int main( int argc, char** argv ) {
     sub_mosaic.stitcher = new m2d::Stitcher(
         op_grid,                                            // use grid
         op_pre,                                             // apply histsretch algorithm
-        TARGET_WIDTH,                                       // frame width
-        TARGET_HEIGHT,                                      // frame heigt
         op_surf ? m2d::USE_SURF : m2d::USE_KAZE,          // select feature extractor
         op_flann ? m2d::USE_FLANN : m2d::USE_BRUTE_FORCE    // select feature matcher
     );
-    //sub_mosaic.st = &stitcher;
 
-    // Create Stitcher class based on input options
-    // m2d::Stitcher mosaic(
-    //     op_grid,                                            // use grid
-    //     op_pre,                                             // apply histsretch algorithm
-    //     TARGET_WIDTH,                                       // frame width
-    //     TARGET_HEIGHT,                                      // frame heigt
-    //     op_akaze ? m2d::USE_AKAZE : m2d::USE_KAZE,          // select feature extractor
-    //     op_flann ? m2d::USE_FLANN : m2d::USE_BRUTE_FORCE    // select feature matcher
-    // );
-
-    // Two images as imput
+    // Two images as input
     if (op_img){
-        n_iter = 1;
-        t = (double) getTickCount();
-        // Check for two image flags and patchs (-i imageName)
         for(const string img_name: args::get(op_img)){
-            img[i++] = imread(img_name, IMREAD_COLOR);
-            if( !img[i-1].data){
-                cout<< " --(!) Error reading image "<< i << endl; 
-                cerr << parser;
-                return -1;
-            }
-            //cout<< " -- Loaded image "<< img_name << endl;
-        }
-        if(i<2){
-            cout<< " -- Insuficient imput data " << endl;
-            std::cerr << "Use -h, --help command to see usage" << std::endl;
-            return -1;
+            file_names.push_back(img_name);
         }
     }
+    // Path as input
     string dir_ent;
     if(op_dir){
         dir_ent = args::get(op_dir);
         file_names = read_filenames(dir_ent);
-        n_iter = file_names.size();
-        img[m2d::SCENE] = imread(dir_ent+"/"+file_names[0],IMREAD_COLOR);
     }
 
     t = (double) getTickCount();
-    sub_mosaic.setRerenceFrame(img[m2d::SCENE]);
 
-    for(i=0; i<n_iter; i++){
-        if(op_dir){
-            img[m2d::OBJECT] = imread(dir_ent+"/"+file_names[i+1],IMREAD_COLOR);
+    for(i=0; i < file_names.size(); i++){
+
+        img = imread(file_names[i],IMREAD_COLOR);
+        cout<<file_names[i]<< i << endl; 
+        if(!img.data){
+            cout<< " --(!) Error reading image "<< i << endl; 
+            return -1;
         }
 
-        if(!sub_mosaic.add2Mosaic(img[m2d::OBJECT])){
+        if(!sub_mosaic.add2Mosaic(img)){
             cout<< "Couldn't Stitch images. Exiting..." << endl;
             return -1;
         }
-        //imwrite("/home/victor/dataset/output/mosaicFTrack0003.jpg",mosaic.img[m2d::SCENE_COLOR]);
-        n_matches = sub_mosaic.stitcher->matches.size();
-        n_good = sub_mosaic.stitcher->good_matches.size();
 
-        cout << "Pair  "<< n_img++ <<" -- -- -- -- -- -- -- -- -- --"  << endl;
-        cout << "-- Possible matches  ["<< n_matches <<"]"  << endl;
-        cout << "-- Good Matches      ["<<green<<n_good<<reset<<"]"  << endl;
+        if(i > 0){
+            n_matches = sub_mosaic.stitcher->matches.size();
+            n_good = sub_mosaic.stitcher->good_matches.size();
 
-        if(op_out && !op_img){
-            imshow("STITCH",sub_mosaic.final_scene);
+            cout << "Pair  "<< n_img++ <<" -- -- -- -- -- -- -- -- -- --"  << endl;
+            cout << "-- Possible matches  ["<< n_matches <<"]"  << endl;
+            cout << "-- Good Matches      ["<<green<<n_good<<reset<<"]"  << endl;
+        }
+        if(op_out){
             t = 1000 * ((double) getTickCount() - t) / getTickFrequency();        
             cout << "   Execution time: " << t << " ms" <<endl;
+            imshow("STITCH", sub_mosaic.final_scene);
             waitKey(0);
             t = (double) getTickCount();
         }
-
     }
-    imshow("STITCH",sub_mosaic.final_scene);
     
     t = 1000 * ((double) getTickCount() - t) / getTickFrequency();        
     cout << "   Execution time: " << t << " ms" <<endl;
-    waitKey(0);
+
     return 0;
 }
