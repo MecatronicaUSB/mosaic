@@ -86,10 +86,10 @@ bool Frame::isGoodFrame(){
     keypoints_area = boundAreaKeypoints();
 
     // 3 initial threshold value, must be ajusted in future tests 
-    if (area > 3*color.cols*color.rows)
+    if (area > 1.5*color.cols*color.rows)
         return false;
     // 4 initial threshold value, must be ajusted in future tests 
-    if (ratio[0]>4 || ratio[1]>4)
+    if (ratio[0]>1.3 || ratio[1]>1.3)
         return false;
 
     if (keypoints_area < 0.2*color.cols*color.rows)
@@ -176,6 +176,8 @@ Mosaic::Mosaic(){
 void Mosaic::addFrame(Mat _object){
     tot_frames++;
 
+    cout <<"Sub Mosaic # "<<n_subs+1<<" # Frames: "<<sub_mosaics[n_subs]->n_frames+1 << endl;
+
     Frame *aux_frame = new Frame(_object.clone());
     if (sub_mosaics[n_subs]->n_frames == 0) {
         sub_mosaics[n_subs]->addFrame(aux_frame);
@@ -188,7 +190,7 @@ void Mosaic::addFrame(Mat _object){
                                sub_mosaics[n_subs]->frames[sub_mosaics[n_subs]->n_frames-1],
                                sub_mosaics[n_subs]->size);
 
-    if (status.ok && (sub_mosaics[n_subs]->n_frames<5)) {
+    if (status.ok && (sub_mosaics[n_subs]->n_frames<10)) {
 
         sub_mosaics[n_subs]->addFrame(aux_frame);
 
