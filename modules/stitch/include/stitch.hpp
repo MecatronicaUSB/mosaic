@@ -52,18 +52,18 @@ enum WarpOffset{
     LEFT,
     RIGHT
 };
+/// termporal frame reference for Frame class
+enum FrameRef{
+    PREV,
+    NEXT
+};
 
 class Frame;
-
-struct StitchStatus{
-    bool ok = false;
-    vector<float> offset;
-};
 
 class Stitcher {
     public:
         // ---------- Atributes
-        Mat offset_h;
+        Mat offset_H;
         Mat scene_keypoints;                    //!< Image to draw the keypoints after one match (testing purpose)
         int cells_div;                          //!< number (n) of cell divisions in grid detector (if used)
         vector<Frame*> img = vector<Frame*>(2); //!< Vector of two frames to stitch (Pointers)
@@ -113,7 +113,7 @@ class Stitcher {
          * @return true If the stitch was sucessfull
          * @return false If the stitch wasn't sucessfull
          */
-        struct StitchStatus stitch(Frame *_object, Frame *_scene);
+        bool stitch(Frame *_object, Frame *_scene, Mat& _final_scene);
     private:
         // ---------- Atributes
         Ptr<Feature2D> detector;                //!< Pointer to OpenCV feature extractor

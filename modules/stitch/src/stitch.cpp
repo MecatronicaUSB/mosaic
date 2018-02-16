@@ -43,6 +43,7 @@ Stitcher::Stitcher(bool _grid, bool _pre, int _detector, int _matcher){
     case USE_FLANN:
         matcher = FlannBasedMatcher::create();
     }
+
 }
 
 // See description in header file
@@ -73,15 +74,13 @@ void Stitcher::setScene(Frame *_frame){
 }
 
 // See description in header file
-struct StitchStatus Stitcher::stitch(Frame *_object, Frame *_scene){
-	StitchStatus status;
+bool Stitcher::stitch(Frame *_object, Frame *_scene, Mat &_final_scene){
+	vector<float> warp_offset;
 
-    _object->neighbors.push_back(_scene);
-    _scene->neighbors.push_back(_object);
     img[OBJECT] = _object;
     img[SCENE] = _scene;
 
-    if (apply_pre) {
+    if(apply_pre){
         imgChannelStretch(img[OBJECT]->gray, img[OBJECT]->gray, 1, 99);
         imgChannelStretch(img[SCENE]->gray, img[SCENE]->gray, 1, 99);
     }
@@ -90,9 +89,9 @@ struct StitchStatus Stitcher::stitch(Frame *_object, Frame *_scene){
     detector->detectAndCompute( img[OBJECT]->gray, Mat(), keypoints[OBJECT], descriptors[OBJECT] );
     detector->detectAndCompute( img[SCENE]->gray, Mat(), keypoints[SCENE], descriptors[SCENE] );
 
-    if (!keypoints[OBJECT].size() || !keypoints[SCENE].size()) {
+    if(!keypoints[OBJECT].size() || !keypoints[SCENE].size()){
         cout << "No Key points Found" <<  endl;
-        return status;
+        return false;
     }
 
     // Match the keypoints using Knn
@@ -104,7 +103,7 @@ struct StitchStatus Stitcher::stitch(Frame *_object, Frame *_scene){
     getGoodMatches();
     
     // Apply grid detector if flag is activated
-    if (use_grid) {
+    if(use_grid){
         gridDetector();
     }
 
@@ -116,34 +115,28 @@ struct StitchStatus Stitcher::stitch(Frame *_object, Frame *_scene){
     // TODO: implement own findHomography function
     img[OBJECT]->H = findHomography(Mat(img[OBJECT]->keypoints_pos[PREV]), Mat(img[SCENE]->keypoints_pos[NEXT]), CV_RANSAC);
 
-    if (img[OBJECT]->H.empty()) {
+    if(img[OBJECT]->H.empty()){
         cout << "not enought keypoints to calculate homography matrix. Exiting..." <<  endl;
-        return status;
+        return false;
     }
 
-    if (!img[OBJECT]->isGoodFrame()) {
-        cout << "Frame too distorted. Exiting..." <<  endl;
-        return status;
-    }
+    warp_offset = getWarpOffet(img[OBJECT]->H, _final_scene.size());
 
-    status.offset = getWarpOffet(img[OBJECT]->H, Size(TARGET_WIDTH, TARGET_HEIGHT));
-
-    // TO BE MOVE
     // Create padd in scene based on offset in transformed image. when transformed image moves 
     // to negatives values a new padding is created in unexisting sides to achieve a correct stitch
-    // copyMakeBorder(_final_scene, _final_scene, status.offset[TOP], status.offset[BOTTOM],
-    //                                            status.offset[LEFT], status.offset[RIGHT],
-    //                                            BORDER_CONSTANT,Scalar(0,0,0));
+    copyMakeBorder(_final_scene, _final_scene, warp_offset[TOP], warp_offset[BOTTOM],
+                                               warp_offset[LEFT], warp_offset[RIGHT],
+                                               BORDER_CONSTANT,Scalar(0,0,0));
 
-    // blend2Scene(_final_scene);
+    blend2Scene(_final_scene);
 
-    // drawKeipoints(status.offset, _final_scene);
-    img[SCENE]->gray.release();
+    drawKeipoints(warp_offset, _final_scene);
+
     cleanData();
-    
-    status.ok = true;
-    return status;
+
+    return true;
 }
+
 
 // See description in header file
 void Stitcher::getGoodMatches(){
@@ -172,9 +165,9 @@ void Stitcher::gridDetector(){
             best_distance = 100;
             for (DMatch match: good_matches) {
                 //-- Get the keypoints from the good matches
-                if (keypoints[OBJECT][match.queryIdx].pt.x >= stepx*i && keypoints[OBJECT][match.queryIdx].pt.x < stepx*(i+1) &&
-                keypoints[OBJECT][match.queryIdx].pt.y >= stepy*j && keypoints[OBJECT][match.queryIdx].pt.y < stepy*(j+1)) {
-                    if (match.distance < best_distance) {
+                if(keypoints[OBJECT][match.queryIdx].pt.x >= stepx*i && keypoints[OBJECT][match.queryIdx].pt.x < stepx*(i+1) &&
+                keypoints[OBJECT][match.queryIdx].pt.y >= stepy*j && keypoints[OBJECT][match.queryIdx].pt.y < stepy*(j+1)){
+                    if(match.distance < best_distance){
                         best_distance = match.distance;
                         best_match = match;
                     }
@@ -182,7 +175,7 @@ void Stitcher::gridDetector(){
                 }
                 k++;
             }
-            if (best_distance != 100)
+            if(best_distance != 100)
                 grid_matches.push_back(best_match);
         }
     }
@@ -214,8 +207,6 @@ void Stitcher::drawKeipoints(vector<float> _warp_offset, Mat &_final_scene){
         circle(_final_scene, aux_kp[1][j], 3, Scalar(0, 0, 255), -1);
     }
 
-    cout << min(Mat(Point2f(5,5)), abs(Mat(aux_kp[0]) - Mat(aux_kp[1]))) << endl;
-
 }
 
 // See description in header file
@@ -235,7 +226,7 @@ vector<float> Stitcher::getWarpOffet(Mat _H, Size _scene_dims){
 	T.at<double>(1,2)= -aux_rect.y;
     img[OBJECT]->bound_rect = aux_rect;
 	// Important: first transform and then translate, not inverse way. correct form: (T*H)
-	offset_h = T*img[OBJECT]->H;
+	offset_H = T*img[OBJECT]->H;
 
     Mat offset_T = Mat::eye(3,3,CV_64F);
     offset_T.at<double>(0,2)= warp_offset[LEFT];
@@ -248,7 +239,7 @@ vector<float> Stitcher::getWarpOffet(Mat _H, Size _scene_dims){
 // See description in header file
 void Stitcher::blend2Scene(Mat &_final_scene){
     Mat warp_img;
-	warpPerspective(img[OBJECT]->color, warp_img, offset_h, Size(img[OBJECT]->bound_rect.width,
+	warpPerspective(img[OBJECT]->color, warp_img, offset_H, Size(img[OBJECT]->bound_rect.width,
                                                                  img[OBJECT]->bound_rect.height));
 
     for(Point2f& pt: img[OBJECT]->bound_points){
