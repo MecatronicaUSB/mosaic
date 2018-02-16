@@ -7,8 +7,8 @@
  */
 
 #pragma once
+#include <args.hxx>
 
-#include "args.hxx"
 
 args::ArgumentParser parser("Stitch module", "Author: Victor Garcia");
 args::HelpFlag help(parser, "help", "Display this help menu", {'h','?', "help"});

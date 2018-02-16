@@ -6,21 +6,8 @@
  * @author Victor Garcia
  */
 #pragma once
-
-#include "../../common/utils.h"
-#include "../include/mosaic.hpp"
-#include "opencv2/xfeatures2d.hpp"
-#include "opencv2/features2d.hpp"
-#include "opencv2/imgcodecs.hpp"
-#include <opencv2/imgproc.hpp>
-#include "opencv2/highgui.hpp"
-#include "opencv2/opencv.hpp"
-#include <opencv2/core.hpp>
-#include <dirent.h>
-#include <stdlib.h>
-#include <iostream>
-#include <cmath> 
-#include <vector>
+#include "utils.h"
+#include "mosaic.hpp"
 
 using namespace std;
 using namespace cv;
@@ -28,6 +15,7 @@ using namespace cv;
 
 namespace m2d //!< mosaic 2d namespace
 {
+
 /// Reference image for stitching class
 enum ImgRef{
     SCENE,
@@ -54,11 +42,6 @@ enum WarpOffset{
 };
 
 class Frame;
-
-struct StitchStatus{
-    bool ok = false;
-    vector<float> offset;
-};
 
 class Stitcher {
     public:

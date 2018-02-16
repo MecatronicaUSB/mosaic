@@ -1,16 +1,15 @@
 cmake_minimum_required(VERSION 2.8)
-project( stitch-opencv )
+project( core-mosaic )
 find_package( OpenCV 3.0 REQUIRED xfeatures2d)
 
 include_directories( ${OpenCV_INCLUDE_DIRS} )
-file(GLOB stitch-cv
-    "../common/*.h"
-    "../common/*.cpp"
+file(GLOB mosaic-files
     "include/*.h"
     "include/*.hxx"
     "src/*.cpp"
+    "main.cpp"
 )
-add_executable( stitch ${stitch-cv} )
-target_compile_options(stitch PUBLIC -std=c++11)
-target_link_libraries( stitch ${OpenCV_LIBS} )
+add_executable( mosaic ${mosaic-files} )
+target_compile_options( mosaic PUBLIC -std=c++11)
+target_link_libraries( mosaic ${OpenCV_LIBS} )
 

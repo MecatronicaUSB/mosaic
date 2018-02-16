@@ -6,7 +6,7 @@
  * @author Victor Garcia
  */
 
-#include "utils.h"
+#include "../include/utils.h"
 
 void getHistogram(cv::Mat img, int *histogram){    
 	int i = 0, j = 0;

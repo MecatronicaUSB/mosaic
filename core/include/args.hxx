@@ -44,6 +44,7 @@
 #ifdef ARGS_TESTNAMESPACE
 namespace argstest
 {
+
 #else
 
 /** \namespace args

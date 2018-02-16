@@ -1,37 +1,20 @@
 /**
  * @file mosaic.hpp
- * @brief Mosaic2d Namespace and Classes
+ * @brief Implementation of Frame, SumMosaic and Mosaic classes
  * @version 0.2
  * @date 10/02/2018
  * @author Victor Garcia
  */
 #pragma once
-
-#include "../../common/utils.h"
-#include "../include/stitch.hpp"
-#include "opencv2/xfeatures2d.hpp"
-#include "opencv2/features2d.hpp"
-#include "opencv2/imgcodecs.hpp"
-#include <opencv2/imgproc.hpp>
-#include "opencv2/highgui.hpp"
-#include "opencv2/opencv.hpp"
-#include <opencv2/core.hpp>
-#include <dirent.h>
-#include <stdlib.h>
-#include <iostream>
-#include <cmath> 
-#include <vector>
+#include "utils.h"
+#include "stitch.hpp"
+#include "blend.hpp"
 
 using namespace std;
 using namespace cv;
 
 namespace m2d //!< mosaic 2d namespace
 {
-const int TARGET_WIDTH	= 640;   
-const int TARGET_HEIGHT	= 480;
-
-class Stitcher;
-class Blender;
 
 /// termporal frame reference for Frame class
 enum FrameRef{
@@ -39,6 +22,13 @@ enum FrameRef{
     NEXT
 };
 
+class Stitcher;
+class Blender;
+
+struct StitchStatus{
+    bool ok = false;
+    vector<float> offset;
+};
 /**
  * @brief Calculate the euclidean distance between two given vector in 2D
  * @param _pt1 First floating point OpenCV coordinate 

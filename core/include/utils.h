@@ -1,19 +1,35 @@
 /**
  * @file utils.h
- * @brief Functions for pre-processing and enhancement images
+ * @brief Usefull functions
  * @version 1.0
  * @date 20/01/2018
  * @author Victor Garcia
  */
-#ifndef UTILS_H
-#define UTILS_H
 
-#include <opencv2/core.hpp>
-#include <opencv2/highgui.hpp>
+#pragma once
+#include <opencv2/xfeatures2d.hpp>
+#include <opencv2/features2d.hpp>
+#include <opencv2/imgcodecs.hpp>
 #include <opencv2/imgproc.hpp>
+#include <opencv2/highgui.hpp>
+#include <opencv2/opencv.hpp>
+#include <opencv2/core.hpp>
 #include <dirent.h>
+#include <stdlib.h>
 #include <iostream>
+#include <stdlib.h>
+#include <cmath> 
+#include <vector>
 #include <string>
+
+
+namespace m2d
+{
+
+const int TARGET_WIDTH	= 640;   
+const int TARGET_HEIGHT	= 480;
+
+}
 
 /**
  * @brief Computes the intensity distribution histograms for the three channels
@@ -71,5 +87,3 @@ void imgChannelStretch(cv::Mat imgOriginal, cv::Mat imgStretched, int lowerPerce
  * @return vector<std::string> Vector container the names (sorted alphabetically) of files in the directory 
  */
 std::vector<std::string> read_filenames(const std::string dir_ent);
-
-#endif

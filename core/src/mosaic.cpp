@@ -7,6 +7,7 @@
  */
 
 #include "../include/mosaic.hpp"
+#include "../include/stitch.hpp"
 
 using namespace std;
 using namespace cv;

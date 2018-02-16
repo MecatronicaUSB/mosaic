@@ -7,6 +7,7 @@
  */
 
 #include "../include/stitch.hpp"
+#include "../include/utils.h"
 
 using namespace std;
 using namespace cv;
