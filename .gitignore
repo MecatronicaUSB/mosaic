@@ -3,11 +3,13 @@
 .vscode/settings.json
 
 # executables
+core/mosaic
 modules/fcomp/fcomp
 modules/stitch/stitch
+
 modules/fcomp/build
 modules/stitch/build
-core/mosaic
+core/build
 
 # data files
 modules/stitch/homography-data.txt

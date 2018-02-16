@@ -8,9 +8,9 @@
  * @title Main code
  */
 
-#include "../include/options.h"
-#include "../include/stitch.hpp"
-#include "../include/mosaic.hpp"
+#include "include/options.h"
+#include "include/stitch.hpp"
+#include "include/mosaic.hpp"
 
 /// Dimensions to resize images
 #define TARGET_WIDTH	640   

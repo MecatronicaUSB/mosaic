@@ -9,6 +9,7 @@ file(GLOB stitch-cv
     "include/*.h"
     "include/*.hxx"
     "src/*.cpp"
+    "main.cpp"
 )
 add_executable( stitch ${stitch-cv} )
 target_compile_options(stitch PUBLIC -std=c++11)

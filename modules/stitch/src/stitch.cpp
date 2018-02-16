@@ -130,7 +130,7 @@ bool Stitcher::stitch(Frame *_object, Frame *_scene, Mat &_final_scene){
 
     blend2Scene(_final_scene);
 
-    drawKeipoints(warp_offset, _final_scene);
+    //drawKeipoints(warp_offset, _final_scene);
 
     cleanData();
 

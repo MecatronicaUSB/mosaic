@@ -133,18 +133,6 @@ class SubMosaic{
         void calcAverageH();
 };
 
-//TODO-----
-// class Mosaic{
-//     public:
-//         int n_frames;
-//         int n_subs;
-//         vector<SubMosaic*> sub_mosaic;
-//         Stitcher* stitcher;
-
-//         Mosaic();
-//         SubMosaic* addSubMosaic(SubMosaic* _sub_mosaic);
-// };
-
 /**
  * @brief Save the homography matrix and heypoints in a txt file
  * @param H OpenCV Matrix containing Homography transformation
