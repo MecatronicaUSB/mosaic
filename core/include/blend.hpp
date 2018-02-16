@@ -8,8 +8,21 @@
 
  #pragma once
 #include "utils.h"
+#include "mosaic.hpp"
 
- namespace m2d
- {
+using namespace std;
+using namespace cv;
 
- }
+namespace m2d
+{
+
+class Frame;
+class SubMosaic;
+
+class Blender{
+    public:
+        Blender();
+        void blendSubMosaic(SubMosaic *_sub_mosaic);
+};
+
+}

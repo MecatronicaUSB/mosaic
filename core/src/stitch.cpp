@@ -74,7 +74,7 @@ void Stitcher::setScene(Frame *_frame){
 }
 
 // See description in header file
-struct StitchStatus Stitcher::stitch(Frame *_object, Frame *_scene){
+struct StitchStatus Stitcher::stitch(Frame *_object, Frame *_scene, Size _scene_dims){
 	StitchStatus status;
 
     _object->neighbors.push_back(_scene);
@@ -87,7 +87,9 @@ struct StitchStatus Stitcher::stitch(Frame *_object, Frame *_scene){
         imgChannelStretch(img[SCENE]->gray, img[SCENE]->gray, 1, 99);
     }
 
-    // Detect the keypoints using desired Detector and compute the descriptors
+    // Detect the keypoints using desired Detector and compute the descriptorss
+    keypoints[OBJECT].clear();
+    keypoints[SCENE].clear();
     detector->detectAndCompute( img[OBJECT]->gray, Mat(), keypoints[OBJECT], descriptors[OBJECT] );
     detector->detectAndCompute( img[SCENE]->gray, Mat(), keypoints[SCENE], descriptors[SCENE] );
 
@@ -127,21 +129,8 @@ struct StitchStatus Stitcher::stitch(Frame *_object, Frame *_scene){
         return status;
     }
 
-    status.offset = getWarpOffet(img[OBJECT]->H, Size(TARGET_WIDTH, TARGET_HEIGHT));
+    status.offset = getWarpOffet(img[OBJECT]->H, _scene_dims);
 
-    // TO BE MOVE
-    // Create padd in scene based on offset in transformed image. when transformed image moves 
-    // to negatives values a new padding is created in unexisting sides to achieve a correct stitch
-    // copyMakeBorder(_final_scene, _final_scene, status.offset[TOP], status.offset[BOTTOM],
-    //                                            status.offset[LEFT], status.offset[RIGHT],
-    //                                            BORDER_CONSTANT,Scalar(0,0,0));
-
-    // blend2Scene(_final_scene);
-
-    // drawKeipoints(status.offset, _final_scene);
-    img[SCENE]->gray.release();
-    cleanData();
-    
     status.ok = true;
     return status;
 }
@@ -230,62 +219,10 @@ vector<float> Stitcher::getWarpOffet(Mat _H, Size _scene_dims){
     warp_offset[BOTTOM] = max(0.f, aux_rect.y + aux_rect.height - _scene_dims.height);
     warp_offset[LEFT] = max(0.f,-aux_rect.x);
     warp_offset[RIGHT] = max(0.f, aux_rect.x + aux_rect.width - _scene_dims.width);
-
-    Mat T = Mat::eye(3,3,CV_64F);
-	T.at<double>(0,2)= -aux_rect.x;
-	T.at<double>(1,2)= -aux_rect.y;
+    
     img[OBJECT]->bound_rect = aux_rect;
-	// Important: first transform and then translate, not inverse way. correct form: (T*H)
-	offset_h = T*img[OBJECT]->H;
-
-    Mat offset_T = Mat::eye(3,3,CV_64F);
-    offset_T.at<double>(0,2)= warp_offset[LEFT];
-	offset_T.at<double>(1,2)= warp_offset[TOP];
-    img[OBJECT]->H = offset_T*img[OBJECT]->H;
 
     return warp_offset;
-}
-
-// See description in header file
-void Stitcher::blend2Scene(Mat &_final_scene){
-    Mat warp_img;
-	warpPerspective(img[OBJECT]->color, warp_img, offset_h, Size(img[OBJECT]->bound_rect.width,
-                                                                 img[OBJECT]->bound_rect.height));
-
-    for(Point2f& pt: img[OBJECT]->bound_points){
-        pt.x -= img[OBJECT]->bound_rect.x;
-        pt.y -= img[OBJECT]->bound_rect.y;
-    }
-
-    Point points_array[4] = {img[OBJECT]->bound_points[0],
-                             img[OBJECT]->bound_points[1],
-                             img[OBJECT]->bound_points[2],
-                             img[OBJECT]->bound_points[3],};
-
-    Mat mask(img[OBJECT]->bound_rect.height, img[OBJECT]->bound_rect.width, CV_8UC3, Scalar(0,0,0));
-    fillConvexPoly( mask, points_array, 4, Scalar(255,255,255));
-
-    erode( mask, mask, getStructuringElement( MORPH_RECT, Size(7, 7),Point(-1, -1)));
-    img[OBJECT]->bound_rect.x = max(img[OBJECT]->bound_rect.x,0.f);
-    img[OBJECT]->bound_rect.y = max(img[OBJECT]->bound_rect.y,0.f);
-	cv::Mat object_position(_final_scene, cv::Rect(img[OBJECT]->bound_rect.x,
-                                                   img[OBJECT]->bound_rect.y,
-                                                   img[OBJECT]->bound_rect.width,
-                                                   img[OBJECT]->bound_rect.height));
-
-    warp_img.copyTo(object_position, mask);
-    // object_position -= _warp_img;
-    // object_position += _warp_img;
-    mask.release();
-}
-
-// See description in header file
-void Stitcher::cleanData(){
-
-        keypoints[OBJECT].clear();
-        keypoints[SCENE].clear();
-        descriptors[OBJECT].release();
-        descriptors[SCENE].release();
 }
 
 }

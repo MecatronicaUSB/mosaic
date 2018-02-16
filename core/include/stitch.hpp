@@ -49,7 +49,7 @@ class Stitcher {
         Mat offset_h;
         Mat scene_keypoints;                    //!< Image to draw the keypoints after one match (testing purpose)
         int cells_div;                          //!< number (n) of cell divisions in grid detector (if used)
-        vector<Frame*> img = vector<Frame*>(2); //!< Vector of two frames to stitch (Pointers)
+        vector<Frame *> img = vector<Frame *>(2); //!< Vector of two frames to stitch (Pointers)
         bool use_grid;                          //!< flag to use or not the grid detection
         bool apply_pre;                         //!< flag to apply or not SCB preprocessing algorithm
         vector<vector<cv::DMatch> > matches;    //!< Vector of OpenCV Matches                     
@@ -96,7 +96,7 @@ class Stitcher {
          * @return true If the stitch was sucessfull
          * @return false If the stitch wasn't sucessfull
          */
-        struct StitchStatus stitch(Frame *_object, Frame *_scene);
+        struct StitchStatus stitch(Frame *_object, Frame *_scene, Size _scene_dims);
     private:
         // ---------- Atributes
         Ptr<Feature2D> detector;                //!< Pointer to OpenCV feature extractor
@@ -137,10 +137,6 @@ class Stitcher {
          * @param _final_scene Input OpenCV Matrix containing warped object image
          */
         void blend2Scene(Mat &_final_scene);
-        /**
-         * @brief Clear the used vectors and OpenCV matrix used
-         */
-        void cleanData();
 };
 
 }

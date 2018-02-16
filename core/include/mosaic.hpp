@@ -51,7 +51,7 @@ class Frame{
         Mat gray;                         //!< OpenCV Matrix containing a gray scale version of image
         vector<Point2f> bound_points;     //!< Points of the transformmed image (initially at corners)
         vector<Point2f> keypoints_pos[2]; //!< Position (X,Y) of good keypoints in image 
-        vector<Frame*> neighbors;         //!< Vector containing all spatially close Frames (Pointers)
+        vector<Frame *> neighbors;         //!< Vector containing all spatially close Frames (Pointers)
         float frame_error;
 
         // ---------- Methods
@@ -63,10 +63,6 @@ class Frame{
          * @param _height Height to resize the image (Speed purpose)
          */
         Frame(Mat _img,  bool _key = false, int _width = TARGET_WIDTH, int _height = TARGET_HEIGHT);
-        /**
-         * @brief 
-         */
-        void resetFrame();
         /**
          * @brief Change the reference for Homography matrix (Not yet implemented)
          * @param _H Homography matrix
@@ -102,8 +98,8 @@ class SubMosaic{
     public:
         // ---------- Atributes
         int n_frames;                       //!< Number of frames in sub-mosaic
-        vector<Frame*> frames;              //!< Vector containing all the frames (Pointers) in sub-mosaic 
-        Frame* key_frame;                   //!< Pointer to reference frame in sub-mosaic
+        vector<Frame *> frames;             //!< Vector containing all the frames (Pointers) in sub-mosaic 
+        Frame * key_frame;                  //!< Pointer to reference frame in sub-mosaic
         Mat final_scene;                    //!< Image containing all blended images (the sub-mosaic)
         Mat avH;                            //!< Average Homography matrix (Matrix that reduces the dostortion error)
         struct Hierarchy{                   //!< Struct to relate two SubMosaics
@@ -112,12 +108,13 @@ class SubMosaic{
         };                  
         vector<struct Hierarchy> neighbors; //!< Vector with all the neighbors SubMosaics (spatially close)
         float distortion;
-        Size size;
+        Size2f size;
+        bool is_complete;
         // ---------- Methods
         /**
          * @brief Default constructor
          */
-        SubMosaic() : n_frames(0), size(Size(TARGET_WIDTH, TARGET_HEIGHT)){};
+        SubMosaic() : n_frames(0), size(Size2f(TARGET_WIDTH, TARGET_HEIGHT)), is_complete(false){};
         /**
          * @brief Set the reference frame to the sub-mosaic. Create a Frame class with the input image
          * @param _scene OpenCV Matrix containig the BGR image
@@ -141,7 +138,7 @@ class SubMosaic{
          * @brief 
          * @param _frames 
          */
-        void updateOffset(Size _size);
+        void updateOffset(Size2f _size);
         /**
          * @brief 
          */
@@ -158,7 +155,6 @@ class Mosaic{
     public:
         // ---------- Atributes
         int tot_frames;
-        int n_frames;
         int n_subs;
         vector<SubMosaic*> sub_mosaics;
         Stitcher *stitcher;

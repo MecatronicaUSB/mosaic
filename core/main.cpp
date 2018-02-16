@@ -114,9 +114,7 @@ int main( int argc, char** argv ) {
             t = (double) getTickCount();
         }
         if (op_out) {
-            imshow("Sub-Mosaic "+to_string(mosaic.n_subs), mosaic.sub_mosaics[mosaic.n_subs]->final_scene);
-            imwrite("/home/victor/dataset/output/sub-Mosaic "+to_string(mosaic.n_subs)+".jpg", mosaic.sub_mosaics[mosaic.n_subs]->final_scene);
-            waitKey(0);
+
         }
     }
 

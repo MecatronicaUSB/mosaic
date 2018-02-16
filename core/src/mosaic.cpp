@@ -59,11 +59,6 @@ Frame::Frame(Mat _img, bool _key, int _width, int _height){
     key = _key;
 }
 
-void Frame::resetFrame(){
-    H = Mat::eye(3, 3, CV_64F);
-    gray.release();
-    cvtColor(color, gray, CV_BGR2GRAY);
-}
 
 // See description in header file
 void Frame::trackKeypoints(){
@@ -116,29 +111,36 @@ float Frame::boundAreaKeypoints(){
 void SubMosaic::setRerenceFrame(Frame *_frame){
     key_frame = _frame;
     key_frame->key = true;
-    final_scene = _frame->color.clone();
+    //final_scene = _frame->color.clone();
 }
 
 // See description in header file
 void SubMosaic::addFrame(Frame *_frame){
     frames.push_back(_frame);
-    if (n_frames == 0) {
-        n_frames++;
+    n_frames++;
+    if (n_frames == 1) {
         setRerenceFrame(frames[0]);
+        return;
     }
 }
 
-void SubMosaic::updateOffset(Size _size){
+void SubMosaic::updateOffset(Size2f _size){
     Mat t = Mat::eye(3, 3, CV_64F);
-    t.at<double>(0, 2) = _size.height;
-    t.at<double>(1, 2) = _size.width; 
+    t.at<double>(0, 2) = _size.width;
+    t.at<double>(1, 2) = _size.height; 
 
-    for (int i=0; i< frames.size()-1; i++){
-        frames[i]->H = t*frames[i]->H;
+    for (int i=0; i<frames.size(); i++){
+        frames[i]->H = t * frames[i]->H;
+
+        perspectiveTransform(frames[i]->bound_points, frames[i]->bound_points, t);
+        // frames[i]->bound_rect = boundingRect(frames[i]->bound_points);
+        frames[i]->bound_rect.x += _size.width;
+        frames[i]->bound_rect.y += _size.height;
+        
         if (frames[i]->keypoints_pos[PREV].size())
-            perspectiveTransform(frames[i]->keypoints_pos[PREV], frames[i]->keypoints_pos[PREV], frames[i]->H);
+            perspectiveTransform(frames[i]->keypoints_pos[PREV], frames[i]->keypoints_pos[PREV], t);
         if (frames[i]->keypoints_pos[NEXT].size())        
-            perspectiveTransform(frames[i]->keypoints_pos[NEXT], frames[i]->keypoints_pos[NEXT], frames[i]->H); 
+            perspectiveTransform(frames[i]->keypoints_pos[NEXT], frames[i]->keypoints_pos[NEXT], t); 
     }
 }
 
@@ -157,16 +159,15 @@ void SubMosaic::correct(){
     for (Frame *frame: frames) {
         frame->gray.release();
     }
-    for (int i=0; i<frames.size()-1; i++) {
-        distortion += calcKeypointsError(frames[n_frames], frames[n_frames+1]);
-    }
+    // for (int i=0; i<frames.size()-1; i++) {
+    //     distortion += calcKeypointsError(frames[n_frames], frames[n_frames+1]);
+    // }
     
 }
 
 // See description in header file
 Mosaic::Mosaic(){
     n_subs = 0;
-    n_frames = 0;
     tot_frames = 0;
     sub_mosaics.push_back(new SubMosaic());
 }
@@ -176,32 +177,39 @@ void Mosaic::addFrame(Mat _object){
     tot_frames++;
 
     Frame *aux_frame = new Frame(_object.clone());
-    if (n_frames == 0) {
-        n_frames++;
+    if (sub_mosaics[n_subs]->n_frames == 0) {
         sub_mosaics[n_subs]->addFrame(aux_frame);
         return;
     }
 
     struct StitchStatus status;
-    status =  stitcher->stitch(aux_frame,
-                               sub_mosaics[n_subs]->frames[n_frames-1]);
 
-    if (status.ok && (n_frames<10)) {
-        sub_mosaics[n_subs]->size.width += status.offset[2] + status.offset[3];
-        sub_mosaics[n_subs]->size.height += status.offset[0] + status.offset[1];
-        
-        if ( status.offset[0] || status.offset[2]) {
-            sub_mosaics[n_subs]->updateOffset(Size(status.offset[2], status.offset[0]));
-        }
+    status =  stitcher->stitch(aux_frame,
+                               sub_mosaics[n_subs]->frames[sub_mosaics[n_subs]->n_frames-1],
+                               sub_mosaics[n_subs]->size);
+
+    if (status.ok && (sub_mosaics[n_subs]->n_frames<5)) {
+
         sub_mosaics[n_subs]->addFrame(aux_frame);
-        n_frames++;
+
+        sub_mosaics[n_subs]->size.width += status.offset[LEFT] + status.offset[RIGHT];
+        sub_mosaics[n_subs]->size.height += status.offset[TOP] + status.offset[BOTTOM];
+
+        if ( status.offset[LEFT] || status.offset[TOP]) {
+            sub_mosaics[n_subs]->updateOffset(Size(status.offset[LEFT], status.offset[TOP]));
+        }
     } else {
         sub_mosaics[n_subs]->correct();
-        n_subs++;
-        n_frames = 1;
+        sub_mosaics[n_subs]->is_complete = true;
+        sub_mosaics[n_subs]->final_scene = Mat(sub_mosaics[n_subs]->size, CV_8UC3, Scalar(0,0,0));
+
+        blender->blendSubMosaic(sub_mosaics[n_subs]);
+        imshow("Blend", sub_mosaics[n_subs]->final_scene);
+        waitKey(0);
+        
         sub_mosaics.push_back(new SubMosaic());
-        aux_frame->resetFrame();
-        sub_mosaics[n_subs]->addFrame(aux_frame);
+        n_subs++;
+        sub_mosaics[n_subs]->addFrame(new Frame(_object.clone()));
     }
 }
 
