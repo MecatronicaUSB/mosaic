@@ -17,7 +17,7 @@ namespace m2d
 // See description in header file
 void Blender::blendSubMosaic(SubMosaic *_sub_mosaic){
     Mat warp_img;
-    _sub_mosaic->final_scene = Mat(_sub_mosaic->size, CV_8UC3, Scalar(0,0,0));
+    _sub_mosaic->final_scene = Mat(_sub_mosaic->scene_size, CV_8UC3, Scalar(0,0,0));
 
     for (Frame* frame: _sub_mosaic->frames) {
 
@@ -26,11 +26,12 @@ void Blender::blendSubMosaic(SubMosaic *_sub_mosaic){
         aux_T.at<double>(1,2)= -frame->bound_rect.y;
         warpPerspective(frame->color , warp_img, aux_T*frame->H, Size(frame->bound_rect.width,
                                                                       frame->bound_rect.height));
-                                                                      
+
         for(Point2f &pt: frame->bound_points){
             pt.x -= frame->bound_rect.x;
             pt.y -= frame->bound_rect.y;
         }
+        reduceRoi(frame->bound_points);
         Point points_array[4] = {frame->bound_points[0],
                                  frame->bound_points[1],
                                  frame->bound_points[2],
@@ -52,6 +53,16 @@ void Blender::blendSubMosaic(SubMosaic *_sub_mosaic){
         // object_position += _warp_img;
         mask.release();
     }
+}
+
+void Blender::reduceRoi(vector<Point2f> &_points){
+    
+    // _points[4] correspond to center point
+    for (Point2f &corner: _points) {
+        corner.x += 2 * ((corner.x - _points[4].x)>0 ? -1 : 1);
+        corner.y += 2 * ((corner.y - _points[4].y)>0 ? -1 : 1);
+    }
+
 }
 
 }

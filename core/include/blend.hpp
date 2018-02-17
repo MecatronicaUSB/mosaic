@@ -23,6 +23,7 @@ class Blender{
     public:
         Blender();
         void blendSubMosaic(SubMosaic *_sub_mosaic);
+        void reduceRoi(vector<Point2f> &_points);
 };
 
 }

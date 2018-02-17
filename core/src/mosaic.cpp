@@ -40,16 +40,31 @@ Frame::Frame(Mat _img, bool _key, int _width, int _height){
 
     bound_rect = Rect2f(0, 0, _width, _height);
     // corner points
-	bound_points.push_back(Point2f(5, 5));
-	bound_points.push_back(Point2f(_width-5, 5));
-	bound_points.push_back(Point2f(_width-5, _height-5));
-	bound_points.push_back(Point2f(5, _height-5));
+	bound_points.push_back(Point2f(0, 0));
+	bound_points.push_back(Point2f(_width, 0));
+	bound_points.push_back(Point2f(_width, _height));
+	bound_points.push_back(Point2f(0, _height));
     // center point
     bound_points.push_back(Point2f(_width/2, _height/2));
 
     H = Mat::eye(3, 3, CV_64F);
 
     key = _key;
+}
+
+// See description in header file
+void Frame::resetFrame(){
+    gray.release();
+    cvtColor(color, gray, CV_BGR2GRAY);
+    H = Mat::eye(3, 3, CV_64F);
+    key = true;    
+
+    bound_points[0] = Point2f(0, 0);
+    bound_points[1] = Point2f(color.cols, 0);
+    bound_points[2] = Point2f(color.cols, color.rows);
+    bound_points[3] = Point2f(5, color.rows);
+
+    bound_points[4] = Point2f(color.cols/2, color.rows/2);
 }
 
 // See description in header file
@@ -83,7 +98,6 @@ bool Frame::isGoodFrame(){
     // 4 initial threshold value, must be ajusted in future tests 
     if (ratio[0]>1.3 || ratio[1]>1.3)
         return false;
-
     if (keypoints_area < 0.2*color.cols*color.rows)
         return false;
 
@@ -102,6 +116,7 @@ float Frame::boundAreaKeypoints(){
 // See description in header file
 void SubMosaic::addFrame(Frame *_frame){
     frames.push_back(_frame);
+    last_frame = _frame;
     n_frames++;
     if (n_frames == 1) {
         key_frame = _frame;
@@ -127,8 +142,8 @@ void SubMosaic::computeOffset(){
         if (frame->bound_rect.y + frame->bound_rect.height > bottom)
             bottom = frame->bound_rect.y + frame->bound_rect.height;
     }
-    size.width  = right - left;
-    size.height = bottom - top;
+    scene_size.width  = right - left;
+    scene_size.height = bottom - top;
 
     updateOffset(Size2f(max(-left,0.f), max(-top,0.f)));
 }
@@ -159,42 +174,70 @@ float SubMosaic::calcKeypointsError(Frame *_first, Frame *_second){
     for (int i=0; i<_first->keypoints_pos[PREV].size(); i++){
         error += getDistance(_first->keypoints_pos[PREV][i],
                              _second->keypoints_pos[NEXT][i]);
+        //error += abs(Mat(_first->keypoints_pos[PREV]) - Mat(_second->keypoints_pos[NEXT]))
     }
     return error;
 }
 
 // See description in header file
-void SubMosaic::correct(){
-    float temp_distortion = 0;
-    Mat temp_avg_H;
-
-    temp_avg_H = frames[2]->H.inv();
+float SubMosaic::calcDistortion(){
+    float semi_diag[4], ratio[2];
+    float distortion=0;
     for (Frame *frame: frames) {
-        frame->setHReference(temp_avg_H);
+        for (int i=0; i<4; i++) {
+            // 5th point correspond to center of image
+            // Getting the distance between corner points to the center (all semi diagonal distances)
+            semi_diag[i] = getDistance(frame->bound_points2[i], frame->bound_points2[4]);
+        }
+        // ratio beween semi diagonals
+        ratio[0] = max(semi_diag[0]/semi_diag[2], semi_diag[2]/semi_diag[0]);
+        ratio[1] = max(semi_diag[1]/semi_diag[3], semi_diag[3]/semi_diag[1]);
+        distortion += (ratio[0] + ratio[1]);
     }
 
-    // for (Frame *frame: frames) {
-    //     frame->gray.release();
-    // }
-    // for (Frame *frame: frames) {
-    //     temp_avg_H = frame->H.inv();
-    //     frame->setHReference(temp_avg_H);
+    return distortion;
+}
 
-    //     temp_distortion = 0;
-    //     for (int i=0; i<frames.size()-1; i++) {
-    //         temp_distortion += calcKeypointsError(frames[i], frames[i+1]);
-    //     }
-    //     cout << distortion << endl << endl;
-    //     if (temp_distortion < distortion) {
-    //         distortion = temp_distortion;
-    //         avg_H = temp_avg_H;
-    //     }
+// See description in header file
+void SubMosaic::correct(){
+    float temp_distortion=0, distortion=0;
+    Mat temp_avg_H;
+    avg_H = Mat::eye(3, 3, CV_64F);
+
+    for (Frame *frame: frames) {
+        frame->gray.release();
+        frame->bound_points2 = frame->bound_points;
+    }
+    
+    // temp_avg_H = last_frame->H.inv();
+    // for (Frame *frame: frames) {
+    //     frame->setHReference(temp_avg_H);
     // }
-    // if (avg_H.data != temp_avg_H.data) {
-    //     for (Frame *frame: frames) {
-    //         frame->setHReference(avg_H);
-    //     }
-    // }
+
+    distortion = calcDistortion();
+
+    cout << distortion << endl << endl;
+
+    for (int i=1; i<frames.size(); i++) {
+        temp_avg_H = frames[i]->H.inv();
+
+        for (Frame *frame: frames) {
+            perspectiveTransform(frame->bound_points, frame->bound_points2, temp_avg_H*frame->H);
+        }
+
+        temp_distortion = calcDistortion();
+        cout << temp_distortion << endl << endl;
+
+        if (temp_distortion < distortion) {
+            distortion = temp_distortion;
+            avg_H = temp_avg_H;
+        }
+    }
+
+    for (Frame *frame: frames) {
+        frame->setHReference(avg_H);
+    }
+    
 }
 
 // See description in header file
@@ -210,40 +253,31 @@ void Mosaic::addFrame(Mat _object){
 
     cout <<"Sub Mosaic # "<<n_subs+1<<" # Frames: "<<sub_mosaics[n_subs]->n_frames+1 << endl;
 
-    Frame *aux_frame = new Frame(_object.clone());
+    Frame *new_frame = new Frame(_object.clone());
     if (sub_mosaics[n_subs]->n_frames == 0) {
-        sub_mosaics[n_subs]->addFrame(aux_frame);
+        sub_mosaics[n_subs]->addFrame(new_frame);
         return;
     }
 
     struct StitchStatus status;
 
-    status =  stitcher->stitch(aux_frame,
-                               sub_mosaics[n_subs]->frames[sub_mosaics[n_subs]->n_frames-1],
-                               sub_mosaics[n_subs]->size);
+    status =  stitcher->stitch(new_frame,
+                               sub_mosaics[n_subs]->last_frame,
+                               sub_mosaics[n_subs]->scene_size);
 
     if (status.ok && (sub_mosaics[n_subs]->n_frames<5)) {
 
-        sub_mosaics[n_subs]->addFrame(aux_frame);
+        sub_mosaics[n_subs]->addFrame(new_frame);
 
-        sub_mosaics[n_subs]->size.width += status.offset[LEFT] + status.offset[RIGHT];
-        sub_mosaics[n_subs]->size.height += status.offset[TOP] + status.offset[BOTTOM];
+        sub_mosaics[n_subs]->scene_size.width += status.offset[LEFT] + status.offset[RIGHT];
+        sub_mosaics[n_subs]->scene_size.height += status.offset[TOP] + status.offset[BOTTOM];
 
         if ( status.offset[LEFT] || status.offset[TOP]) {
             sub_mosaics[n_subs]->updateOffset(Size(status.offset[LEFT], status.offset[TOP]));
         }
     } else {
         sub_mosaics[n_subs]->is_complete = true;
-        // sub_mosaics[n_subs]->final_scene = Mat(sub_mosaics[n_subs]->size, CV_8UC3, Scalar(0,0,0));
-
-        // blender->blendSubMosaic(sub_mosaics[n_subs]);
-        // imshow("Blend", sub_mosaics[n_subs]->final_scene);
-        // waitKey(0);
-
-        // sub_mosaics[n_subs]->correct();
-
-        //sub_mosaics[n_subs]->computeOffset();
-
+        
         sub_mosaics[n_subs]->correct();
         sub_mosaics[n_subs]->computeOffset();
 
@@ -253,7 +287,9 @@ void Mosaic::addFrame(Mat _object){
         
         sub_mosaics.push_back(new SubMosaic());
         n_subs++;
-        sub_mosaics[n_subs]->addFrame(new Frame(_object.clone()));
+
+        new_frame->resetFrame();
+        sub_mosaics[n_subs]->addFrame(new_frame);
     }
 }
 

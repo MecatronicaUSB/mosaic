@@ -32,8 +32,8 @@ int main( int argc, char** argv ) {
     cv::Mat img;
     vector<string> file_names;
 
-    parser.Prog(argv[0]);
-  
+    parser.helpParams.proglineOptions = "[detector] [matcher] {OPTIONAL}";
+
     try{
         parser.ParseCLI(argc, argv);
     }
