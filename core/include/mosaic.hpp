@@ -116,11 +116,6 @@ class SubMosaic{
          */
         SubMosaic() : n_frames(0), size(Size2f(TARGET_WIDTH, TARGET_HEIGHT)), is_complete(false){};
         /**
-         * @brief Set the reference frame to the sub-mosaic. Create a Frame class with the input image
-         * @param _scene OpenCV Matrix containig the BGR image
-         */
-        void setRerenceFrame(Frame *_frame);
-        /**
          * @brief Using the Stitcher class, add the object image to the current sub-mosaic
          * @param _object OpenCV Matrix containig the BGR image to add in the sub-mosaic
          * @return true If the stitch was sucesussfull

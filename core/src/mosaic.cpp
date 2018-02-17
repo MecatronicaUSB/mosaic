@@ -21,13 +21,6 @@ float getDistance(Point2f _pt1, Point2f _pt2){
 }
 
 // See description in header file
-Point2f getMiddlePoint(Point2f _pt1, Point2f _pt2){
-    Point2f middle;
-
-    return middle;
-}
-
-// See description in header file
 void transformationError(){
 
 }
@@ -47,10 +40,10 @@ Frame::Frame(Mat _img, bool _key, int _width, int _height){
 
     bound_rect = Rect2f(0, 0, _width, _height);
     // corner points
-	bound_points.push_back(Point2f(0, 0));
-	bound_points.push_back(Point2f(_width, 0));
-	bound_points.push_back(Point2f(_width, _height));
-	bound_points.push_back(Point2f(0, _height));
+	bound_points.push_back(Point2f(5, 5));
+	bound_points.push_back(Point2f(_width-5, 5));
+	bound_points.push_back(Point2f(_width-5, _height-5));
+	bound_points.push_back(Point2f(5, _height-5));
     // center point
     bound_points.push_back(Point2f(_width/2, _height/2));
 
@@ -58,7 +51,6 @@ Frame::Frame(Mat _img, bool _key, int _width, int _height){
 
     key = _key;
 }
-
 
 // See description in header file
 void Frame::trackKeypoints(){
@@ -108,19 +100,12 @@ float Frame::boundAreaKeypoints(){
 }
 
 // See description in header file
-void SubMosaic::setRerenceFrame(Frame *_frame){
-    key_frame = _frame;
-    key_frame->key = true;
-    //final_scene = _frame->color.clone();
-}
-
-// See description in header file
 void SubMosaic::addFrame(Frame *_frame){
     frames.push_back(_frame);
     n_frames++;
     if (n_frames == 1) {
-        setRerenceFrame(frames[0]);
-        return;
+        key_frame = _frame;
+        key_frame->key = true;
     }
 }
 
