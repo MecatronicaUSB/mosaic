@@ -109,6 +109,30 @@ void SubMosaic::addFrame(Frame *_frame){
     }
 }
 
+void Frame::setHReference(Mat _avg_H){
+    perspectiveTransform(bound_points, bound_points, _avg_H);
+    bound_rect =  boundingRect(bound_points);
+    H = _avg_H * H;
+}
+
+void SubMosaic::computeOffset(){
+    float top=TARGET_HEIGHT, bottom=0, left=TARGET_WIDTH, right=0;
+    for (Frame *frame: frames) {
+        if (frame->bound_rect.x < left)
+            left = frame->bound_rect.x;
+        if (frame->bound_rect.y < top)
+            top = frame->bound_rect.y;
+        if (frame->bound_rect.x + frame->bound_rect.width > right)
+            right = frame->bound_rect.x + frame->bound_rect.width;
+        if (frame->bound_rect.y + frame->bound_rect.height > bottom)
+            bottom = frame->bound_rect.y + frame->bound_rect.height;
+    }
+    size.width  = right - left;
+    size.height = bottom - top;
+
+    updateOffset(Size2f(max(-left,0.f), max(-top,0.f)));
+}
+
 void SubMosaic::updateOffset(Size2f _size){
     Mat t = Mat::eye(3, 3, CV_64F);
     t.at<double>(0, 2) = _size.width;
@@ -141,13 +165,36 @@ float SubMosaic::calcKeypointsError(Frame *_first, Frame *_second){
 
 // See description in header file
 void SubMosaic::correct(){
+    float temp_distortion = 0;
+    Mat temp_avg_H;
+
+    temp_avg_H = frames[2]->H.inv();
     for (Frame *frame: frames) {
-        frame->gray.release();
+        frame->setHReference(temp_avg_H);
     }
-    // for (int i=0; i<frames.size()-1; i++) {
-    //     distortion += calcKeypointsError(frames[n_frames], frames[n_frames+1]);
+
+    // for (Frame *frame: frames) {
+    //     frame->gray.release();
     // }
-    
+    // for (Frame *frame: frames) {
+    //     temp_avg_H = frame->H.inv();
+    //     frame->setHReference(temp_avg_H);
+
+    //     temp_distortion = 0;
+    //     for (int i=0; i<frames.size()-1; i++) {
+    //         temp_distortion += calcKeypointsError(frames[i], frames[i+1]);
+    //     }
+    //     cout << distortion << endl << endl;
+    //     if (temp_distortion < distortion) {
+    //         distortion = temp_distortion;
+    //         avg_H = temp_avg_H;
+    //     }
+    // }
+    // if (avg_H.data != temp_avg_H.data) {
+    //     for (Frame *frame: frames) {
+    //         frame->setHReference(avg_H);
+    //     }
+    // }
 }
 
 // See description in header file
@@ -175,7 +222,7 @@ void Mosaic::addFrame(Mat _object){
                                sub_mosaics[n_subs]->frames[sub_mosaics[n_subs]->n_frames-1],
                                sub_mosaics[n_subs]->size);
 
-    if (status.ok && (sub_mosaics[n_subs]->n_frames<10)) {
+    if (status.ok && (sub_mosaics[n_subs]->n_frames<5)) {
 
         sub_mosaics[n_subs]->addFrame(aux_frame);
 
@@ -186,9 +233,19 @@ void Mosaic::addFrame(Mat _object){
             sub_mosaics[n_subs]->updateOffset(Size(status.offset[LEFT], status.offset[TOP]));
         }
     } else {
-        sub_mosaics[n_subs]->correct();
         sub_mosaics[n_subs]->is_complete = true;
-        sub_mosaics[n_subs]->final_scene = Mat(sub_mosaics[n_subs]->size, CV_8UC3, Scalar(0,0,0));
+        // sub_mosaics[n_subs]->final_scene = Mat(sub_mosaics[n_subs]->size, CV_8UC3, Scalar(0,0,0));
+
+        // blender->blendSubMosaic(sub_mosaics[n_subs]);
+        // imshow("Blend", sub_mosaics[n_subs]->final_scene);
+        // waitKey(0);
+
+        // sub_mosaics[n_subs]->correct();
+
+        //sub_mosaics[n_subs]->computeOffset();
+
+        sub_mosaics[n_subs]->correct();
+        sub_mosaics[n_subs]->computeOffset();
 
         blender->blendSubMosaic(sub_mosaics[n_subs]);
         imshow("Blend", sub_mosaics[n_subs]->final_scene);

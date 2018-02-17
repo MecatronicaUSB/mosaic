@@ -17,6 +17,7 @@ namespace m2d
 // See description in header file
 void Blender::blendSubMosaic(SubMosaic *_sub_mosaic){
     Mat warp_img;
+    _sub_mosaic->final_scene = Mat(_sub_mosaic->size, CV_8UC3, Scalar(0,0,0));
 
     for (Frame* frame: _sub_mosaic->frames) {
 
@@ -25,6 +26,7 @@ void Blender::blendSubMosaic(SubMosaic *_sub_mosaic){
         aux_T.at<double>(1,2)= -frame->bound_rect.y;
         warpPerspective(frame->color , warp_img, aux_T*frame->H, Size(frame->bound_rect.width,
                                                                       frame->bound_rect.height));
+                                                                      
         for(Point2f &pt: frame->bound_points){
             pt.x -= frame->bound_rect.x;
             pt.y -= frame->bound_rect.y;

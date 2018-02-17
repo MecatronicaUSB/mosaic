@@ -46,6 +46,7 @@ class Frame{
         // ---------- Atributes
         bool key;                         //!< Flag to specify reference frame
         Mat H;                            //!< Homography matrix based on previous frame
+        Mat avg_H;
         Rect2f bound_rect;                //!< Minimum bounding rectangle of transformed image
         Mat color;                        //!< OpenCV Matrix containing the original image
         Mat gray;                         //!< OpenCV Matrix containing a gray scale version of image
@@ -101,7 +102,7 @@ class SubMosaic{
         vector<Frame *> frames;             //!< Vector containing all the frames (Pointers) in sub-mosaic 
         Frame * key_frame;                  //!< Pointer to reference frame in sub-mosaic
         Mat final_scene;                    //!< Image containing all blended images (the sub-mosaic)
-        Mat avH;                            //!< Average Homography matrix (Matrix that reduces the dostortion error)
+        Mat avg_H;                            //!< Average Homography matrix (Matrix that reduces the dostortion error)
         struct Hierarchy{                   //!< Struct to relate two SubMosaics
             SubMosaic* mosaic;              //!< Pointer to SubMosaic
             float overlap;                  //!< Overlap area between this sub-mosaic and pointed one
@@ -129,6 +130,10 @@ class SubMosaic{
          * @return float 
          */
         float calcKeypointsError(Frame *_first, Frame *_second);
+        /**
+         * @brief 
+         */
+        void computeOffset();
         /**
          * @brief 
          * @param _frames 
