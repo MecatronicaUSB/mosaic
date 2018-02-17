@@ -54,7 +54,6 @@ int main( int argc, char** argv ) {
         return 1;
     }
 
-
     // Veobose section -----
     cout << "Built with OpenCV " << CV_VERSION << endl;
     op_img ?   // this flag is activated from argument parser
