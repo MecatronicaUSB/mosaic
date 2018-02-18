@@ -47,13 +47,13 @@ class Stitcher {
     public:
         // ---------- Atributes
         Mat offset_h;
-        Mat scene_keypoints;                            //!< Image to draw the keypoints after one match (testing purpose)
-        int cells_div;                                  //!< number (n) of cell divisions in grid detector (if used)
-        vector<Frame *> img = vector<Frame *>(2);       //!< Vector of two frames to stitch (Pointers)
-        bool use_grid;                                  //!< flag to use or not the grid detection
-        vector<vector<vector<DMatch> > > matches;   //!< Vector of OpenCV Matches                     
-        vector<vector<DMatch> > good_matches;                //!< Vector of OpenCV good Matches (after discard outliers)
-        vector<vector<KeyPoint> > keypoints;            //!< Array of Vectors containing OpenCV Keypoints
+        Mat scene_keypoints;                                                //!< Image to draw the keypoints after one match (testing purpose)
+        int cells_div;                                                      //!< number (n) of cell divisions in grid detector (if used)
+        vector<Frame *> img = vector<Frame *>(2);                           //!< Vector of two frames to stitch (Pointers)
+        bool use_grid;                                                      //!< flag to use or not the grid detection
+        vector<vector<vector<DMatch> > > matches;                           //!< Vector of OpenCV Matches                     
+        vector<vector<DMatch> > good_matches;                               //!< Vector of OpenCV good Matches (after discard outliers)
+        vector<vector<KeyPoint> > keypoints;                                //!< Array of Vectors containing OpenCV Keypoints
         // ---------- Methods
         /**
          * @brief Default Stitcher constructor
@@ -97,9 +97,11 @@ class Stitcher {
         struct StitchStatus stitch(Frame *_object, Frame *_scene, Size _scene_dims);
     private:
         // ---------- Atributes
-        Ptr<Feature2D> detector;                //!< Pointer to OpenCV feature extractor
-        Ptr<DescriptorMatcher> matcher;         //!< Pointer to OpenCV feature Matcher
-        vector<vector<Mat> >descriptors;                     //!< Array of OpenCV Matrix conaining feature descriptors
+        Ptr<Feature2D> detector;                                            //!< Pointer to OpenCV feature extractor
+        Ptr<DescriptorMatcher> matcher;                                     //!< Pointer to OpenCV feature Matcher
+        vector<Mat> descriptors = vector<Mat>(2);          //!< Array of OpenCV Matrix conaining feature descriptors
+        vector<vector<Point2f> > neighbors_kp;
+        vector<Mat> points_pos = vector<Mat>(2);
         // ---------- Methods
         /**
          * @brief Discard outliers from initial matches vector
@@ -118,7 +120,12 @@ class Stitcher {
          * @brief transform a vector of OpenCV Keypoints to vectors of OpenCV Points
          */
         void positionFromKeypoints();
-        void trackKeypoints(vector<vector<Point2f> > _points, vector<Mat> _H);
+        /**
+         * @brief 
+         * @param _H 
+         * @param _points 
+         */
+        void trackKeypoints(Mat _H, vector<Point2f> &_points);
         /**
          * @brief 
          */

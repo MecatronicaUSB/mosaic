@@ -6,7 +6,7 @@
             "suppressTaskName": true,
             "isBuildCommand": false,
             "command": "g++",
-            "showOutput": "silent",         
+            "showOutput": "silent",
             "args": ["-g","-std=c++11", "modules/fcomp/src/main.cpp", "modules/common/utils.cpp", "modules/fcomp/src/detector.cpp", "-o", "modules/fcomp/fcomp", "-I/usr/local/include/opencv", "-I/usr/local/include","-I/usr/include", "-L/usr/local/lib",
                 "-lopencv_superres", "-lopencv_videostab", "-lopencv_photo", "-lopencv_aruco", "-lopencv_bgsegm", "-lopencv_bioinspired", "-lopencv_ccalib",
                 "-lopencv_dpm", "-lopencv_face", "-lopencv_freetype", "-lopencv_fuzzy", "-lopencv_hdf", "-lopencv_line_descriptor", "-lopencv_optflow",

@@ -57,17 +57,17 @@ Frame::Frame(Mat _img, bool _pre, int _width, int _height){
 
 // See description in header file
 void Frame::resetFrame(){
-    gray.release();
-    cvtColor(color, gray, CV_BGR2GRAY);
+    
     H = Mat::eye(3, 3, CV_64F);
     key = true;    
 
     bound_points[0] = Point2f(0, 0);
     bound_points[1] = Point2f(color.cols, 0);
     bound_points[2] = Point2f(color.cols, color.rows);
-    bound_points[3] = Point2f(5, color.rows);
+    bound_points[3] = Point2f(0, color.rows);
 
     bound_points[4] = Point2f(color.cols/2, color.rows/2);
+    neighbors.clear();
 }
 
 // See description in header file
@@ -281,8 +281,7 @@ void Mosaic::addFrame(Mat _object){
 
         blender->blendSubMosaic(sub_mosaics[n_subs]);
         imshow("Blend", sub_mosaics[n_subs]->final_scene);
-        imwrite("/home/victor/dataset/output/"+to_string(n_subs)+".jpg", sub_mosaics[n_subs]->final_scene);
- 
+        imwrite("/home/victor/dataset/output/neighbor-"+to_string(n_subs)+".jpg", sub_mosaics[n_subs]->final_scene);
         waitKey(0);
         
         sub_mosaics.push_back(new SubMosaic());
