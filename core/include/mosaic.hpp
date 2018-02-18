@@ -64,7 +64,7 @@ class Frame{
          * @param _width Width to resize the image (Speed purpose)
          * @param _height Height to resize the image (Speed purpose)
          */
-        Frame(Mat _img,  bool _key = false, int _width = TARGET_WIDTH, int _height = TARGET_HEIGHT);
+        Frame(Mat _img,  bool _pre = true, int _width = TARGET_WIDTH, int _height = TARGET_HEIGHT);
         /**
          * @brief 
          */
@@ -149,7 +149,7 @@ class SubMosaic{
          * @brief 
          * @param _frames 
          */
-        void updateOffset(Size2f _size);
+        void updateOffset(vector<float> _offset);
         /**
          * @brief 
          */
@@ -168,10 +168,11 @@ class Mosaic{
         int tot_frames;
         int n_subs;
         vector<SubMosaic *> sub_mosaics;
+        bool apply_pre;                         //!< flag to apply or not SCB preprocessing algorithm
         Stitcher *stitcher;
         Blender *blender;
         // ---------- Methods
-        Mosaic();
+        Mosaic(bool _pre = true);
         // TODO:
         SubMosaic* addSubMosaics(SubMosaic *_sub_mosaic1, SubMosaic *_sub_mosaic2);
         /**

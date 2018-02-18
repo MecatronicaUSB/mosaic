@@ -31,12 +31,16 @@ void getAvHomography(Mat img1, Mat img2){
 }
 
 // See description in header file
-Frame::Frame(Mat _img, bool _key, int _width, int _height){
+Frame::Frame(Mat _img, bool _pre, int _width, int _height){
+
     if (_img.size().width != _width || _img.size().height != _height)
         resize(_img, _img, Size(_width, _height));
     
     color = _img.clone();
     cvtColor(color, gray, CV_BGR2GRAY);
+    if (_pre) {
+        imgChannelStretch(gray, gray, 1, 99);
+    }
 
     bound_rect = Rect2f(0, 0, _width, _height);
     // corner points
@@ -49,7 +53,6 @@ Frame::Frame(Mat _img, bool _key, int _width, int _height){
 
     H = Mat::eye(3, 3, CV_64F);
 
-    key = _key;
 }
 
 // See description in header file
@@ -65,11 +68,6 @@ void Frame::resetFrame(){
     bound_points[3] = Point2f(5, color.rows);
 
     bound_points[4] = Point2f(color.cols/2, color.rows/2);
-}
-
-// See description in header file
-void Frame::trackKeypoints(){
-    perspectiveTransform(keypoints_pos[NEXT], keypoints_pos[NEXT], H);
 }
 
 // See description in header file
@@ -96,11 +94,11 @@ bool Frame::isGoodFrame(){
     if (area > 1.5*color.cols*color.rows)
         return false;
     // 4 initial threshold value, must be ajusted in future tests 
-    if (ratio[0]>1.3 || ratio[1]>1.3)
+    if (ratio[0]>1.6 || ratio[1]>1.6)
         return false;
     if (keypoints_area < 0.2*color.cols*color.rows)
         return false;
-
+    cout << "good Frame" << endl;
     return true;
 }
 
@@ -145,21 +143,30 @@ void SubMosaic::computeOffset(){
     scene_size.width  = right - left;
     scene_size.height = bottom - top;
 
-    updateOffset(Size2f(max(-left,0.f), max(-top,0.f)));
+    vector<float> offset = {max(-top,0.f), 0, max(-left,0.f), 0};
+    updateOffset(offset);
 }
 
-void SubMosaic::updateOffset(Size2f _size){
+void SubMosaic::updateOffset(vector<float> _offset){
+
+    scene_size.width += _offset[LEFT] + _offset[RIGHT];
+    scene_size.height += _offset[TOP] + _offset[BOTTOM];
+
+    if ( !_offset[TOP] && !_offset[LEFT] ) {
+        return;
+    }
+
     Mat t = Mat::eye(3, 3, CV_64F);
-    t.at<double>(0, 2) = _size.width;
-    t.at<double>(1, 2) = _size.height; 
+    t.at<double>(0, 2) = _offset[LEFT];
+    t.at<double>(1, 2) = _offset[TOP]; 
 
     for (int i=0; i<frames.size(); i++){
         frames[i]->H = t * frames[i]->H;
 
         perspectiveTransform(frames[i]->bound_points, frames[i]->bound_points, t);
         // frames[i]->bound_rect = boundingRect(frames[i]->bound_points);
-        frames[i]->bound_rect.x += _size.width;
-        frames[i]->bound_rect.y += _size.height;
+        frames[i]->bound_rect.x += _offset[LEFT];
+        frames[i]->bound_rect.y += _offset[TOP];
         
         if (frames[i]->keypoints_pos[PREV].size())
             perspectiveTransform(frames[i]->keypoints_pos[PREV], frames[i]->keypoints_pos[PREV], t);
@@ -209,11 +216,6 @@ void SubMosaic::correct(){
         frame->bound_points2 = frame->bound_points;
     }
     
-    // temp_avg_H = last_frame->H.inv();
-    // for (Frame *frame: frames) {
-    //     frame->setHReference(temp_avg_H);
-    // }
-
     distortion = calcDistortion();
 
     cout << distortion << endl << endl;
@@ -241,7 +243,8 @@ void SubMosaic::correct(){
 }
 
 // See description in header file
-Mosaic::Mosaic(){
+Mosaic::Mosaic(bool _pre){
+    apply_pre = _pre;
     n_subs = 0;
     tot_frames = 0;
     sub_mosaics.push_back(new SubMosaic());
@@ -253,7 +256,7 @@ void Mosaic::addFrame(Mat _object){
 
     cout <<"Sub Mosaic # "<<n_subs+1<<" # Frames: "<<sub_mosaics[n_subs]->n_frames+1 << endl;
 
-    Frame *new_frame = new Frame(_object.clone());
+    Frame *new_frame = new Frame(_object.clone(), apply_pre);
     if (sub_mosaics[n_subs]->n_frames == 0) {
         sub_mosaics[n_subs]->addFrame(new_frame);
         return;
@@ -265,16 +268,11 @@ void Mosaic::addFrame(Mat _object){
                                sub_mosaics[n_subs]->last_frame,
                                sub_mosaics[n_subs]->scene_size);
 
-    if (status.ok && (sub_mosaics[n_subs]->n_frames<5)) {
+    if (status.ok) {
 
         sub_mosaics[n_subs]->addFrame(new_frame);
+        sub_mosaics[n_subs]->updateOffset(status.offset);
 
-        sub_mosaics[n_subs]->scene_size.width += status.offset[LEFT] + status.offset[RIGHT];
-        sub_mosaics[n_subs]->scene_size.height += status.offset[TOP] + status.offset[BOTTOM];
-
-        if ( status.offset[LEFT] || status.offset[TOP]) {
-            sub_mosaics[n_subs]->updateOffset(Size(status.offset[LEFT], status.offset[TOP]));
-        }
     } else {
         sub_mosaics[n_subs]->is_complete = true;
         
@@ -283,6 +281,8 @@ void Mosaic::addFrame(Mat _object){
 
         blender->blendSubMosaic(sub_mosaics[n_subs]);
         imshow("Blend", sub_mosaics[n_subs]->final_scene);
+        imwrite("/home/victor/dataset/output/"+to_string(n_subs)+".jpg", sub_mosaics[n_subs]->final_scene);
+ 
         waitKey(0);
         
         sub_mosaics.push_back(new SubMosaic());

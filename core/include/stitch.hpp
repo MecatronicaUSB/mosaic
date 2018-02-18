@@ -47,14 +47,13 @@ class Stitcher {
     public:
         // ---------- Atributes
         Mat offset_h;
-        Mat scene_keypoints;                    //!< Image to draw the keypoints after one match (testing purpose)
-        int cells_div;                          //!< number (n) of cell divisions in grid detector (if used)
-        vector<Frame *> img = vector<Frame *>(2); //!< Vector of two frames to stitch (Pointers)
-        bool use_grid;                          //!< flag to use or not the grid detection
-        bool apply_pre;                         //!< flag to apply or not SCB preprocessing algorithm
-        vector<vector<cv::DMatch> > matches;    //!< Vector of OpenCV Matches                     
-        vector<cv::DMatch> good_matches;        //!< Vector of OpenCV good Matches (after discard outliers)
-        vector<KeyPoint> keypoints[2];          //!< Array of Vectors containing OpenCV Keypoints
+        Mat scene_keypoints;                            //!< Image to draw the keypoints after one match (testing purpose)
+        int cells_div;                                  //!< number (n) of cell divisions in grid detector (if used)
+        vector<Frame *> img = vector<Frame *>(2);       //!< Vector of two frames to stitch (Pointers)
+        bool use_grid;                                  //!< flag to use or not the grid detection
+        vector<vector<vector<DMatch> > > matches;   //!< Vector of OpenCV Matches                     
+        vector<vector<DMatch> > good_matches;                //!< Vector of OpenCV good Matches (after discard outliers)
+        vector<vector<KeyPoint> > keypoints;            //!< Array of Vectors containing OpenCV Keypoints
         // ---------- Methods
         /**
          * @brief Default Stitcher constructor
@@ -66,8 +65,7 @@ class Stitcher {
          * @param _detector enum value to set the desired feature Detector and descriptor
          * @param _matcher enum value to set the desired feature matcher
          */
-        Stitcher(bool _grid = false, bool _pre = false,
-                 int _detector = USE_KAZE, int _matcher = USE_BRUTE_FORCE);
+        Stitcher(bool _grid = false, int _detector = USE_KAZE, int _matcher = USE_BRUTE_FORCE);
         /**
          * @brief Change the feature Detector and descriptor to use
          * @param int enum value of desired feature Detector and descriptor
@@ -101,7 +99,7 @@ class Stitcher {
         // ---------- Atributes
         Ptr<Feature2D> detector;                //!< Pointer to OpenCV feature extractor
         Ptr<DescriptorMatcher> matcher;         //!< Pointer to OpenCV feature Matcher
-        Mat descriptors[2];                     //!< Array of OpenCV Matrix conaining feature descriptors
+        vector<vector<Mat> >descriptors;                     //!< Array of OpenCV Matrix conaining feature descriptors
         // ---------- Methods
         /**
          * @brief Discard outliers from initial matches vector
@@ -120,9 +118,9 @@ class Stitcher {
          * @brief transform a vector of OpenCV Keypoints to vectors of OpenCV Points
          */
         void positionFromKeypoints();
+        void trackKeypoints(vector<vector<Point2f> > _points, vector<Mat> _H);
         /**
          * @brief 
-         * 
          */
         void drawKeipoints(vector<float> _warp_offset, Mat &_final_scene);
         /**

@@ -31,6 +31,7 @@ int main( int argc, char** argv ) {
     int i=0, n_img=0;
     cv::Mat img;
     vector<string> file_names;
+    string filename;
 
     parser.helpParams.proglineOptions = "[detector] [matcher] {OPTIONAL}";
 
@@ -69,10 +70,10 @@ int main( int argc, char** argv ) {
     cout << "\tApply preprocessing:\t"<< op_pre << endl;
     cout << "\tUse grid detection:\t"<< op_grid << endl;
 
-    m2d::Mosaic mosaic;
+
+    m2d::Mosaic mosaic(op_pre);
     mosaic.stitcher = new m2d::Stitcher(
         op_grid,                                            // use grid
-        op_pre,                                             // apply histsretch algorithm
         op_surf ? m2d::USE_SURF : m2d::USE_KAZE,          // select feature extractor
         op_flann ? m2d::USE_FLANN : m2d::USE_BRUTE_FORCE    // select feature matcher
     );
@@ -115,6 +116,7 @@ int main( int argc, char** argv ) {
         if (op_out) {
 
         }
+        
     }
 
     return 0;

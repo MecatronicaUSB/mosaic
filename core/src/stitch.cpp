@@ -17,9 +17,8 @@ namespace m2d //!< mosaic 2d namespace
 {
 
 // See description in header file
-Stitcher::Stitcher(bool _grid, bool _pre, int _detector, int _matcher){
+Stitcher::Stitcher(bool _grid, int _detector, int _matcher){
     use_grid = _grid;
-    apply_pre = _pre;
     cells_div = 10;
 
     switch( _detector ) {
@@ -77,21 +76,18 @@ void Stitcher::setScene(Frame *_frame){
 struct StitchStatus Stitcher::stitch(Frame *_object, Frame *_scene, Size _scene_dims){
 	StitchStatus status;
 
-    _object->neighbors.push_back(_scene);
-    _scene->neighbors.push_back(_object);
     img[OBJECT] = _object;
     img[SCENE] = _scene;
-
-    if (apply_pre) {
-        imgChannelStretch(img[OBJECT]->gray, img[OBJECT]->gray, 1, 99);
-        imgChannelStretch(img[SCENE]->gray, img[SCENE]->gray, 1, 99);
-    }
 
     // Detect the keypoints using desired Detector and compute the descriptorss
     keypoints[OBJECT].clear();
     keypoints[SCENE].clear();
     detector->detectAndCompute( img[OBJECT]->gray, Mat(), keypoints[OBJECT], descriptors[OBJECT] );
     detector->detectAndCompute( img[SCENE]->gray, Mat(), keypoints[SCENE], descriptors[SCENE] );
+
+    if (img[OBJECT]->neighbors.size()>1 ) {
+
+    }
 
     if (!keypoints[OBJECT].size() || !keypoints[SCENE].size()) {
         cout << "No Key points Found" <<  endl;
@@ -114,7 +110,8 @@ struct StitchStatus Stitcher::stitch(Frame *_object, Frame *_scene, Size _scene_
     // Convert the keypoints into a vector containing the correspond X,Y position in image
     positionFromKeypoints();
 
-    img[SCENE]->trackKeypoints();
+    //img[SCENE]->trackKeypoints();
+    //trackKeypoints();
 
     // TODO: implement own findHomography function
     img[OBJECT]->H = findHomography(Mat(img[OBJECT]->keypoints_pos[PREV]), Mat(img[SCENE]->keypoints_pos[NEXT]), CV_RANSAC);
@@ -124,12 +121,15 @@ struct StitchStatus Stitcher::stitch(Frame *_object, Frame *_scene, Size _scene_
         return status;
     }
 
+    status.offset = getWarpOffet(img[OBJECT]->H, _scene_dims);
+
     if (!img[OBJECT]->isGoodFrame()) {
         cout << "Frame too distorted. Exiting..." <<  endl;
         return status;
     }
 
-    status.offset = getWarpOffet(img[OBJECT]->H, _scene_dims);
+    img[OBJECT]->neighbors.push_back(img[SCENE]);
+    img[SCENE]->neighbors.push_back(img[OBJECT]);
 
     status.ok = true;
     return status;
@@ -186,6 +186,11 @@ void  Stitcher::positionFromKeypoints(){
         img[OBJECT]->keypoints_pos[PREV].push_back(keypoints[OBJECT][good.queryIdx].pt);
         img[SCENE]->keypoints_pos[NEXT].push_back(keypoints[SCENE][good.trainIdx].pt);
     }
+}
+
+// See description in header file
+void Stitcher::trackKeypoints(vector<vector<Point2f> > _points, vector<Mat> _H){
+    //perspectiveTransform(keypoints_pos[NEXT], keypoints_pos[NEXT], H);
 }
 
 // See description in header file
