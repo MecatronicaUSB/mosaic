@@ -54,6 +54,8 @@ class Frame{
         vector<Point2f> bound_points2;
         vector<Point2f> keypoints_pos[2]; //!< Position (X,Y) of good keypoints in image 
         vector<Frame *> neighbors;         //!< Vector containing all spatially close Frames (Pointers)
+        vector<KeyPoint> keypoints;
+        Mat descriptors;
         float frame_error;
 
         // ---------- Methods

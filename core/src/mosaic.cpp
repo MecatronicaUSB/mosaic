@@ -67,6 +67,7 @@ void Frame::resetFrame(){
     bound_points[3] = Point2f(0, color.rows);
 
     bound_points[4] = Point2f(color.cols/2, color.rows/2);
+    bound_rect = Rect2f(0, 0, color.cols, color.rows);
     neighbors.clear();
 }
 

@@ -79,28 +79,12 @@ struct StitchStatus Stitcher::stitch(Frame *_object, Frame *_scene, Size _scene_
     img[OBJECT] = _object;
     img[SCENE] = _scene;
 
-    keypoints.clear();
-
-    for (Mat descriptor: descriptors) {
-        descriptor.release();
+    if (!img[SCENE]->keypoints.size()) {
+        detector->detectAndCompute(img[SCENE]->gray, Mat(), img[SCENE]->keypoints, img[SCENE]->descriptors);
     }
-    vector<KeyPoint> aux_keypoints;
-    detector->detectAndCompute( img[SCENE]->gray, Mat(), aux_keypoints, descriptors[SCENE] );
-    keypoints.push_back(aux_keypoints);
-    aux_keypoints.clear();
-    detector->detectAndCompute( img[OBJECT]->gray, Mat(), aux_keypoints, descriptors[OBJECT] );
-    keypoints.push_back(aux_keypoints);
+    detector->detectAndCompute(img[OBJECT]->gray, Mat(), img[OBJECT]->keypoints, img[OBJECT]->descriptors);
 
-    for (Frame *neighbor: img[SCENE]->neighbors) {
-        vector<KeyPoint> aux_keypoint;
-        Mat aux_descriptor;
-
-        detector->detectAndCompute( neighbor->gray, Mat(), aux_keypoint, aux_descriptor );
-        keypoints.push_back(aux_keypoint);
-        descriptors.push_back(aux_descriptor);
-    }
-
-    if (!keypoints[OBJECT].size() || !keypoints[SCENE].size()) {
+    if (!img[OBJECT]->keypoints.size()) {
         cout << "No Key points Found" <<  endl;
         return status;
     }
@@ -108,13 +92,14 @@ struct StitchStatus Stitcher::stitch(Frame *_object, Frame *_scene, Size _scene_
     // Match the keypoints using Knn
     vector<vector<DMatch> > aux_matches;
     matches.clear();
-    matcher->knnMatch( descriptors[OBJECT], descriptors[SCENE], aux_matches, 2);
+    matcher->knnMatch( img[OBJECT]->descriptors, img[SCENE]->descriptors, aux_matches, 2);
     matches.push_back(aux_matches);
-    for (int i=0; i<img[SCENE]->neighbors.size(); i++) {
+    for (Frame *neighbor: img[SCENE]->neighbors) {
         aux_matches.clear();
-        matcher->knnMatch( descriptors[OBJECT], descriptors[i+2], aux_matches, 2);
+        matcher->knnMatch(img[OBJECT]->descriptors, neighbor->descriptors, aux_matches, 2);
         matches.push_back(aux_matches);
     }
+
     // Discard outliers based on distance between descriptor's vectors
     good_matches.clear();
     getGoodMatches();
@@ -127,9 +112,6 @@ struct StitchStatus Stitcher::stitch(Frame *_object, Frame *_scene, Size _scene_
     // Convert the keypoints into a vector containing the correspond X,Y position in image
     positionFromKeypoints();
 
-    //img[SCENE]->trackKeypoints();
-    //trackKeypoints();
-
     img[OBJECT]->H = findHomography(points_pos[OBJECT], points_pos[SCENE], CV_RANSAC);
 
     if (img[OBJECT]->H.empty()) {
@@ -141,16 +123,18 @@ struct StitchStatus Stitcher::stitch(Frame *_object, Frame *_scene, Size _scene_
 
     if (!img[OBJECT]->isGoodFrame()) {
         cout << "Frame too distorted. Exiting..." <<  endl;
+        for (int i=0; i<img[SCENE]->neighbors.size(); i++) {
+            neighbors_kp.pop_back();
+            good_matches.pop_back();
+        }
         return status;
     }
 
     img[OBJECT]->neighbors.push_back(img[SCENE]);
-    for (int i=1; i<img[SCENE]->neighbors.size(); i++) {
-        if (good_matches[i].size() > 4) {
-            img[OBJECT]->neighbors.push_back(img[SCENE]->neighbors[i-1]);
+    for (int i=0; i<img[SCENE]->neighbors.size(); i++) {
+        if (good_matches[i+1].size() > 4) {
+            img[OBJECT]->neighbors.push_back(img[SCENE]->neighbors[i]);
         }
-        descriptors.pop_back();
-        keypoints.pop_back();
         neighbors_kp.pop_back();
         good_matches.pop_back();
     }
@@ -162,9 +146,9 @@ struct StitchStatus Stitcher::stitch(Frame *_object, Frame *_scene, Size _scene_
 
 // See description in header file
 void Stitcher::getGoodMatches(){
-
+    vector<DMatch> aux_matches;
     for (int i=0; i<img[SCENE]->neighbors.size()+1; i++){
-        vector<DMatch> aux_matches;
+        aux_matches.clear();
         for (vector<DMatch> match: matches[i]) {
             if ((match[0].distance < 0.5 * (match[1].distance)) &&
                 ((int) match.size() <= 2 && (int) match.size() > 0)) {
@@ -179,59 +163,70 @@ void Stitcher::getGoodMatches(){
 
 // See description in header file
 void Stitcher::gridDetector(){
-    vector<DMatch> grid_matches;
+    vector<vector<DMatch> > grid_matches;
     DMatch best_match;
     int m=0, best_distance = 100;
     int stepx = img[OBJECT]->color.cols / cells_div;
     int stepy = img[OBJECT]->color.rows / cells_div;
-    
-    for (int k=0; k<img[OBJECT]->neighbors.size()+1; k++) {
-        grid_matches.clear();
-        for (int i=0; i<10; i++) {
-            for (int j=0; j<10; j++) {
+    int index = 0;
+
+    grid_matches = good_matches;
+    for (vector<DMatch> &aux: grid_matches) {
+        aux.clear();
+    }
+
+    for (int i=0; i<10; i++) {
+        for (int j=0; j<10; j++) {
+            best_distance = 100;
+            index=0;
+            for (int k=0; k<img[SCENE]->neighbors.size()+1; k++) {
                 m=0;
-                best_distance = 100;
                 for (DMatch match: good_matches[k]) {
                     //-- Get the keypoints from the good matches
-                    if (keypoints[k][match.queryIdx].pt.x >= stepx*i && keypoints[k][match.queryIdx].pt.x < stepx*(i+1) &&
-                    keypoints[k][match.queryIdx].pt.y >= stepy*j && keypoints[k][match.queryIdx].pt.y < stepy*(j+1)) {
+                    if (img[OBJECT]->keypoints[match.queryIdx].pt.x >= stepx*i && img[OBJECT]->keypoints[match.queryIdx].pt.x < stepx*(i+1) &&
+                        img[OBJECT]->keypoints[match.queryIdx].pt.y >= stepy*j && img[OBJECT]->keypoints[match.queryIdx].pt.y < stepy*(j+1)) {
                         if (match.distance < best_distance) {
                             best_distance = match.distance;
                             best_match = match;
+                            index = k;
                         }
                         good_matches[k].erase(good_matches[k].begin() + m);
                     }
                     m++;
                 }
-                if (best_distance != 100)
-                    grid_matches.push_back(best_match);
             }
+            if (best_distance != 100)
+                grid_matches[index].push_back(best_match);
         }
-        good_matches[k] = grid_matches;
     }
+    good_matches = grid_matches;
+
 }
 
 // See description in header file
 void  Stitcher::positionFromKeypoints(){
     for (DMatch good: good_matches[0]) {
         //-- Get the keypoints from the good matches
-        img[OBJECT]->keypoints_pos[PREV].push_back(keypoints[OBJECT][good.queryIdx].pt);
-        img[SCENE]->keypoints_pos[NEXT].push_back(keypoints[SCENE][good.trainIdx].pt);
+        img[OBJECT]->keypoints_pos[PREV].push_back(img[OBJECT]->keypoints[good.queryIdx].pt);
+        img[SCENE]->keypoints_pos[NEXT].push_back(img[SCENE]->keypoints[good.trainIdx].pt);
     }
+    vector<Point2f> aux_points;
     neighbors_kp.clear();
     for (int i=0; i<img[SCENE]->neighbors.size(); i++) {
+        aux_points.clear();
 
-        vector<Point2f> aux_points;
         for (DMatch good: good_matches[i+1]) {
-            img[OBJECT]->keypoints_pos[PREV].push_back(keypoints[OBJECT][good.queryIdx].pt);
-            aux_points.push_back(keypoints[i+2][good.trainIdx].pt);
+            img[OBJECT]->keypoints_pos[PREV].push_back(img[OBJECT]->keypoints[good.queryIdx].pt);
+            aux_points.push_back(img[SCENE]->neighbors[i]->keypoints[good.trainIdx].pt);
         }
         neighbors_kp.push_back(aux_points);
     }
+
     trackKeypoints(img[SCENE]->H, img[SCENE]->keypoints_pos[NEXT]);
 
     for (int i=0; i<img[SCENE]->neighbors.size(); i++) {
-        trackKeypoints(img[SCENE]->neighbors[i]->H, neighbors_kp[i]);
+        if (neighbors_kp[i].size()>=4)
+            trackKeypoints(img[SCENE]->neighbors[i]->H, neighbors_kp[i]);
     }
     
     points_pos[SCENE] = Mat(img[SCENE]->keypoints_pos[NEXT]);
