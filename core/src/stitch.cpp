@@ -222,7 +222,8 @@ void  Stitcher::positionFromKeypoints(){
         neighbors_kp.push_back(aux_points);
     }
 
-    trackKeypoints(img[SCENE]->H, img[SCENE]->keypoints_pos[NEXT]);
+    if (img[SCENE]->keypoints_pos[NEXT].size() >= 4)
+        trackKeypoints(img[SCENE]->H, img[SCENE]->keypoints_pos[NEXT]);
 
     for (int i=0; i<img[SCENE]->neighbors.size(); i++) {
         if (neighbors_kp[i].size()>=4)

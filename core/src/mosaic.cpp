@@ -75,7 +75,7 @@ void Frame::resetFrame(){
 bool Frame::isGoodFrame(){
     float deformation, area, keypoints_area;
     float semi_diag[4], ratio[2];
-
+    
     for (int i=0; i<4; i++) {
         // 5th point correspond to center of image
         // Getting the distance between corner points to the center (all semi diagonal distances)
