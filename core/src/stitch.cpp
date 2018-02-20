@@ -100,17 +100,32 @@ struct StitchStatus Stitcher::stitch(Frame *_object, Frame *_scene, Size _scene_
         matches.push_back(aux_matches);
     }
 
-    // Discard outliers based on distance between descriptor's vectors
-    good_matches.clear();
-    getGoodMatches();
-    
-    // Apply grid detector if flag is activated
-    if (use_grid) {
-        gridDetector();
+    float thresh = 0.5;
+    bool good_thresh = true;
+    while (good_thresh) {
+
+        // Discard outliers based on distance between descriptor's vectors
+        good_matches.clear();
+        getGoodMatches(thresh);
+        
+        // Apply grid detector if flag is activated
+        if (use_grid) {
+            gridDetector();
+        }
+        // Convert the keypoints into a vector containing the correspond X,Y position in image
+        positionFromKeypoints();
+
+        if (points_pos[OBJECT].rows>4 && points_pos[SCENE].rows>4) {
+            good_thresh = false;
+        } else {
+            thresh += 0.1;
+            for (int i=0; i<img[SCENE]->neighbors.size(); i++) {
+                neighbors_kp.pop_back();
+                good_matches.pop_back();
+            }
+        }
     }
 
-    // Convert the keypoints into a vector containing the correspond X,Y position in image
-    positionFromKeypoints();
 
     img[OBJECT]->H = findHomography(points_pos[OBJECT], points_pos[SCENE], CV_RANSAC);
 
@@ -123,10 +138,7 @@ struct StitchStatus Stitcher::stitch(Frame *_object, Frame *_scene, Size _scene_
 
     if (!img[OBJECT]->isGoodFrame()) {
         cout << "Frame too distorted. Exiting..." <<  endl;
-        for (int i=0; i<img[SCENE]->neighbors.size(); i++) {
-            neighbors_kp.pop_back();
-            good_matches.pop_back();
-        }
+        cleanNeighborsData();
         return status;
     }
 
@@ -135,22 +147,29 @@ struct StitchStatus Stitcher::stitch(Frame *_object, Frame *_scene, Size _scene_
         if (good_matches[i+1].size() > 4) {
             img[OBJECT]->neighbors.push_back(img[SCENE]->neighbors[i]);
         }
-        neighbors_kp.pop_back();
-        good_matches.pop_back();
     }
+    cleanNeighborsData();
     // img[SCENE]->neighbors.push_back(img[OBJECT]);
 
     status.ok = true;
     return status;
 }
 
+void Stitcher::cleanNeighborsData(){
+    for (int i=0; i<img[SCENE]->neighbors.size(); i++) {
+        neighbors_kp.pop_back();
+        good_matches.pop_back();
+        matches.pop_back();
+    }
+}
+
 // See description in header file
-void Stitcher::getGoodMatches(){
+void Stitcher::getGoodMatches(int _thresh){
     vector<DMatch> aux_matches;
     for (int i=0; i<img[SCENE]->neighbors.size()+1; i++){
         aux_matches.clear();
         for (vector<DMatch> match: matches[i]) {
-            if ((match[0].distance < 0.5 * (match[1].distance)) &&
+            if ((match[0].distance < _thresh * (match[1].distance)) &&
                 ((int) match.size() <= 2 && (int) match.size() > 0)) {
                 // take the first result only if its distance is smaller than 0.5*second_best_dist
                 // that means this descriptor is ignored if the second distance is bigger or of similar

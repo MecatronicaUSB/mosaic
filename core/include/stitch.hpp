@@ -106,7 +106,7 @@ class Stitcher {
         /**
          * @brief Discard outliers from initial matches vector
          */
-        void getGoodMatches();
+        void getGoodMatches(int _thresh = 0.5);
         /**
          * @brief Select the best keypoint for each cell in the defined grid
          */
@@ -131,17 +131,17 @@ class Stitcher {
          */
         void drawKeipoints(vector<float> _warp_offset, Mat &_final_scene);
         /**
+         * @brief 
+         */
+        void cleanNeighborsData();
+        /**
          * @brief Computes the size of pads in the scene based on the transformation of object image
          * @param _H Homography matrix
          * @param _scene_dims Dimensions of scene image
          * @return vector<float> Padd size for each side of scene image
          */
         vector<float> getWarpOffet(Mat _H, Size _scene_dims);
-        /**
-         * @brief  Blend the warped object image to the scene
-         * @param _final_scene Input OpenCV Matrix containing warped object image
-         */
-        void blend2Scene(Mat &_final_scene);
+
 };
 
 }
