@@ -41,17 +41,14 @@ enum WarpOffset{
     RIGHT
 };
 
-enum StitchStatus3 {
-    l,
-    u
+enum StitchStatus {
+    OK,
+    BAD_HOMOGRAPHY,
+    BAD_DISTORTION,
+    BAD_KEYPOINTS
 };
 
 class Frame;
-
-struct StitchStatus{
-    bool ok = false;
-    vector<float> offset;
-};
 
 class Stitcher {
     public:
@@ -104,7 +101,7 @@ class Stitcher {
          * @return true If the stitch was sucessfull
          * @return false If the stitch wasn't sucessfull
          */
-        struct StitchStatus stitch(Frame *_object, Frame *_scene, Size _scene_dims);
+        int stitch(Frame *_object, Frame *_scene, Size _scene_dims);
     private:
         // ---------- Atributes
         Ptr<Feature2D> detector;                                            //!< Pointer to OpenCV feature extractor
@@ -150,7 +147,7 @@ class Stitcher {
          * @param _scene_dims Dimensions of scene image
          * @return vector<float> Padd size for each side of scene image
          */
-        vector<float> getWarpOffet(Mat _H, Size _scene_dims);
+        void getBoundPoints();
 
 };
 

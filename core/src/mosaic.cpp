@@ -32,17 +32,31 @@ void Mosaic::addFrame(Mat _object){
         sub_mosaics[n_subs]->addFrame(new_frame);
         return;
     }
-
-    struct StitchStatus status;
-
-    status = stitcher->stitch(new_frame,
-                               sub_mosaics[n_subs]->last_frame,
-                               sub_mosaics[n_subs]->scene_size);
-
+    int status = stitcher->stitch(new_frame,
+                                  sub_mosaics[n_subs]->last_frame,
+                                  sub_mosaics[n_subs]->scene_size);
+    switch( status ) {
+        case OK: {
+            sub_mosaics[n_subs]->addFrame(new_frame);
+            sub_mosaics[n_subs]->computeOffset();
+            break;
+        }
+        case USE_AKAZE:
+            detector = AKAZE::create();
+            break;
+        case USE_SIFT:
+            detector = SIFT::create();
+            break;
+        case USE_SURF:
+            detector = SURF::create();
+            break;
+        default:
+            detector = KAZE::create();
+            break; 
+    }
     if (status.ok) {
 
-        sub_mosaics[n_subs]->addFrame(new_frame);
-        sub_mosaics[n_subs]->computeOffset();
+
         // sub_mosaics[n_subs]->updateOffset(status.offset);
 
     } else {

@@ -22,27 +22,34 @@ Stitcher::Stitcher(bool _grid, int _detector, int _matcher){
     cells_div = 10;
 
     switch( _detector ) {
-    case USE_KAZE:
-        detector = KAZE::create();
-        break;
-    case USE_AKAZE:
-        detector = AKAZE::create();
-        break;
-    case USE_SIFT:
-        detector = SIFT::create();
-        break;
-    case USE_SURF:
-        detector = SURF::create();
-        break;
+        case USE_KAZE:
+            detector = KAZE::create();
+            break;
+        case USE_AKAZE:
+            detector = AKAZE::create();
+            break;
+        case USE_SIFT:
+            detector = SIFT::create();
+            break;
+        case USE_SURF:
+            detector = SURF::create();
+            break;
+        default:
+            detector = KAZE::create();
+            break; 
     }
 
     switch( _matcher ) {
-    case USE_BRUTE_FORCE:
-        matcher = BFMatcher::create();
-        break;
-    case USE_FLANN:
-        matcher = FlannBasedMatcher::create();
-    }
+        case USE_BRUTE_FORCE:
+            matcher = BFMatcher::create();
+            break;
+        case USE_FLANN:
+            matcher = FlannBasedMatcher::create();
+            break;
+        default:
+            matcher = FlannBasedMatcher::create();
+            break;
+        }
 }
 
 // See description in header file
@@ -73,8 +80,7 @@ void Stitcher::setScene(Frame *_frame){
 }
 
 // See description in header file
-struct StitchStatus Stitcher::stitch(Frame *_object, Frame *_scene, Size _scene_dims){
-	struct StitchStatus status;
+int Stitcher::stitch(Frame *_object, Frame *_scene, Size _scene_dims){
 
     img[OBJECT] = _object;
     img[SCENE] = _scene;
@@ -86,7 +92,7 @@ struct StitchStatus Stitcher::stitch(Frame *_object, Frame *_scene, Size _scene_
 
     if (!img[OBJECT]->keypoints.size()) {
         cout << "No Key points Found" <<  endl;
-        return status;
+        return BAD_HEYPOINTS;
     }
 
     // Match the keypoints using Knn
@@ -130,15 +136,15 @@ struct StitchStatus Stitcher::stitch(Frame *_object, Frame *_scene, Size _scene_
 
     if (img[OBJECT]->H.empty()) {
         cout << "not enought keypoints to calculate homography matrix. Exiting..." <<  endl;
-        return status;
+        return BAD_HOMOGRAPHY;
     }
 
-    status.offset = getWarpOffet(img[OBJECT]->H, _scene_dims);
+    getBoundPoints();
 
     if (!img[OBJECT]->isGoodFrame()) {
         cout << "Frame too distorted. Exiting..." <<  endl;
         cleanNeighborsData();
-        return status;
+        return BAD_DISTORTION;
     }
 
     img[OBJECT]->neighbors.push_back(img[SCENE]);
@@ -150,8 +156,7 @@ struct StitchStatus Stitcher::stitch(Frame *_object, Frame *_scene, Size _scene_
     cleanNeighborsData();
     // img[SCENE]->neighbors.push_back(img[OBJECT]);
 
-    status.ok = true;
-    return status;
+    return OK;
 }
 
 void Stitcher::cleanNeighborsData(){
@@ -287,21 +292,11 @@ void Stitcher::drawKeipoints(vector<float> _warp_offset, Mat &_final_scene){
 }
 
 // See description in header file
-vector<float> Stitcher::getWarpOffet(Mat _H, Size _scene_dims){
-    vector<float> warp_offset(4);
-    Rect2f aux_rect;
-    
-    perspectiveTransform(img[OBJECT]->bound_points, img[OBJECT]->bound_points, _H);
-    aux_rect = boundingRect(img[OBJECT]->bound_points);
+void Stitcher::getBoundPoints(){
 
-    warp_offset[TOP] = max(0.f,-aux_rect.y);
-    warp_offset[BOTTOM] = max(0.f, aux_rect.y + aux_rect.height - _scene_dims.height);
-    warp_offset[LEFT] = max(0.f,-aux_rect.x);
-    warp_offset[RIGHT] = max(0.f, aux_rect.x + aux_rect.width - _scene_dims.width);
-    
-    img[OBJECT]->bound_rect = aux_rect;
+    perspectiveTransform(img[OBJECT]->bound_points, img[OBJECT]->bound_points, img[OBJECT]->H);
+    img[OBJECT]->bound_rect = boundingRect(img[OBJECT]->bound_points);
 
-    return warp_offset;
 }
 
 }
