@@ -5,8 +5,9 @@
  * @date 10/02/2018
  * @author Victor Garcia
  */
- 
+#include "../include/submosaic.hpp"
 #include "../include/blend.hpp"
+
 
 using namespace std;
 using namespace cv;

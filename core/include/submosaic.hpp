@@ -91,7 +91,10 @@ class Frame{
         float boundAreaKeypoints();
 
 };
-
+typedef struct {                   //!< Struct to relate two SubMosaics
+    SubMosaic* mosaic;              //!< Pointer to SubMosaic
+    float overlap;                  //!< Overlap area between this sub-mosaic and pointed one
+} Hierarchy; 
 /**
  * @brief 
  */
@@ -104,11 +107,8 @@ class SubMosaic{
         Frame *last_frame;
         Mat final_scene;                    //!< Image containing all blended images (the sub-mosaic)
         Mat avg_H;                            //!< Average Homography matrix (Matrix that reduces the dostortion error)
-        struct Hierarchy{                   //!< Struct to relate two SubMosaics
-            SubMosaic* mosaic;              //!< Pointer to SubMosaic
-            float overlap;                  //!< Overlap area between this sub-mosaic and pointed one
-        };                  
-        vector<struct Hierarchy> neighbors; //!< Vector with all the neighbors SubMosaics (spatially close)
+                 
+        vector<Hierarchy> neighbors; //!< Vector with all the neighbors SubMosaics (spatially close)
         float distortion;
         Size2f scene_size;
         bool is_complete;

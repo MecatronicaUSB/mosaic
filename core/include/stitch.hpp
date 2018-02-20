@@ -7,7 +7,7 @@
  */
 #pragma once
 #include "utils.h"
-#include "mosaic.hpp"
+#include "submosaic.hpp"
 
 using namespace std;
 using namespace cv;
@@ -41,7 +41,13 @@ enum WarpOffset{
     RIGHT
 };
 
+enum StitchStatus3 {
+    l,
+    u
+};
+
 class Frame;
+
 struct StitchStatus{
     bool ok = false;
     vector<float> offset;
@@ -129,7 +135,7 @@ class Stitcher {
          * @param _H 
          * @param _points 
          */
-        void trackKeypoints(Mat _H, vector<Point2f> &_points);
+        void trackKeypoints();
         /**
          * @brief 
          */

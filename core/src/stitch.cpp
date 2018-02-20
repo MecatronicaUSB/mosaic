@@ -74,7 +74,7 @@ void Stitcher::setScene(Frame *_frame){
 
 // See description in header file
 struct StitchStatus Stitcher::stitch(Frame *_object, Frame *_scene, Size _scene_dims){
-	StitchStatus status;
+	struct StitchStatus status;
 
     img[OBJECT] = _object;
     img[SCENE] = _scene;
@@ -223,11 +223,13 @@ void Stitcher::gridDetector(){
 
 // See description in header file
 void  Stitcher::positionFromKeypoints(){
+
     for (DMatch good: good_matches[0]) {
         //-- Get the keypoints from the good matches
         img[OBJECT]->keypoints_pos[PREV].push_back(img[OBJECT]->keypoints[good.queryIdx].pt);
         img[SCENE]->keypoints_pos[NEXT].push_back(img[SCENE]->keypoints[good.trainIdx].pt);
     }
+
     vector<Point2f> aux_points;
     neighbors_kp.clear();
     for (int i=0; i<img[SCENE]->neighbors.size(); i++) {
@@ -240,14 +242,8 @@ void  Stitcher::positionFromKeypoints(){
         neighbors_kp.push_back(aux_points);
     }
 
-    if (img[SCENE]->keypoints_pos[NEXT].size() >= 4)
-        trackKeypoints(img[SCENE]->H, img[SCENE]->keypoints_pos[NEXT]);
+    trackKeypoints();
 
-    for (int i=0; i<img[SCENE]->neighbors.size(); i++) {
-        if (neighbors_kp[i].size()>=4)
-            trackKeypoints(img[SCENE]->neighbors[i]->H, neighbors_kp[i]);
-    }
-    
     points_pos[SCENE] = Mat(img[SCENE]->keypoints_pos[NEXT]);
     points_pos[OBJECT] = Mat(img[OBJECT]->keypoints_pos[PREV]);
     for (int i=0; i<img[SCENE]->neighbors.size(); i++) {
@@ -256,9 +252,18 @@ void  Stitcher::positionFromKeypoints(){
 }
 
 // See description in header file
-void Stitcher::trackKeypoints(Mat _H, vector<Point2f> &_points){
-    //img[SCENE]->keypoints_pos[NEXT].push_back(keypoints[SCENE][good.trainIdx].pt);
-    perspectiveTransform(_points,_points, _H);
+void Stitcher::trackKeypoints(){
+    if (img[SCENE]->keypoints_pos[NEXT].size() >= 4)
+        perspectiveTransform(img[SCENE]->keypoints_pos[NEXT], img[SCENE]->keypoints_pos[NEXT],
+                             img[SCENE]->H);
+
+    for (int i=0; i<img[SCENE]->neighbors.size(); i++) {
+        if (neighbors_kp[i].size()>=4)
+            perspectiveTransform(neighbors_kp[i], neighbors_kp[i],
+                                 img[SCENE]->neighbors[i]->H);
+           
+    }
+    
 }
 
 // See description in header file
@@ -285,6 +290,7 @@ void Stitcher::drawKeipoints(vector<float> _warp_offset, Mat &_final_scene){
 vector<float> Stitcher::getWarpOffet(Mat _H, Size _scene_dims){
     vector<float> warp_offset(4);
     Rect2f aux_rect;
+    
     perspectiveTransform(img[OBJECT]->bound_points, img[OBJECT]->bound_points, _H);
     aux_rect = boundingRect(img[OBJECT]->bound_points);
 

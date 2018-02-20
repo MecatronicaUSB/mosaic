@@ -35,14 +35,15 @@ void Mosaic::addFrame(Mat _object){
 
     struct StitchStatus status;
 
-    status =  stitcher->stitch(new_frame,
+    status = stitcher->stitch(new_frame,
                                sub_mosaics[n_subs]->last_frame,
                                sub_mosaics[n_subs]->scene_size);
 
     if (status.ok) {
 
         sub_mosaics[n_subs]->addFrame(new_frame);
-        sub_mosaics[n_subs]->updateOffset(status.offset);
+        sub_mosaics[n_subs]->computeOffset();
+        // sub_mosaics[n_subs]->updateOffset(status.offset);
 
     } else {
         sub_mosaics[n_subs]->is_complete = true;

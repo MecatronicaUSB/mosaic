@@ -6,9 +6,8 @@
  * @author Victor Garcia
  */
 
- #pragma once
+#pragma once
 #include "utils.h"
-#include "mosaic.hpp"
 
 using namespace std;
 using namespace cv;
@@ -16,7 +15,6 @@ using namespace cv;
 namespace m2d
 {
 
-class Frame;
 class SubMosaic;
 
 class Blender{
