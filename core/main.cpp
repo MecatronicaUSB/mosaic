@@ -12,6 +12,7 @@
 #include "include/utils.h"
 #include "include/stitch.hpp"
 #include "include/blend.hpp"
+#include "include/submosaic.hpp"
 #include "include/mosaic.hpp"
 
 const std::string green("\033[1;32m");

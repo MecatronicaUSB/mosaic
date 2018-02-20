@@ -42,6 +42,10 @@ enum WarpOffset{
 };
 
 class Frame;
+struct StitchStatus{
+    bool ok = false;
+    vector<float> offset;
+};
 
 class Stitcher {
     public:

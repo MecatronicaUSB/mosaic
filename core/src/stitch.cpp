@@ -126,7 +126,6 @@ struct StitchStatus Stitcher::stitch(Frame *_object, Frame *_scene, Size _scene_
         }
     }
 
-
     img[OBJECT]->H = findHomography(points_pos[OBJECT], points_pos[SCENE], CV_RANSAC);
 
     if (img[OBJECT]->H.empty()) {
