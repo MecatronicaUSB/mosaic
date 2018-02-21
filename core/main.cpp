@@ -54,8 +54,10 @@ int main( int argc, char** argv ) {
     file_names = read_filenames(directory);
 
     // Veobose section -----
+    cout<<endl<< "2D mosaic generation pipeline"<<endl;
+    cout<< "Author: Victor Garcia"<<endl<<endl;
     cout << "Built with OpenCV\t" <<yellow<< CV_VERSION << reset << endl;
-    cout << "  Directory:\t\t" + directory << endl;
+    cout << "  Directory:\t\t"<<cyan<< directory<<reset << endl;
     detector_surf  ?
     cout << "  Feature extractor:\t"<<cyan<<"SURF"<<reset<< endl:
     detector_sift  ? 

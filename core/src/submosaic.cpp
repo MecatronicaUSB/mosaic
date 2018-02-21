@@ -32,12 +32,11 @@ SubMosaic::~SubMosaic(){
 // See description in header file
 SubMosaic* SubMosaic::clone(){
     SubMosaic *new_sub_mosaic = new SubMosaic();
-    new_sub_mosaic->n_frames = n_frames;
     new_sub_mosaic->distortion = distortion;
     new_sub_mosaic->final_scene = final_scene.clone();
     new_sub_mosaic->avg_H = avg_H.clone();
     new_sub_mosaic->scene_size = scene_size;
-    new_sub_mosaic->neighbors = neighbors;
+    //new_sub_mosaic->neighbors = neighbors;
     for (Frame *frame: frames) {
         new_sub_mosaic->addFrame(frame->clone());
     }
@@ -52,8 +51,17 @@ void SubMosaic::addFrame(Frame *_frame){
     n_frames++;
 }
 
+void SubMosaic::referenceToZero(){
+
+    vector<float> offset = {-frames[0]->bound_rect.y, 0,
+                            -frames[0]->bound_rect.x, 0};
+
+    updateOffset(offset);
+
+}
 
 void SubMosaic::computeOffset(){
+
     float top=TARGET_HEIGHT, bottom=0, left=TARGET_WIDTH, right=0;
     for (Frame *frame: frames) {
         if (frame->bound_rect.x < left)
@@ -72,26 +80,23 @@ void SubMosaic::computeOffset(){
     updateOffset(offset);
 }
 
-void SubMosaic::updateOffset(vector<float> _offset){
+void SubMosaic::updateOffset(vector<float> _total_offset){
 
-    scene_size.width += _offset[LEFT] + _offset[RIGHT];
-    scene_size.height += _offset[TOP] + _offset[BOTTOM];
-
-    if ( !_offset[TOP] && !_offset[LEFT] ) {
+    if ( !_total_offset[TOP] && !_total_offset[LEFT] ) {
         return;
     }
 
     Mat t = Mat::eye(3, 3, CV_64F);
-    t.at<double>(0, 2) = _offset[LEFT];
-    t.at<double>(1, 2) = _offset[TOP]; 
+    t.at<double>(0, 2) = _total_offset[LEFT];
+    t.at<double>(1, 2) = _total_offset[TOP]; 
 
     for (int i=0; i<frames.size(); i++){
         frames[i]->H = t * frames[i]->H;
 
         perspectiveTransform(frames[i]->bound_points[FIRST], frames[i]->bound_points[FIRST], t);
         // frames[i]->bound_rect = boundingRect(frames[i]->bound_points[FIRST]);
-        frames[i]->bound_rect.x += _offset[LEFT];
-        frames[i]->bound_rect.y += _offset[TOP];
+        frames[i]->bound_rect.x += _total_offset[LEFT];
+        frames[i]->bound_rect.y += _total_offset[TOP];
         
         if (frames[i]->keypoints_pos[PREV].size())
             perspectiveTransform(frames[i]->keypoints_pos[PREV], frames[i]->keypoints_pos[PREV], t);

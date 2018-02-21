@@ -44,7 +44,6 @@ enum WarpOffset{
 class Frame{
     public:
         // ---------- Atributes
-        bool key;                         //!< Flag to specify reference frame
         float frame_error;
         Mat descriptors;
         Mat color;                        //!< OpenCV Matrix containing the original image

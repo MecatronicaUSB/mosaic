@@ -39,7 +39,7 @@ class Mosaic{
          * @brief 
          * @param n_inter 
          */
-        void compute(int n_inter = 200);
+        void compute(int n_inter = 500);
         /**
          * @brief 
          * @param _first 
@@ -47,7 +47,7 @@ class Mosaic{
          * @param _ref 
          * @return SubMosaic* 
          */
-        void getReferencedMosaics(vector<SubMosaic *> _sub_mosaics);
+        void getReferencedMosaics(vector<SubMosaic *> &_sub_mosaics);
         /**
          * @brief 
          */

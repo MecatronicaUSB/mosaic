@@ -17,6 +17,7 @@ namespace m2d
 // See description in header file
 void Blender::blendSubMosaic(SubMosaic *_sub_mosaic){
     Mat warp_img;
+    _sub_mosaic->final_scene.release();
     _sub_mosaic->final_scene = Mat(_sub_mosaic->scene_size, CV_8UC3, Scalar(0,0,0));
 
     //reverse(_sub_mosaic->frames.begin(), _sub_mosaic->frames.end());
@@ -43,8 +44,8 @@ void Blender::blendSubMosaic(SubMosaic *_sub_mosaic){
         fillConvexPoly( mask, points_array, 4, Scalar(255,255,255));
         erode( mask, mask, getStructuringElement( MORPH_RECT, Size(7, 7),Point(-1, -1)));
 
-        frame->bound_rect.x = max(frame->bound_rect.x,0.f);
-        frame->bound_rect.y = max(frame->bound_rect.y,0.f);
+        // frame->bound_rect.x = max(frame->bound_rect.x,0.f);
+        // frame->bound_rect.y = max(frame->bound_rect.y,0.f);
         Mat frame_position(_sub_mosaic->final_scene, cv::Rect(frame->bound_rect.x,
                                                               frame->bound_rect.y,
                                                               frame->bound_rect.width,

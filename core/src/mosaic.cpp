@@ -48,8 +48,9 @@ bool Mosaic::addFrame(Mat _object){
         case BAD_DISTORTION:{
         
             // sub_mosaics[n_subs]->correct();
-            sub_mosaics[n_subs]->computeOffset();
-            
+            sub_mosaics[n_subs]->avg_H = new_frame->H.clone();
+
+            //sub_mosaics[n_subs]->computeOffset();
             sub_mosaics.push_back(new SubMosaic());
             n_subs++;
 
@@ -99,19 +100,21 @@ void Mosaic::compute(int n_iter){
     ransac_mosaics[0]->computeOffset();
     ransac_mosaics[1]->computeOffset();
 
-    blender->blendSubMosaic(ransac_mosaics[0]);
-    imshow("Blend-Ransac", ransac_mosaics[0]->final_scene);
-    waitKey(0);
+    // blender->blendSubMosaic(ransac_mosaics[0]);
+    // imshow("Blend-Ransac0", ransac_mosaics[0]->final_scene);
+    // blender->blendSubMosaic(ransac_mosaics[1]);
+    // imshow("Blend-Ransac1", ransac_mosaics[1]->final_scene);
+    // waitKey(0);
 
-    int n_frames = ransac_mosaics[0]->n_frames;
     srand((uint32_t)getTickCount());
 
     for (int i=0; i<n_iter; i++) {
         for (int j=0; j<4; j++) {
-            rnd_frame = rand() % n_frames;
-            rnd_point = ransac_mosaics[0]->frames[rand()%n_frames]->bound_points[FIRST].size();
-            points[0].push_back(ransac_mosaics[0]->frames[rand()%n_frames]->bound_points[FIRST][rnd_point]);
-            points[1].push_back(ransac_mosaics[1]->frames[rand()%n_frames]->bound_points[FIRST][rnd_point]);
+            rnd_frame = rand() % ransac_mosaics[0]->n_frames;
+            rnd_point = rand() % ransac_mosaics[0]->frames[rnd_frame]->bound_points[FIRST].size();
+
+            points[0].push_back(ransac_mosaics[0]->frames[rnd_frame]->bound_points[FIRST][rnd_point]);
+            points[1].push_back(ransac_mosaics[1]->frames[rnd_frame]->bound_points[FIRST][rnd_point]);
         }
         for (int j=0; j<4; j++) {
             mid_points[j] = getMidPoint(points[0][j], points[1][j]);
@@ -138,19 +141,22 @@ void Mosaic::compute(int n_iter){
     }
 }
 
-void Mosaic::getReferencedMosaics(vector<SubMosaic *> _sub_mosaics){
+void Mosaic::getReferencedMosaics(vector<SubMosaic *> &_sub_mosaics){
 
-    SubMosaic *aux_sub_mosaic = _sub_mosaics[0];
-    for (Frame *frame: aux_sub_mosaic->frames) {
-        frame->setHReference(_sub_mosaics[1]->avg_H);
-        aux_sub_mosaic->addFrame(frame);
+    //SubMosaic *aux_mosaic1 = _sub_mosaics[1];
+
+    _sub_mosaics[1]->referenceToZero();
+
+    for (Frame *frame:  _sub_mosaics[1]->frames) {
+        frame->setHReference(_sub_mosaics[0]->avg_H);
+        _sub_mosaics[0]->addFrame(frame);
     }
+
+    _sub_mosaics[1] = _sub_mosaics[0]->clone();
 
     for (Frame *frame: _sub_mosaics[1]->frames) {
-        frame->setHReference(_sub_mosaics[0]->avg_H);
-        _sub_mosaics[1]->addFrame(frame);
+        frame->setHReference(_sub_mosaics[0]->avg_H.inv());
     }
-
 }
 
 void Mosaic::positionSubMosaics(SubMosaic *_first, SubMosaic *_second){
@@ -160,11 +166,10 @@ void Mosaic::positionSubMosaics(SubMosaic *_first, SubMosaic *_second){
 void Mosaic::show(){
     if (test) {
         if (!sub_mosaics[n_subs-1]->final_scene.data) {
-            SubMosaic *new_s = sub_mosaics[n_subs-1]->clone();
-            blender->blendSubMosaic(new_s);
-            imshow("Blend", sub_mosaics[n_subs-1]->final_scene);
-            imwrite("/home/victor/dataset/output/neighbor-"+to_string(n_subs)+".jpg", sub_mosaics[n_subs-1]->final_scene);
-            waitKey(0);
+            // blender->blendSubMosaic(sub_mosaics[n_subs-1]);
+            // imshow("Blend", sub_mosaics[n_subs-1]->final_scene);
+            // imwrite("/home/victor/dataset/output/neighbor-"+to_string(n_subs)+".jpg", sub_mosaics[n_subs-1]->final_scene);
+            // waitKey(0);
             test = false;
         }
 

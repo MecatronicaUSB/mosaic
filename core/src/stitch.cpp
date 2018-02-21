@@ -145,6 +145,7 @@ int Stitcher::stitch(Frame *_object, Frame *_scene, Size _scene_dims){
 
     if (!img[OBJECT]->isGoodFrame()) {
         cout << "Frame too distorted. Creating new Sub-Mosaic..." <<  endl;
+
         cleanNeighborsData();
         return BAD_DISTORTION;
     }
@@ -295,12 +296,6 @@ void Stitcher::drawKeipoints(vector<float> _warp_offset, Mat &_final_scene){
 
     cout << min(Mat(Point2f(5,5)), abs(Mat(aux_kp[0]) - Mat(aux_kp[1]))) << endl;
 
-}
-
-// See description in header file
-void Stitcher::getBoundPoints(){
-    perspectiveTransform(img[OBJECT]->bound_points[FIRST], img[OBJECT]->bound_points[FIRST], img[OBJECT]->H);
-    img[OBJECT]->bound_rect = boundingRect(img[OBJECT]->bound_points[FIRST]);
 }
 
 }

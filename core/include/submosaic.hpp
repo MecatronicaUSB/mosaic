@@ -76,6 +76,10 @@ class SubMosaic{
         void computeOffset();
         /**
          * @brief 
+         */
+        void referenceToZero();
+        /**
+         * @brief 
          * @param _frames 
          */
         void updateOffset(vector<float> _offset);

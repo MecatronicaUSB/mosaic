@@ -54,12 +54,12 @@ Frame::~Frame(){
 }
 
 Frame* Frame::clone(){
-    Frame* new_frame;
-    new_frame->key = key;
+    // CARE: must pass apply_pre instead of true
+    Frame* new_frame = new Frame(color, true);
+
     new_frame->frame_error = frame_error;        
     new_frame->descriptors = descriptors.clone();
-    new_frame->color = color.clone();
-    new_frame->gray = gray.clone();
+    //new_frame->gray = gray.clone();
     new_frame->H = H.clone();
     new_frame->bound_rect = bound_rect;
     new_frame->bound_points = bound_points;
@@ -74,7 +74,6 @@ Frame* Frame::clone(){
 void Frame::resetFrame(){
     
     H = Mat::eye(3, 3, CV_64F);
-    key = true;    
 
     bound_points[FIRST][0] = Point2f(0, 0);
     bound_points[FIRST][1] = Point2f(color.cols, 0);
@@ -132,6 +131,7 @@ void Frame::setHReference(Mat _H){
     bound_rect =  boundingRect(bound_points[FIRST]);
     H = _H * H;
 }
+
 
 bool Frame::haveKeypoints(){
     return keypoints.size() > 0 ? true : false;
