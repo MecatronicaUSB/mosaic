@@ -29,11 +29,13 @@ void Blender::blendSubMosaic(SubMosaic *_sub_mosaic){
         warpPerspective(frame->color , warp_img, aux_T*frame->H, Size(frame->bound_rect.width,
                                                                       frame->bound_rect.height));
 
-        for(Point2f &pt: frame->bound_points[FIRST]){
+
+        vector<Point2f> aux_points = frame->bound_points[FIRST];
+        
+        for(Point2f &pt: aux_points){
             pt.x -= frame->bound_rect.x;
             pt.y -= frame->bound_rect.y;
         }
-        vector<Point2f> aux_points = frame->bound_points[FIRST];
         reduceRoi(aux_points);
         Point points_array[4] = {aux_points[0],
                                  aux_points[1],

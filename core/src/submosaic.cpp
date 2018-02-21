@@ -90,18 +90,8 @@ void SubMosaic::updateOffset(vector<float> _total_offset){
     t.at<double>(0, 2) = _total_offset[LEFT];
     t.at<double>(1, 2) = _total_offset[TOP]; 
 
-    for (int i=0; i<frames.size(); i++){
-        frames[i]->H = t * frames[i]->H;
-
-        perspectiveTransform(frames[i]->bound_points[FIRST], frames[i]->bound_points[FIRST], t);
-        // frames[i]->bound_rect = boundingRect(frames[i]->bound_points[FIRST]);
-        frames[i]->bound_rect.x += _total_offset[LEFT];
-        frames[i]->bound_rect.y += _total_offset[TOP];
-        
-        if (frames[i]->keypoints_pos[PREV].size())
-            perspectiveTransform(frames[i]->keypoints_pos[PREV], frames[i]->keypoints_pos[PREV], t);
-        if (frames[i]->keypoints_pos[NEXT].size())        
-            perspectiveTransform(frames[i]->keypoints_pos[NEXT], frames[i]->keypoints_pos[NEXT], t); 
+    for (Frame *frame: frames){
+        frame->setHReference(t);
     }
 }
 
@@ -124,7 +114,7 @@ float SubMosaic::calcDistortion(){
         for (int i=0; i<4; i++) {
             // 5th point correspond to center of image
             // Getting the distance between corner points to the center (all semi diagonal distances)
-            semi_diag[i] = getDistance(frame->bound_points[SECOND][i], frame->bound_points[SECOND][4]);
+            semi_diag[i] = getDistance(frame->bound_points[RANSAC][i], frame->bound_points[RANSAC][4]);
         }
         // ratio beween semi diagonals
         ratio[0] = max(semi_diag[0]/semi_diag[2], semi_diag[2]/semi_diag[0]);

@@ -127,7 +127,13 @@ float Frame::boundAreaKeypoints(){
 }
 
 void Frame::setHReference(Mat _H){
+
     perspectiveTransform(bound_points[FIRST], bound_points[FIRST], _H);
+    if (keypoints_pos[PREV].size())
+        perspectiveTransform(keypoints_pos[PREV], keypoints_pos[PREV], _H);
+    if (keypoints_pos[NEXT].size())        
+        perspectiveTransform(keypoints_pos[NEXT], keypoints_pos[NEXT], _H); 
+        
     bound_rect =  boundingRect(bound_points[FIRST]);
     H = _H * H;
 }

@@ -131,6 +131,8 @@ int Stitcher::stitch(Frame *_object, Frame *_scene, Size _scene_dims){
                 neighbors_kp.pop_back();
                 good_matches.pop_back();
             }
+            img[OBJECT]->keypoints_pos[PREV].clear();
+            img[SCENE]->keypoints_pos[NEXT].clear();
         }
     }
 

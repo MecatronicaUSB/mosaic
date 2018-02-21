@@ -83,11 +83,6 @@ class Frame{
          */
         void setHReference(Mat _H);
         /**
-         * @brief Transform coordimates of keypoints by own homography matrix
-         * @detail Usefull to detect keypoints in original image and thack them to the transformed one
-         */
-        void trackKeypoints();
-        /**
          * @brief Check if the frame is too much distorted
          * @detail The distortion is besed on follow criteria:
          * - Ratio of semi-diagonals distance. \n

@@ -58,7 +58,7 @@ bool Mosaic::addFrame(Mat _object){
             sub_mosaics[n_subs]->addFrame(new_frame);
             test = true;
 
-            if (n_subs>2) {
+            if (n_subs>1) {
                 compute();
             }
 
@@ -106,15 +106,37 @@ void Mosaic::compute(int n_iter){
     // imshow("Blend-Ransac1", ransac_mosaics[1]->final_scene);
     // waitKey(0);
 
+
+    blender->blendSubMosaic(ransac_mosaics[0]);
+    for (Frame *frame: ransac_mosaics[0]->frames) {
+        for(int j=0; j<frame->keypoints_pos[PREV].size(); j++){
+            circle(ransac_mosaics[0]->final_scene, frame->keypoints_pos[PREV][j], 3, Scalar(255, 0, 0), -1);
+        }
+    }
+    imshow("Blend-Ransac1", ransac_mosaics[0]->final_scene);
+
+    blender->blendSubMosaic(ransac_mosaics[1]);
+    for (Frame *frame: ransac_mosaics[1]->frames) {
+        for(int j=0; j<frame->keypoints_pos[PREV].size(); j++){
+            circle(ransac_mosaics[1]->final_scene, frame->keypoints_pos[PREV][j], 3, Scalar(255, 0, 0), -1);
+        }
+    }
+    imshow("Blend-Ransac1", ransac_mosaics[1]->final_scene);
+
+    waitKey(0);
+
     srand((uint32_t)getTickCount());
+
+    points[0] = vector<Point2f>(4);
+    points[1] = vector<Point2f>(4);
 
     for (int i=0; i<n_iter; i++) {
         for (int j=0; j<4; j++) {
             rnd_frame = rand() % ransac_mosaics[0]->n_frames;
             rnd_point = rand() % ransac_mosaics[0]->frames[rnd_frame]->bound_points[FIRST].size();
 
-            points[0].push_back(ransac_mosaics[0]->frames[rnd_frame]->bound_points[FIRST][rnd_point]);
-            points[1].push_back(ransac_mosaics[1]->frames[rnd_frame]->bound_points[FIRST][rnd_point]);
+            points[0][j] = ransac_mosaics[0]->frames[rnd_frame]->bound_points[FIRST][rnd_point];
+            points[1][j] = ransac_mosaics[1]->frames[rnd_frame]->bound_points[FIRST][rnd_point];
         }
         for (int j=0; j<4; j++) {
             mid_points[j] = getMidPoint(points[0][j], points[1][j]);
@@ -139,6 +161,12 @@ void Mosaic::compute(int n_iter){
         perspectiveTransform(frame->bound_points[FIRST],
                              frame->bound_points[RANSAC], best_H*frame->H);
     }
+
+    for (Frame *frame: ransac_mosaics[0]->frames) {
+        frame->setHReference(best_H);
+    }
+
+
 }
 
 void Mosaic::getReferencedMosaics(vector<SubMosaic *> &_sub_mosaics){
@@ -157,6 +185,8 @@ void Mosaic::getReferencedMosaics(vector<SubMosaic *> &_sub_mosaics){
     for (Frame *frame: _sub_mosaics[1]->frames) {
         frame->setHReference(_sub_mosaics[0]->avg_H.inv());
     }
+
+    _sub_mosaics[1]->avg_H = _sub_mosaics[0]->avg_H.inv();
 }
 
 void Mosaic::positionSubMosaics(SubMosaic *_first, SubMosaic *_second){
