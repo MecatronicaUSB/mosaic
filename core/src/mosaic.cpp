@@ -22,64 +22,70 @@ Mosaic::Mosaic(bool _pre){
 }
 
 // See description in header file
-void Mosaic::addFrame(Mat _object){
+bool Mosaic::addFrame(Mat _object){
     tot_frames++;
 
     cout <<"Sub Mosaic # "<<n_subs+1<<" # Frames: "<<sub_mosaics[n_subs]->n_frames+1 << endl;
 
     Frame *new_frame = new Frame(_object.clone(), apply_pre);
-    if (sub_mosaics[n_subs]->n_frames == 0) {
+
+    if (sub_mosaics[n_subs]->isEmpty()) {
         sub_mosaics[n_subs]->addFrame(new_frame);
-        return;
+        return true;
     }
+
     int status = stitcher->stitch(new_frame,
                                   sub_mosaics[n_subs]->last_frame,
                                   sub_mosaics[n_subs]->scene_size);
+
     switch( status ) {
         case OK: {
             sub_mosaics[n_subs]->addFrame(new_frame);
             sub_mosaics[n_subs]->computeOffset();
-            break;
+            return true;
         }
-        case USE_AKAZE:
-            detector = AKAZE::create();
-            break;
-        case USE_SIFT:
-            detector = SIFT::create();
-            break;
-        case USE_SURF:
-            detector = SURF::create();
-            break;
-        default:
-            detector = KAZE::create();
-            break; 
-    }
-    if (status.ok) {
-
-
-        // sub_mosaics[n_subs]->updateOffset(status.offset);
-
-    } else {
-        sub_mosaics[n_subs]->is_complete = true;
+        case BAD_DISTORTION:{
         
-        sub_mosaics[n_subs]->correct();
-        sub_mosaics[n_subs]->computeOffset();
+            // sub_mosaics[n_subs]->correct();
+            sub_mosaics[n_subs]->computeOffset();
+            
+            sub_mosaics.push_back(new SubMosaic());
+            n_subs++;
 
-        blender->blendSubMosaic(sub_mosaics[n_subs]);
-        imshow("Blend", sub_mosaics[n_subs]->final_scene);
-        imwrite("/home/victor/dataset/output/neighbor-"+to_string(n_subs)+".jpg", sub_mosaics[n_subs]->final_scene);
-        waitKey(0);
-        
-        sub_mosaics.push_back(new SubMosaic());
-        n_subs++;
-
-        new_frame->resetFrame();
-        sub_mosaics[n_subs]->addFrame(new_frame);
+            new_frame->resetFrame();
+            sub_mosaics[n_subs]->addFrame(new_frame);
+            test = true;
+            return true;
+        }
+        case BAD_KEYPOINTS: {
+            // TODO: evaluate this case
+            return false;
+        }
+        case BAD_HOMOGRAPHY: {
+            // TODO: evaluate this case
+            return false;
+        }
+        default: {
+            return false;
+        }
     }
 }
 
 void Mosaic::compute(){
 
+}
+
+void Mosaic::show(){
+    if (test) {
+        if (!sub_mosaics[n_subs-1]->final_scene.data) {
+            blender->blendSubMosaic(sub_mosaics[n_subs-1]);
+            imshow("Blend", sub_mosaics[n_subs-1]->final_scene);
+            imwrite("/home/victor/dataset/output/neighbor-"+to_string(n_subs)+".jpg", sub_mosaics[n_subs-1]->final_scene);
+            waitKey(0);
+            test = false;
+        }
+
+    }
 }
 
 }

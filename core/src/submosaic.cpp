@@ -7,7 +7,6 @@
  */
 
 #include "../include/submosaic.hpp"
-#include "../include/stitch.hpp"
 
 using namespace std;
 using namespace cv;
@@ -112,6 +111,16 @@ float Frame::boundAreaKeypoints(){
     return contourArea(hull);
 }
 
+void Frame::setHReference(Mat _avg_H){
+    perspectiveTransform(bound_points, bound_points, _avg_H);
+    bound_rect =  boundingRect(bound_points);
+    H = _avg_H * H;
+}
+
+bool Frame::haveKeypoints(){
+    return keypoints.size() > 0 ? true : false;
+}
+
 // See description in header file
 void SubMosaic::addFrame(Frame *_frame){
     frames.push_back(_frame);
@@ -123,11 +132,6 @@ void SubMosaic::addFrame(Frame *_frame){
     }
 }
 
-void Frame::setHReference(Mat _avg_H){
-    perspectiveTransform(bound_points, bound_points, _avg_H);
-    bound_rect =  boundingRect(bound_points);
-    H = _avg_H * H;
-}
 
 void SubMosaic::computeOffset(){
     float top=TARGET_HEIGHT, bottom=0, left=TARGET_WIDTH, right=0;
@@ -238,9 +242,15 @@ void SubMosaic::correct(){
     }
 
     for (Frame *frame: frames) {
+        //frame->H = frame->H * avg_H;
         frame->setHReference(avg_H);
     }
     
+}
+
+// See description in header file
+bool SubMosaic::isEmpty(){
+    return n_frames==0 ? true : false;
 }
 
 // See description in header file

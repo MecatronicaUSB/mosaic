@@ -43,8 +43,8 @@ enum WarpOffset{
 
 enum StitchStatus {
     OK,
-    BAD_HOMOGRAPHY,
     BAD_DISTORTION,
+    BAD_HOMOGRAPHY,
     BAD_KEYPOINTS
 };
 
@@ -53,14 +53,12 @@ class Frame;
 class Stitcher {
     public:
         // ---------- Atributes
-        Mat offset_h;
-        Mat scene_keypoints;                                                //!< Image to draw the keypoints after one match (testing purpose)
-        int cells_div;                                                      //!< number (n) of cell divisions in grid detector (if used)
-        vector<Frame *> img = vector<Frame *>(2);                           //!< Vector of two frames to stitch (Pointers)
         bool use_grid;                                                      //!< flag to use or not the grid detection
+        int cells_div;                                                      //!< number (n) of cell divisions in grid detector (if used)
+        Mat offset_h;
         vector<vector<vector<DMatch> > > matches;                           //!< Vector of OpenCV Matches                     
         vector<vector<DMatch> > good_matches;                               //!< Vector of OpenCV good Matches (after discard outliers)
-        vector<vector<KeyPoint> > keypoints;                                //!< Array of Vectors containing OpenCV Keypoints
+        vector<Frame *> img = vector<Frame *>(2);                           //!< Vector of two frames to stitch (Pointers)
         // ---------- Methods
         /**
          * @brief Default Stitcher constructor
@@ -148,6 +146,10 @@ class Stitcher {
          * @return vector<float> Padd size for each side of scene image
          */
         void getBoundPoints();
+        /**
+         * @brief 
+         */
+        void updateNeighbors();
 
 };
 

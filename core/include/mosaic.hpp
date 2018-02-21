@@ -7,6 +7,8 @@
  */
 #pragma once
 #include "submosaic.hpp"
+#include "stitch.hpp"
+#include "blend.hpp"
 
 using namespace std;
 using namespace cv;
@@ -27,6 +29,7 @@ class Mosaic{
         bool apply_pre;                         //!< flag to apply or not SCB preprocessing algorithm
         Stitcher *stitcher;
         Blender *blender;
+        bool test = false;
         // ---------- Methods
         Mosaic(bool _pre = true);
         // TODO:
@@ -35,9 +38,11 @@ class Mosaic{
          * @brief 
          * @param _object 
          */
-        void addFrame(Mat _object);
+        bool addFrame(Mat _object);
         // TODO:
         void compute();
+        // temporal function
+        void show();
 };
 
 }

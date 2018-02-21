@@ -1,4 +1,4 @@
-// STITCH MODULE
+
 /**
  * @file main.cpp
  * @brief Contais the main code for image stitching module
@@ -115,7 +115,7 @@ int main( int argc, char** argv ) {
             t = (double) getTickCount();
         }
         if (op_out) {
-
+            mosaic.show();
         }
         
     }

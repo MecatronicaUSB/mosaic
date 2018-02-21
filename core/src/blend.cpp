@@ -33,11 +33,12 @@ void Blender::blendSubMosaic(SubMosaic *_sub_mosaic){
             pt.x -= frame->bound_rect.x;
             pt.y -= frame->bound_rect.y;
         }
-        reduceRoi(frame->bound_points);
-        Point points_array[4] = {frame->bound_points[0],
-                                 frame->bound_points[1],
-                                 frame->bound_points[2],
-                                 frame->bound_points[3],};
+        vector<Point2f> aux_points = frame->bound_points;
+        reduceRoi(aux_points);
+        Point points_array[4] = {aux_points[0],
+                                 aux_points[1],
+                                 aux_points[2],
+                                 aux_points[3],};
 
         Mat mask(frame->bound_rect.height, frame->bound_rect.width, CV_8UC3, Scalar(0,0,0));
         fillConvexPoly( mask, points_array, 4, Scalar(255,255,255));
@@ -46,9 +47,9 @@ void Blender::blendSubMosaic(SubMosaic *_sub_mosaic){
         frame->bound_rect.x = max(frame->bound_rect.x,0.f);
         frame->bound_rect.y = max(frame->bound_rect.y,0.f);
         Mat frame_position(_sub_mosaic->final_scene, cv::Rect(frame->bound_rect.x,
-                                                frame->bound_rect.y,
-                                                frame->bound_rect.width,
-                                                frame->bound_rect.height));
+                                                              frame->bound_rect.y,
+                                                              frame->bound_rect.width,
+                                                              frame->bound_rect.height));
 
         warp_img.copyTo(frame_position, mask);
         // object_position -= _warp_img;

@@ -89,6 +89,12 @@ class Frame{
          * @return float Area with good keypoints inside
          */
         float boundAreaKeypoints();
+        /**
+         * @brief 
+         * @return true 
+         * @return false 
+         */
+        bool haveKeypoints();
 
 };
 typedef struct {                   //!< Struct to relate two SubMosaics
@@ -111,12 +117,11 @@ class SubMosaic{
         vector<Hierarchy> neighbors; //!< Vector with all the neighbors SubMosaics (spatially close)
         float distortion;
         Size2f scene_size;
-        bool is_complete;
         // ---------- Methods
         /**
          * @brief Default constructor
          */
-        SubMosaic() : n_frames(0), scene_size(Size2f(TARGET_WIDTH, TARGET_HEIGHT)), is_complete(false){};
+        SubMosaic() : n_frames(0), scene_size(Size2f(TARGET_WIDTH, TARGET_HEIGHT)){};
         /**
          * @brief Using the Stitcher class, add the object image to the current sub-mosaic
          * @param _object OpenCV Matrix containig the BGR image to add in the sub-mosaic
@@ -154,6 +159,12 @@ class SubMosaic{
          * (Not yet implemented)
          */
         void calcAverageH();
+        /**
+         * @brief 
+         * @return true 
+         * @return false 
+         */
+        bool isEmpty();
 };
 
 /**

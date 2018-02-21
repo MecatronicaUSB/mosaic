@@ -7,7 +7,6 @@
  */
 
 #include "../include/stitch.hpp"
-#include "../include/utils.h"
 
 using namespace std;
 using namespace cv;
@@ -85,21 +84,24 @@ int Stitcher::stitch(Frame *_object, Frame *_scene, Size _scene_dims){
     img[OBJECT] = _object;
     img[SCENE] = _scene;
 
-    if (!img[SCENE]->keypoints.size()) {
-        detector->detectAndCompute(img[SCENE]->gray, Mat(), img[SCENE]->keypoints, img[SCENE]->descriptors);
+    if (!img[SCENE]->haveKeypoints()) {
+        detector->detectAndCompute(img[SCENE]->gray, Mat(), img[SCENE]->keypoints,
+                                                            img[SCENE]->descriptors);
     }
-    detector->detectAndCompute(img[OBJECT]->gray, Mat(), img[OBJECT]->keypoints, img[OBJECT]->descriptors);
+    detector->detectAndCompute(img[OBJECT]->gray, Mat(), img[OBJECT]->keypoints,
+                                                         img[OBJECT]->descriptors);
 
-    if (!img[OBJECT]->keypoints.size()) {
+    if (!img[SCENE]->haveKeypoints()) {
         cout << "No Key points Found" <<  endl;
-        return BAD_HEYPOINTS;
+        return BAD_KEYPOINTS;
     }
 
     // Match the keypoints using Knn
     vector<vector<DMatch> > aux_matches;
-    matches.clear();
+
     matcher->knnMatch( img[OBJECT]->descriptors, img[SCENE]->descriptors, aux_matches, 2);
     matches.push_back(aux_matches);
+    
     for (Frame *neighbor: img[SCENE]->neighbors) {
         aux_matches.clear();
         matcher->knnMatch(img[OBJECT]->descriptors, neighbor->descriptors, aux_matches, 2);
@@ -132,14 +134,14 @@ int Stitcher::stitch(Frame *_object, Frame *_scene, Size _scene_dims){
         }
     }
 
-    img[OBJECT]->H = findHomography(points_pos[OBJECT], points_pos[SCENE], CV_RANSAC);
+    Mat H = findHomography(points_pos[OBJECT], points_pos[SCENE], CV_RANSAC);
 
-    if (img[OBJECT]->H.empty()) {
+    if (H.empty()) {
         cout << "not enought keypoints to calculate homography matrix. Exiting..." <<  endl;
         return BAD_HOMOGRAPHY;
     }
 
-    getBoundPoints();
+    img[OBJECT]->setHReference(H);
 
     if (!img[OBJECT]->isGoodFrame()) {
         cout << "Frame too distorted. Exiting..." <<  endl;
@@ -147,14 +149,7 @@ int Stitcher::stitch(Frame *_object, Frame *_scene, Size _scene_dims){
         return BAD_DISTORTION;
     }
 
-    img[OBJECT]->neighbors.push_back(img[SCENE]);
-    for (int i=0; i<img[SCENE]->neighbors.size(); i++) {
-        if (good_matches[i+1].size() > 4) {
-            img[OBJECT]->neighbors.push_back(img[SCENE]->neighbors[i]);
-        }
-    }
-    cleanNeighborsData();
-    // img[SCENE]->neighbors.push_back(img[OBJECT]);
+    updateNeighbors();
 
     return OK;
 }
@@ -165,6 +160,17 @@ void Stitcher::cleanNeighborsData(){
         good_matches.pop_back();
         matches.pop_back();
     }
+    matches.clear();
+}
+
+void Stitcher::updateNeighbors(){
+    img[OBJECT]->neighbors.push_back(img[SCENE]);
+    for (int i=0; i<img[SCENE]->neighbors.size(); i++) {
+        if (good_matches[i+1].size() > 4) {
+            img[OBJECT]->neighbors.push_back(img[SCENE]->neighbors[i]);
+        }
+    }
+    cleanNeighborsData();
 }
 
 // See description in header file
@@ -175,7 +181,7 @@ void Stitcher::getGoodMatches(int _thresh){
         for (vector<DMatch> match: matches[i]) {
             if ((match[0].distance < _thresh * (match[1].distance)) &&
                 ((int) match.size() <= 2 && (int) match.size() > 0)) {
-                // take the first result only if its distance is smaller than 0.5*second_best_dist
+                // take the first result only if its distance is smaller than threshold*second_best_dist
                 // that means this descriptor is ignored if the second distance is bigger or of similar
                 aux_matches.push_back(match[0]);
             }
@@ -293,10 +299,8 @@ void Stitcher::drawKeipoints(vector<float> _warp_offset, Mat &_final_scene){
 
 // See description in header file
 void Stitcher::getBoundPoints(){
-
     perspectiveTransform(img[OBJECT]->bound_points, img[OBJECT]->bound_points, img[OBJECT]->H);
     img[OBJECT]->bound_rect = boundingRect(img[OBJECT]->bound_points);
-
 }
 
 }
