@@ -30,20 +30,27 @@ class SubMosaic{
     public:
         // ---------- Atributes
         int n_frames;                       //!< Number of frames in sub-mosaic
-        vector<Frame *> frames;             //!< Vector containing all the frames (Pointers) in sub-mosaic 
+        float distortion;
         Mat final_scene;                    //!< Image containing all blended images (the sub-mosaic)
         Mat avg_H;                            //!< Average Homography matrix (Matrix that reduces the dostortion error)
         Frame *last_frame;
-        vector<Hierarchy> neighbors; //!< Vector with all the neighbors SubMosaics (spatially close)
-        float distortion;
         Size2f scene_size;
+        vector<Frame *> frames;             //!< Vector containing all the frames (Pointers) in sub-mosaic 
+        vector<Hierarchy> neighbors; //!< Vector with all the neighbors SubMosaics (spatially close)
         // ---------- Methods
         /**
          * @brief Default constructor
          */
-        SubMosaic() : n_frames(0),
-                      scene_size(Size2f(TARGET_WIDTH, TARGET_HEIGHT)),
-                      avg_H(Mat::eye(3, 3, CV_64F)){};
+        SubMosaic();
+        /**
+         * @brief 
+         */
+        ~SubMosaic();
+        /**
+         * @brief 
+         * @return SubMosaic 
+         */
+        SubMosaic* clone();
         /**
          * @brief Using the Stitcher class, add the object image to the current sub-mosaic
          * @param _object OpenCV Matrix containig the BGR image to add in the sub-mosaic

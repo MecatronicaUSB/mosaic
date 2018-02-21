@@ -45,16 +45,16 @@ class Frame{
     public:
         // ---------- Atributes
         bool key;                         //!< Flag to specify reference frame
-        Mat H;                            //!< Homography matrix based on previous frame
-        Rect2f bound_rect;                //!< Minimum bounding rectangle of transformed image
+        float frame_error;
+        Mat descriptors;
         Mat color;                        //!< OpenCV Matrix containing the original image
         Mat gray;                         //!< OpenCV Matrix containing a gray scale version of image
-        vector<Point2f> bound_points[3];     //!< Points of the transformmed image (initially at corners)
-        vector<Point2f> keypoints_pos[2]; //!< Position (X,Y) of good keypoints in image 
-        vector<Frame *> neighbors;         //!< Vector containing all spatially close Frames (Pointers)
+        Mat H;                            //!< Homography matrix based on previous frame
+        Rect2f bound_rect;                //!< Minimum bounding rectangle of transformed image
+        vector<vector<Point2f> > bound_points;     //!< Points of the transformmed image (initially at corners)
+        vector<vector<Point2f> > keypoints_pos; //!< Position (X,Y) of good keypoints in image 
         vector<KeyPoint> keypoints;
-        Mat descriptors;
-        float frame_error;
+        vector<Frame *> neighbors;         //!< Vector containing all spatially close Frames (Pointers)
 
         // ---------- Methods
         /**
@@ -65,6 +65,15 @@ class Frame{
          * @param _height Height to resize the image (Speed purpose)
          */
         Frame(Mat _img,  bool _pre = true, int _width = TARGET_WIDTH, int _height = TARGET_HEIGHT);
+        /**
+         * @brief 
+         */
+        ~Frame();
+        /**
+         * @brief 
+         * @return Frame* 
+         */
+        Frame* clone();
         /**
          * @brief 
          */

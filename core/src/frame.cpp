@@ -17,6 +17,9 @@ namespace m2d //!< mosaic 2d namespace
 // See description in header file
 Frame::Frame(Mat _img, bool _pre, int _width, int _height){
 
+    bound_points = vector<vector<Point2f> >(3);
+    keypoints_pos = vector<vector<Point2f> >(2);
+
     if (_img.size().width != _width || _img.size().height != _height)
         resize(_img, _img, Size(_width, _height));
     
@@ -37,6 +40,34 @@ Frame::Frame(Mat _img, bool _pre, int _width, int _height){
 
     H = Mat::eye(3, 3, CV_64F);
 
+}
+
+Frame::~Frame(){
+    H.release();
+    gray.release();
+    color.release();
+    descriptors.release();
+    keypoints_pos.clear();
+    bound_points.clear();
+    keypoints.clear();
+    neighbors.clear();
+}
+
+Frame* Frame::clone(){
+    Frame* new_frame;
+    new_frame->key = key;
+    new_frame->frame_error = frame_error;        
+    new_frame->descriptors = descriptors.clone();
+    new_frame->color = color.clone();
+    new_frame->gray = gray.clone();
+    new_frame->H = H.clone();
+    new_frame->bound_rect = bound_rect;
+    new_frame->bound_points = bound_points;
+    new_frame->keypoints_pos = keypoints_pos;
+    new_frame->keypoints = keypoints;
+    new_frame->neighbors = neighbors;
+
+    return new_frame;
 }
 
 // See description in header file

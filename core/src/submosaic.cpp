@@ -14,6 +14,36 @@ using namespace cv;
 namespace m2d //!< mosaic 2d namespace
 {
 
+SubMosaic::SubMosaic(){
+    n_frames = 0;
+    scene_size = Size2f(TARGET_WIDTH, TARGET_HEIGHT);
+    avg_H = Mat::eye(3, 3, CV_64F);
+}
+
+SubMosaic::~SubMosaic(){
+    for (Frame *frame: frames) {
+        delete frame;
+    }
+    final_scene.release();
+    avg_H.release();
+    neighbors.clear();
+}
+
+// See description in header file
+SubMosaic* SubMosaic::clone(){
+    SubMosaic *new_sub_mosaic = new SubMosaic();
+    new_sub_mosaic->n_frames = n_frames;
+    new_sub_mosaic->distortion = distortion;
+    new_sub_mosaic->final_scene = final_scene.clone();
+    new_sub_mosaic->avg_H = avg_H.clone();
+    new_sub_mosaic->scene_size = scene_size;
+    new_sub_mosaic->neighbors = neighbors;
+    for (Frame *frame: frames) {
+        new_sub_mosaic->addFrame(frame->clone());
+    }
+
+    return new_sub_mosaic;
+}
 
 // See description in header file
 void SubMosaic::addFrame(Frame *_frame){
@@ -123,7 +153,6 @@ void SubMosaic::correct(){
         }
 
         temp_distortion = calcDistortion();
-        cout << temp_distortion << endl << endl;
 
         if (temp_distortion < distortion) {
             distortion = temp_distortion;

@@ -47,7 +47,7 @@ class Mosaic{
          * @param _ref 
          * @return SubMosaic* 
          */
-        SubMosaic* getReferencedMosaic(SubMosaic *_first, SubMosaic *_second, int _ref);
+        void getReferencedMosaics(vector<SubMosaic *> _sub_mosaics);
         /**
          * @brief 
          */
