@@ -25,7 +25,8 @@ enum FrameRef{
 
 enum RansacReference {
     FIRST,
-    SECOND
+    SECOND,
+    RANSAC
 };
 
 /// offset of padding to add in scene after object transformation
@@ -48,7 +49,7 @@ class Frame{
         Rect2f bound_rect;                //!< Minimum bounding rectangle of transformed image
         Mat color;                        //!< OpenCV Matrix containing the original image
         Mat gray;                         //!< OpenCV Matrix containing a gray scale version of image
-        vector<Point2f> bound_points[2];     //!< Points of the transformmed image (initially at corners)
+        vector<Point2f> bound_points[3];     //!< Points of the transformmed image (initially at corners)
         vector<Point2f> keypoints_pos[2]; //!< Position (X,Y) of good keypoints in image 
         vector<Frame *> neighbors;         //!< Vector containing all spatially close Frames (Pointers)
         vector<KeyPoint> keypoints;

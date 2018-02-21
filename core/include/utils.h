@@ -16,11 +16,12 @@
 #include <opencv2/core.hpp>
 #include <dirent.h>
 #include <stdlib.h>
-#include <iostream>
 #include <stdlib.h>
-#include <cmath> 
-#include <vector>
+#include <iostream>
+#include <time.h>
 #include <string>
+#include <vector>
+#include <cmath> 
 
 using namespace cv;
 using namespace std;
@@ -39,6 +40,7 @@ const int TARGET_HEIGHT	= 480;
  */
 float getDistance(Point2f _pt1, Point2f _pt2);
 
+Point2f getMidPoint(Point2f _pt1, Point2f _pt2);
 
 }
 

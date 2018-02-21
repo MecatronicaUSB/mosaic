@@ -72,13 +72,66 @@ bool Mosaic::addFrame(Mat _object){
     }
 }
 
-void Mosaic::compute(){
+void Mosaic::compute(int n_iter){
 
-SubMosaic *scene = sub_mosaics[0];
-SubMosaic *object = sub_mosaics[1];
+    vector<SubMosaic *> ransac_mosaic(2);
+    vector<vector<Point2f> > points(2);
+    vector<Point2f> mid_points(4);
+    vector<Frame *> frames(4);
+    float distortion = 100;
+    float temp_distortion;
+    int rnd_frame, rnd_point;
+    int n_ponts;
+    Mat temp_H, best_H;
 
-object->setHReference(scene->avg_H);
-object->computeOffset();
+    SubMosaic *scene = sub_mosaics[0];
+    SubMosaic *object = sub_mosaics[1];
+
+    ransac_mosaic[0] = getReferencedMosaic(scene, object, FIRST);
+    ransac_mosaic[1] = getReferencedMosaic(scene, object, SECOND);
+
+    ransac_mosaic[0]->computeOffset();
+    ransac_mosaic[1]->computeOffset();
+
+    int n_frames = ransac_mosaic[0]->n_frames;
+    srand((uint32_t)getTickCount());
+
+
+    for (int i=0; i<n_iter; i++) {
+        for (int j=0; j<4; j++) {
+            rnd_frame = rand() % n_frames;
+            rnd_point = ransac_mosaic[0]->frames[rand()%n_frames]->bound_points[FIRST].size();
+            points[0].push_back(ransac_mosaic[0]->frames[rand()%n_frames]->bound_points[FIRST][rnd_point]);
+            points[1].push_back(ransac_mosaic[1]->frames[rand()%n_frames]->bound_points[FIRST][rnd_point]);
+        }
+        for (int j=0; j<4; j++) {
+            mid_points[j] = getMidPoint(points[0][j], points[1][j]);
+        }
+
+        temp_H = getPerspectiveTransform(points[0], mid_points);
+
+        for (Frame *frame: ransac_mosaic[0]->frames) {
+            perspectiveTransform(frame->bound_points[FIRST],
+                                 frame->bound_points[RANSAC], temp_H*frame->H);
+        }
+
+        temp_distortion = ransac_mosaic[0]->calcDistortion();
+
+        if (temp_distortion < distortion) {
+            distortion = temp_distortion;
+            best_H = temp_H;
+        }
+    }
+
+    for (Frame *frame: ransac_mosaic[0]->frames) {
+        perspectiveTransform(frame->bound_points[FIRST],
+                             frame->bound_points[RANSAC], best_H*frame->H);
+    }
+
+
+}
+
+SubMosaic* Mosaic::getReferencedMosaic(SubMosaic *_first, SubMosaic *_second, int _ref){
 
 }
 

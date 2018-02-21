@@ -35,8 +35,19 @@ class Mosaic{
          * @param _object 
          */
         bool addFrame(Mat _object);
-        // TODO:
-        void compute();
+        /**
+         * @brief 
+         * @param n_inter 
+         */
+        void compute(int n_inter = 200);
+        /**
+         * @brief 
+         * @param _first 
+         * @param _second 
+         * @param _ref 
+         * @return SubMosaic* 
+         */
+        SubMosaic* getReferencedMosaic(SubMosaic *_first, SubMosaic *_second, int _ref);
         /**
          * @brief 
          */

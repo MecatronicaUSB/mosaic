@@ -16,6 +16,10 @@ float getDistance(Point2f _pt1, Point2f _pt2){
     return sqrt(pow((_pt1.x - _pt2.x),2) + pow((_pt1.y - _pt2.y),2));
 }
 
+Point2f getMidPoint(Point2f _pt1, Point2f _pt2){
+
+}
+
 }
 
 void getHistogram(cv::Mat img, int *histogram){    

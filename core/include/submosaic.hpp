@@ -60,11 +60,6 @@ class SubMosaic{
         float calcKeypointsError(Frame *_first, Frame *_second);
         /**
          * @brief 
-         * @param _h 
-         */
-        void setHReference(Mat _H);
-        /**
-         * @brief 
          * @return float 
          */
         float calcDistortion();

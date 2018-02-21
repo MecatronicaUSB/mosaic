@@ -137,9 +137,6 @@ void SubMosaic::correct(){
     }
 }
 
-void SubMosaic::setHReference(Mat _H){
-
-}
 
 // See description in header file
 bool SubMosaic::isEmpty(){
