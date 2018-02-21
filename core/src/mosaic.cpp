@@ -1,6 +1,6 @@
 /**
  * @file mosaic.cpp
- * @brief Implementation of stitch class and Mosaic2d Namespace functions 
+ * @brief Implementation of Mosaic class functions
  * @version 0.2
  * @date 10/02/2018
  * @author Victor Garcia
@@ -13,6 +13,7 @@ using namespace cv;
 
 namespace m2d //!< mosaic 2d namespace
 {
+
 // See description in header file
 Mosaic::Mosaic(bool _pre){
     apply_pre = _pre;
@@ -25,8 +26,8 @@ Mosaic::Mosaic(bool _pre){
 bool Mosaic::addFrame(Mat _object){
     tot_frames++;
 
-    cout <<"Sub Mosaic # "<<n_subs+1<<" # Frames: "<<sub_mosaics[n_subs]->n_frames+1 << endl;
-
+    cout <<"Sub Mosaic # "<<n_subs+1<<" # Frames: "<<sub_mosaics[n_subs]->n_frames+1;
+    cout << flush << "\r";
     Frame *new_frame = new Frame(_object.clone(), apply_pre);
 
     if (sub_mosaics[n_subs]->isEmpty()) {
@@ -57,11 +58,11 @@ bool Mosaic::addFrame(Mat _object){
             test = true;
             return true;
         }
-        case BAD_KEYPOINTS: {
+        case NO_KEYPOINTS: {
             // TODO: evaluate this case
             return false;
         }
-        case BAD_HOMOGRAPHY: {
+        case NO_HOMOGRAPHY: {
             // TODO: evaluate this case
             return false;
         }
@@ -72,6 +73,16 @@ bool Mosaic::addFrame(Mat _object){
 }
 
 void Mosaic::compute(){
+
+SubMosaic *scene = sub_mosaics[0];
+SubMosaic *object = sub_mosaics[1];
+
+object->setHReference(scene->avg_H);
+object->computeOffset();
+
+}
+
+void Mosaic::positionSubMosaics(SubMosaic *_first, SubMosaic *_second){
 
 }
 

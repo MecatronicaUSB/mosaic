@@ -1,13 +1,13 @@
 /**
  * @file stitch.hpp
- * @brief Mosaic2d Namespace and Classes
+ * @brief Description of Stitcher Class
  * @version 0.2
  * @date 10/02/2018
  * @author Victor Garcia
  */
+
 #pragma once
-#include "utils.h"
-#include "submosaic.hpp"
+#include "frame.hpp"
 
 using namespace std;
 using namespace cv;
@@ -33,22 +33,13 @@ enum Matcher{
     USE_BRUTE_FORCE,
     USE_FLANN
 };
-/// offset of padding to add in scene after object transformation
-enum WarpOffset{
-    TOP,
-    BOTTOM,
-    LEFT,
-    RIGHT
-};
 
 enum StitchStatus {
     OK,
     BAD_DISTORTION,
-    BAD_HOMOGRAPHY,
-    BAD_KEYPOINTS
+    NO_KEYPOINTS,
+    NO_HOMOGRAPHY
 };
-
-class Frame;
 
 class Stitcher {
     public:

@@ -1,6 +1,6 @@
 /**
  * @file stitch.cpp
- * @brief Implementation of stitch class and Mosaic2d Namespace functions 
+ * @brief Implementation of Stitcher class functions 
  * @version 0.2
  * @date 10/02/2018
  * @author Victor Garcia
@@ -92,8 +92,8 @@ int Stitcher::stitch(Frame *_object, Frame *_scene, Size _scene_dims){
                                                          img[OBJECT]->descriptors);
 
     if (!img[SCENE]->haveKeypoints()) {
-        cout << "No Key points Found" <<  endl;
-        return BAD_KEYPOINTS;
+        cout << "No Key points Found. exiting" <<  endl;
+        return NO_KEYPOINTS;
     }
 
     // Match the keypoints using Knn
@@ -137,14 +137,14 @@ int Stitcher::stitch(Frame *_object, Frame *_scene, Size _scene_dims){
     Mat H = findHomography(points_pos[OBJECT], points_pos[SCENE], CV_RANSAC);
 
     if (H.empty()) {
-        cout << "not enought keypoints to calculate homography matrix. Exiting..." <<  endl;
-        return BAD_HOMOGRAPHY;
+        cout << "Not enought keypoints to calculate homography matrix. Exiting..." <<  endl;
+        return NO_HOMOGRAPHY;
     }
 
     img[OBJECT]->setHReference(H);
 
     if (!img[OBJECT]->isGoodFrame()) {
-        cout << "Frame too distorted. Exiting..." <<  endl;
+        cout << "Frame too distorted. Creating new Sub-Mosaic..." <<  endl;
         cleanNeighborsData();
         return BAD_DISTORTION;
     }
@@ -299,8 +299,8 @@ void Stitcher::drawKeipoints(vector<float> _warp_offset, Mat &_final_scene){
 
 // See description in header file
 void Stitcher::getBoundPoints(){
-    perspectiveTransform(img[OBJECT]->bound_points, img[OBJECT]->bound_points, img[OBJECT]->H);
-    img[OBJECT]->bound_rect = boundingRect(img[OBJECT]->bound_points);
+    perspectiveTransform(img[OBJECT]->bound_points[FIRST], img[OBJECT]->bound_points[FIRST], img[OBJECT]->H);
+    img[OBJECT]->bound_rect = boundingRect(img[OBJECT]->bound_points[FIRST]);
 }
 
 }

@@ -1,6 +1,6 @@
 /**
  * @file submosaic.cpp
- * @brief Implementation of stitch class and Mosaic2d Namespace functions 
+ * @brief Implementation of SubMosaic class functions 
  * @version 0.2
  * @date 10/02/2018
  * @author Victor Garcia
@@ -14,122 +14,12 @@ using namespace cv;
 namespace m2d //!< mosaic 2d namespace
 {
 
-// See description in header file
-float getDistance(Point2f _pt1, Point2f _pt2){
-    return sqrt(pow((_pt1.x - _pt2.x),2) + pow((_pt1.y - _pt2.y),2));
-}
-
-// See description in header file
-void transformationError(){
-
-}
-
-// See description in header file
-void getAvHomography(Mat img1, Mat img2){
-
-}
-
-// See description in header file
-Frame::Frame(Mat _img, bool _pre, int _width, int _height){
-
-    if (_img.size().width != _width || _img.size().height != _height)
-        resize(_img, _img, Size(_width, _height));
-    
-    color = _img.clone();
-    cvtColor(color, gray, CV_BGR2GRAY);
-    if (_pre) {
-        imgChannelStretch(gray, gray, 1, 99);
-    }
-
-    bound_rect = Rect2f(0, 0, _width, _height);
-    // corner points
-	bound_points.push_back(Point2f(0, 0));
-	bound_points.push_back(Point2f(_width, 0));
-	bound_points.push_back(Point2f(_width, _height));
-	bound_points.push_back(Point2f(0, _height));
-    // center point
-    bound_points.push_back(Point2f(_width/2, _height/2));
-
-    H = Mat::eye(3, 3, CV_64F);
-
-}
-
-// See description in header file
-void Frame::resetFrame(){
-    
-    H = Mat::eye(3, 3, CV_64F);
-    key = true;    
-
-    bound_points[0] = Point2f(0, 0);
-    bound_points[1] = Point2f(color.cols, 0);
-    bound_points[2] = Point2f(color.cols, color.rows);
-    bound_points[3] = Point2f(0, color.rows);
-
-    bound_points[4] = Point2f(color.cols/2, color.rows/2);
-    bound_rect = Rect2f(0, 0, color.cols, color.rows);
-    neighbors.clear();
-}
-
-// See description in header file
-bool Frame::isGoodFrame(){
-    float deformation, area, keypoints_area;
-    float semi_diag[4], ratio[2];
-    
-    for (int i=0; i<4; i++) {
-        // 5th point correspond to center of image
-        // Getting the distance between corner points to the center (all semi diagonal distances)
-        semi_diag[i] = getDistance(bound_points[i], bound_points[4]);
-    }
-    // ratio beween semi diagonals
-    ratio[0] = max(semi_diag[0]/semi_diag[2], semi_diag[2]/semi_diag[0]);
-    ratio[1] = max(semi_diag[1]/semi_diag[3], semi_diag[3]/semi_diag[1]);
-
-    // Area of distorted images
-    area = contourArea(bound_points);
-
-    // enclosing area with good keypoints
-    keypoints_area = boundAreaKeypoints();
-
-    // 3 initial threshold value, must be ajusted in future tests 
-    if (area > 1.5*color.cols*color.rows)
-        return false;
-    // 4 initial threshold value, must be ajusted in future tests 
-    if (ratio[0]>1.6 || ratio[1]>1.6)
-        return false;
-    if (keypoints_area < 0.2*color.cols*color.rows)
-        return false;
-    cout << "good Frame" << endl;
-    return true;
-}
-
-// See description in header file
-float Frame::boundAreaKeypoints(){
-    vector<Point2f> hull;
-
-    convexHull(keypoints_pos[PREV], hull);
-
-    return contourArea(hull);
-}
-
-void Frame::setHReference(Mat _avg_H){
-    perspectiveTransform(bound_points, bound_points, _avg_H);
-    bound_rect =  boundingRect(bound_points);
-    H = _avg_H * H;
-}
-
-bool Frame::haveKeypoints(){
-    return keypoints.size() > 0 ? true : false;
-}
 
 // See description in header file
 void SubMosaic::addFrame(Frame *_frame){
     frames.push_back(_frame);
     last_frame = _frame;
     n_frames++;
-    if (n_frames == 1) {
-        key_frame = _frame;
-        key_frame->key = true;
-    }
 }
 
 
@@ -168,8 +58,8 @@ void SubMosaic::updateOffset(vector<float> _offset){
     for (int i=0; i<frames.size(); i++){
         frames[i]->H = t * frames[i]->H;
 
-        perspectiveTransform(frames[i]->bound_points, frames[i]->bound_points, t);
-        // frames[i]->bound_rect = boundingRect(frames[i]->bound_points);
+        perspectiveTransform(frames[i]->bound_points[FIRST], frames[i]->bound_points[FIRST], t);
+        // frames[i]->bound_rect = boundingRect(frames[i]->bound_points[FIRST]);
         frames[i]->bound_rect.x += _offset[LEFT];
         frames[i]->bound_rect.y += _offset[TOP];
         
@@ -199,7 +89,7 @@ float SubMosaic::calcDistortion(){
         for (int i=0; i<4; i++) {
             // 5th point correspond to center of image
             // Getting the distance between corner points to the center (all semi diagonal distances)
-            semi_diag[i] = getDistance(frame->bound_points2[i], frame->bound_points2[4]);
+            semi_diag[i] = getDistance(frame->bound_points[SECOND][i], frame->bound_points[SECOND][4]);
         }
         // ratio beween semi diagonals
         ratio[0] = max(semi_diag[0]/semi_diag[2], semi_diag[2]/semi_diag[0]);
@@ -218,7 +108,7 @@ void SubMosaic::correct(){
 
     for (Frame *frame: frames) {
         frame->gray.release();
-        frame->bound_points2 = frame->bound_points;
+        frame->bound_points[SECOND] = frame->bound_points[FIRST];
     }
     
     distortion = calcDistortion();
@@ -229,7 +119,7 @@ void SubMosaic::correct(){
         temp_avg_H = frames[i]->H.inv();
 
         for (Frame *frame: frames) {
-            perspectiveTransform(frame->bound_points, frame->bound_points2, temp_avg_H*frame->H);
+            perspectiveTransform(frame->bound_points[FIRST], frame->bound_points[SECOND], temp_avg_H*frame->H);
         }
 
         temp_distortion = calcDistortion();
@@ -245,7 +135,10 @@ void SubMosaic::correct(){
         //frame->H = frame->H * avg_H;
         frame->setHReference(avg_H);
     }
-    
+}
+
+void SubMosaic::setHReference(Mat _H){
+
 }
 
 // See description in header file

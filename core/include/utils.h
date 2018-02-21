@@ -22,12 +22,23 @@
 #include <vector>
 #include <string>
 
+using namespace cv;
+using namespace std;
 
 namespace m2d
 {
 
 const int TARGET_WIDTH	= 640;   
 const int TARGET_HEIGHT	= 480;
+
+/**
+ * @brief Calculate the euclidean distance between two given vector in 2D
+ * @param _pt1 First floating point OpenCV coordinate 
+ * @param _pt2 Second floating point OpenCV coordinate 
+ * @return float Distance betwenn two points
+ */
+float getDistance(Point2f _pt1, Point2f _pt2);
+
 
 }
 
@@ -87,3 +98,11 @@ void imgChannelStretch(cv::Mat imgOriginal, cv::Mat imgStretched, int lowerPerce
  * @return vector<std::string> Vector container the names (sorted alphabetically) of files in the directory 
  */
 std::vector<std::string> read_filenames(const std::string dir_ent);
+
+/**
+ * @brief Save the homography matrix and heypoints in a txt file
+ * @param H OpenCV Matrix containing Homography transformation
+ * @param keypoints Vector with OpenCV Keypoints
+ * @param matches Vector with OpenCV Matches
+ */
+void saveHomographyData(cv::Mat _h, vector<KeyPoint> keypoints[2], vector<cv::DMatch> matches);

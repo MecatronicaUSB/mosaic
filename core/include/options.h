@@ -13,20 +13,21 @@
 args::ArgumentParser parser("2D mosaic generation pipeline", "Author: Victor Garcia");
 args::HelpFlag help(parser, "help", "Display this help menu", {'h','?', "help"});
 
-args::Group op_matcher(parser, "Select the Feature Matcher:", args::Group::Validators::AtMostOne);
-args::Flag op_brutef(op_matcher, "Brute Force", "Brute force matcher (default)", {'b',"bf"});
-args::Flag op_flann(op_matcher, "Flann", "Flann force matcher", {'f',"flann"});
+args::Group matcher(parser, "Select the Feature Matcher:", args::Group::Validators::AtMostOne);
+args::Flag matcher_brutef(matcher, "Brute Force", "Brute force matcher", {'b',"bf"});
+args::Flag matcher_flann(matcher, "Flann", "Flann force matcher (default)", {'f',"flann"});
 
-args::Group op_feature(parser, "Select the Feature Extractor and Descriptor:", args::Group::Validators::AtMostOne);
-args::Flag op_kaze(op_feature, "KAZE", "Use KAZE --Kaze Features-- (default)", {"kaze"});
-args::Flag op_surf(op_feature, "SURF", "Use SURF --Speed-Up Robust Feature--", {"surf"});
+args::Group feature(parser, "Select the Feature Extractor and Descriptor:", args::Group::Validators::AtMostOne);
+args::Flag detector_sift(feature, "SIFT", "Use SURF --Scale Invariant Feature Detector--", {"sift"});
+args::Flag detector_surf(feature, "SURF", "Use SURF --Speed-Up Robust Feature--", {"surf"});
+args::Flag detector_akaze(feature, "AKAZE", "Use SURF --A-Kaze Features--", {"akaze"});
+args::Flag detector_kaze(feature, "KAZE", "Use KAZE --Kaze Features-- (default)", {"kaze"});
 
-args::Group op_data(parser, "Select input data:", args::Group::Validators::AtLeastOne);
-args::ValueFlagList<std::string> op_img(op_data, "image-name", "Image input name. Mus specify two file names (one per flag)",{'i'});
-args::ValueFlag<std::string> op_dir(op_data,"path","Directory to load the frames.",{'d'});
+args::Group group_data(parser, "Select input data:", args::Group::Validators::AtLeastOne);
+args::Positional<std::string> input_dir(group_data, "directory", "Directory to load the frames.");
 
-args::Group optional(parser, "(Optional)", args::Group::Validators::DontCare);
-args::Flag op_out(optional, "image-name", "Show final blended images", {'o'});
-args::ValueFlag<std::string> op_save(optional, "image-name", "Save the blended sub-mosaic", {'s'});
-args::Flag op_pre(optional, "Pre-processing", "Apply pre-processing algorithm to test improvement in keypoints search", {"pre"});
-args::Flag op_grid(optional, "grid", "Filter keypoints based on grid distribution. the grid is fixed at 10x10 cels", {"grid"});
+args::Group group_optional(parser, "(Optional)", args::Group::Validators::DontCare);
+args::Flag output(group_optional, "image-name", "Show final blended images", {'o'});
+args::Flag apply_pre(group_optional, "Pre-processing", "Apply pre-processing algorithm to test improvement in keypoints search", {"pre"});
+args::Flag use_grid(group_optional, "grid", "Filter keypoints based on grid distribution. the grid is fixed at 10x10 cels", {"grid"});
+args::ValueFlag<std::string> save(group_optional, "image-name", "Save the blended sub-mosaic", {'s'});

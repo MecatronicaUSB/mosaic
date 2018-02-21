@@ -1,12 +1,12 @@
 /**
  * @file mosaic.hpp
- * @brief Implementation of Frame, SumMosaic and Mosaic classes
+ * @brief Description for main Mosaic Class
  * @version 0.2
  * @date 10/02/2018
  * @author Victor Garcia
  */
+
 #pragma once
-#include "submosaic.hpp"
 #include "stitch.hpp"
 #include "blend.hpp"
 
@@ -15,11 +15,7 @@ using namespace cv;
 
 namespace m2d //!< mosaic 2d namespace
 {
-
-class Stitcher;
-class Blender;
-class SubMosaic;
-
+    
 class Mosaic{
     public:
         // ---------- Atributes
@@ -41,6 +37,10 @@ class Mosaic{
         bool addFrame(Mat _object);
         // TODO:
         void compute();
+        /**
+         * @brief 
+         */
+        void positionSubMosaics(SubMosaic *_first, SubMosaic *_second);
         // temporal function
         void show();
 };
