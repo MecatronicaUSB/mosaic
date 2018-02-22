@@ -128,9 +128,9 @@ int Stitcher::stitch(Frame *_object, Frame *_scene, Size _scene_dims){
         } else {
             thresh += 0.1;
             for (int i=0; i<img[SCENE]->neighbors.size(); i++) {
-                neighbors_kp.pop_back();
                 good_matches.pop_back();
             }
+            neighbors_kp.clear();
             img[OBJECT]->keypoints_pos[PREV].clear();
             img[SCENE]->keypoints_pos[NEXT].clear();
         }
@@ -159,10 +159,9 @@ int Stitcher::stitch(Frame *_object, Frame *_scene, Size _scene_dims){
 
 void Stitcher::cleanNeighborsData(){
     for (int i=0; i<img[SCENE]->neighbors.size(); i++) {
-        neighbors_kp.pop_back();
         good_matches.pop_back();
-        matches.pop_back();
     }
+    neighbors_kp.clear();
     matches.clear();
 }
 
@@ -245,10 +244,10 @@ void  Stitcher::positionFromKeypoints(){
     }
 
     vector<Point2f> aux_points;
-    neighbors_kp.clear();
-    for (int i=0; i<img[SCENE]->neighbors.size(); i++) {
-        aux_points.clear();
 
+    for (int i=0; i<img[SCENE]->neighbors.size(); i++) {
+        
+        aux_points.clear();
         for (DMatch good: good_matches[i+1]) {
             img[OBJECT]->keypoints_pos[PREV].push_back(img[OBJECT]->keypoints[good.queryIdx].pt);
             aux_points.push_back(img[SCENE]->neighbors[i]->keypoints[good.trainIdx].pt);
@@ -260,6 +259,7 @@ void  Stitcher::positionFromKeypoints(){
 
     points_pos[SCENE] = Mat(img[SCENE]->keypoints_pos[NEXT]);
     points_pos[OBJECT] = Mat(img[OBJECT]->keypoints_pos[PREV]);
+
     for (int i=0; i<img[SCENE]->neighbors.size(); i++) {
         vconcat(points_pos[SCENE], Mat(neighbors_kp[i]), points_pos[SCENE]);
     }

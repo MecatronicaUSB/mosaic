@@ -37,7 +37,7 @@
             "suppressTaskName": true,
             "isBuildCommand": true,
             "command": "g++",
-            "showOutput": "never",  
+            "showOutput": "always",  
             "args": ["-g","-std=c++11",
                           "core/src/utils.cpp",
                           "core/src/frame.cpp",
