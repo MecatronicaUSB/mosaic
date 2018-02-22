@@ -32,7 +32,6 @@ SubMosaic::~SubMosaic(){
 // See description in header file
 SubMosaic* SubMosaic::clone(){
     SubMosaic *new_sub_mosaic = new SubMosaic();
-    new_sub_mosaic->distortion = distortion;
     new_sub_mosaic->final_scene = final_scene.clone();
     new_sub_mosaic->avg_H = avg_H.clone();
     new_sub_mosaic->scene_size = scene_size;
@@ -108,18 +107,36 @@ float SubMosaic::calcKeypointsError(Frame *_first, Frame *_second){
 
 // See description in header file
 float SubMosaic::calcDistortion(){
-    float semi_diag[4], ratio[2];
+    float sides[2]; 
+    float ratio;
     float distortion=0;
-    for (Frame *frame: frames) {
-        for (int i=0; i<4; i++) {
-            // 5th point correspond to center of image
-            // Getting the distance between corner points to the center (all semi diagonal distances)
-            semi_diag[i] = getDistance(frame->bound_points[RANSAC][i], frame->bound_points[RANSAC][4]);
+
+    for (int i=0; i<frames.size()-1; i++) {
+        for (int j=0; j<4; j++) {
+            // sides[0] = getDistance(frames[i]->bound_points[RANSAC][j],
+            //                        frames[i]->bound_points[RANSAC][j<3 ? j+1:0]);
+
+            // sides[1] = getDistance(frames[i+1]->bound_points[RANSAC][j],
+            //                        frames[i+1]->bound_points[RANSAC][j<3 ? j+1:0]);
+
+            // ratio = max(sides[0]/sides[1], sides[1]/sides[0]);
+            // distortion += ratio;
         }
-        // ratio beween semi diagonals
-        ratio[0] = max(semi_diag[0]/semi_diag[2], semi_diag[2]/semi_diag[0]);
-        ratio[1] = max(semi_diag[1]/semi_diag[3], semi_diag[3]/semi_diag[1]);
-        distortion += (ratio[0] + ratio[1]);
+        sides[0] = getDistance(frames[i]->bound_points[RANSAC][0],
+                               frames[i]->bound_points[RANSAC][1]);
+        sides[1] = getDistance(frames[i]->bound_points[RANSAC][1],
+                               frames[i]->bound_points[RANSAC][2]);
+
+        ratio = max(sides[0]/sides[1], sides[1]/sides[0]);
+        distortion += ratio;      
+
+        sides[0] = getDistance(frames[i]->bound_points[RANSAC][2],
+                               frames[i]->bound_points[RANSAC][3]);
+        sides[1] = getDistance(frames[i]->bound_points[RANSAC][3],
+                               frames[i]->bound_points[RANSAC][0]);
+
+        ratio = max(sides[0]/sides[1], sides[1]/sides[0]);
+        distortion += ratio; 
     }
 
     return distortion;

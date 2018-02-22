@@ -59,7 +59,7 @@ bool Mosaic::addFrame(Mat _object){
             test = true;
 
             if (n_subs>1) {
-                compute(2000);
+                compute(10000);
             }
 
             return true;
@@ -80,7 +80,7 @@ bool Mosaic::addFrame(Mat _object){
 
 void Mosaic::compute(int n_iter){
 
-    float distortion = 100;
+    float distortion = 1000;
     float temp_distortion;
     int rnd_frame, rnd_point;
     vector<SubMosaic *> ransac_mosaics;
@@ -107,7 +107,9 @@ void Mosaic::compute(int n_iter){
             circle(ransac_mosaics[1]->final_scene, frame->keypoints_pos[PREV][j], 3, Scalar(255, 0, 0), -1);
         }
     }
-
+    vector<Point2f> pts1;
+    vector<Point2f> pts2;
+    
     srand((uint32_t)getTickCount());
 
     points[0] = vector<Point2f>(4);
@@ -125,24 +127,25 @@ void Mosaic::compute(int n_iter){
                 rnd_point = rand() % ransac_mosaics[0]->frames[rnd_frame]->keypoints_pos[NEXT].size();
                 points[0][j] = ransac_mosaics[0]->frames[rnd_frame]->keypoints_pos[NEXT][rnd_point];
                 points[1][j] = ransac_mosaics[1]->frames[rnd_frame]->keypoints_pos[NEXT][rnd_point];
+            
             }
-        }
-        for (int j=0; j<4; j++) {
             mid_points[j] = getMidPoint(points[0][j], points[1][j]);
         }
 
         temp_H = getPerspectiveTransform(points[0], mid_points);
 
         for (Frame *frame: ransac_mosaics[0]->frames) {
-            perspectiveTransform(frame->bound_points[FIRST],
-                                 frame->bound_points[RANSAC], temp_H*frame->H);
+            pts1 = frame->bound_points[FIRST];
+            pts2 = frame->bound_points[RANSAC];
+            perspectiveTransform(pts1, pts2, temp_H*frame->H);
+            frame->bound_points[RANSAC] = pts2;
         }
 
         temp_distortion = ransac_mosaics[0]->calcDistortion();
 
         if (temp_distortion < distortion) {
             distortion = temp_distortion;
-            cout << distortion << endl;
+
             best_H = temp_H;
         }
     }
