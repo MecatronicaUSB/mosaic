@@ -59,7 +59,7 @@ bool Mosaic::addFrame(Mat _object){
             test = true;
 
             if (n_subs>1) {
-                compute(10000);
+                compute(2000);
             }
 
             return true;
