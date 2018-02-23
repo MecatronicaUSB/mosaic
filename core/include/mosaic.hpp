@@ -39,7 +39,7 @@ class Mosaic{
          * @brief 
          * @param n_inter 
          */
-        void compute(int n_inter = 500);
+        void compute();
         /**
          * @brief 
          * @param _first 
@@ -50,8 +50,10 @@ class Mosaic{
         void getReferencedMosaics(vector<SubMosaic *> &_sub_mosaics);
         /**
          * @brief 
+         * @param ransac_mosaics 
+         * @return Mat 
          */
-        void positionSubMosaics(SubMosaic *_first, SubMosaic *_second);
+        Mat getBestModel(vector<SubMosaic *> ransac_mosaics, int _niter = 2000);
         // temporal function
         void show();
 };
