@@ -165,27 +165,27 @@ void Mosaic::compute(int n_iter){
 
 void Mosaic::getReferencedMosaics(vector<SubMosaic *> &_sub_mosaics){
 
-    //SubMosaic *aux_mosaic1 = _sub_mosaics[1];
+    Mat ref_H;
+    ref_H = _sub_mosaics[0]->avg_H;
 
     _sub_mosaics[1]->referenceToZero();
+    Mat new_ref_H = _sub_mosaics[1]->avg_H.clone();
 
     for (Frame *frame:  _sub_mosaics[1]->frames) {
-        frame->setHReference(_sub_mosaics[0]->avg_H);
+        frame->setHReference(ref_H);
         _sub_mosaics[0]->addFrame(frame);
     }
 
     _sub_mosaics[1] = _sub_mosaics[0]->clone();
 
     for (Frame *frame: _sub_mosaics[1]->frames) {
-        frame->setHReference(_sub_mosaics[0]->avg_H.inv());
+        frame->setHReference(ref_H.inv());
     }
 
-    _sub_mosaics[1]->avg_H = _sub_mosaics[0]->avg_H.inv();
+    new_ref_H = ref_H * new_ref_H;
+    _sub_mosaics[0]->avg_H = new_ref_H;
 }
 
-void Mosaic::positionSubMosaics(SubMosaic *_first, SubMosaic *_second){
-
-}
 
 void Mosaic::show(){
     if (test) {

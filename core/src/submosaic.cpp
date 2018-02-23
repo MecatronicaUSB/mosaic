@@ -92,6 +92,7 @@ void SubMosaic::updateOffset(vector<float> _total_offset){
     for (Frame *frame: frames){
         frame->setHReference(t);
     }
+    avg_H = t * avg_H;
 }
 
 // See description in header file
