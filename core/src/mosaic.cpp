@@ -58,8 +58,8 @@ bool Mosaic::addFrame(Mat _object){
             sub_mosaics[n_subs]->addFrame(new_frame);
             test = true;
 
-            if (n_subs>1) {
-                compute(2000);
+            if (n_subs>2) {
+                compute();
             }
 
             return true;
@@ -78,91 +78,39 @@ bool Mosaic::addFrame(Mat _object){
     }
 }
 
-void Mosaic::compute(int n_iter){
+// See description in header file
+void Mosaic::compute(){
 
-    float distortion = 1000;
-    float temp_distortion;
-    int rnd_frame, rnd_point;
-    vector<SubMosaic *> ransac_mosaics;
-    vector<vector<Point2f> > points(2);
-    vector<Point2f> mid_points(4);
-    Mat temp_H, best_H;
+    vector<SubMosaic *> ransac_mosaics(2);
+    ransac_mosaics[0] = sub_mosaics[0];
 
-    ransac_mosaics.push_back(sub_mosaics[0]);
-    ransac_mosaics.push_back(sub_mosaics[1]);
+    for (int i=0; i<sub_mosaics.size(); i++) {
 
-    getReferencedMosaics(ransac_mosaics);
+        ransac_mosaics[1] = sub_mosaics[1];
 
-    ransac_mosaics[0]->computeOffset();
-    ransac_mosaics[1]->computeOffset();
+        getReferencedMosaics(ransac_mosaics);
 
-    for (Frame *frame: ransac_mosaics[0]->frames) {
-        for(int j=0; j<frame->keypoints_pos[PREV].size(); j++){
-            circle(ransac_mosaics[0]->final_scene, frame->keypoints_pos[PREV][j], 3, Scalar(255, j*2, 0), -1);
-        }
-    }
+        ransac_mosaics[0]->computeOffset();
+        ransac_mosaics[1]->computeOffset();
 
-    for (Frame *frame: ransac_mosaics[1]->frames) {
-        for(int j=0; j<frame->keypoints_pos[PREV].size(); j++){
-            circle(ransac_mosaics[1]->final_scene, frame->keypoints_pos[PREV][j], 3, Scalar(255, 0, 0), -1);
-        }
-    }
-    vector<Point2f> pts1;
-    vector<Point2f> pts2;
-    
-    srand((uint32_t)getTickCount());
-
-    points[0] = vector<Point2f>(4);
-    points[1] = vector<Point2f>(4);
-
-    for (int i=0; i<n_iter; i++) {
-        for (int j=0; j<4; j++) {
-            rnd_frame = rand() % ransac_mosaics[0]->n_frames;
-
-            if (rnd_frame!=0){
-                rnd_point = rand() % ransac_mosaics[0]->frames[rnd_frame]->keypoints_pos[PREV].size();
-                points[0][j] = ransac_mosaics[0]->frames[rnd_frame]->keypoints_pos[PREV][rnd_point];
-                points[1][j] = ransac_mosaics[1]->frames[rnd_frame]->keypoints_pos[PREV][rnd_point];
-            } else {
-                rnd_point = rand() % ransac_mosaics[0]->frames[rnd_frame]->keypoints_pos[NEXT].size();
-                points[0][j] = ransac_mosaics[0]->frames[rnd_frame]->keypoints_pos[NEXT][rnd_point];
-                points[1][j] = ransac_mosaics[1]->frames[rnd_frame]->keypoints_pos[NEXT][rnd_point];
-            
-            }
-            mid_points[j] = getMidPoint(points[0][j], points[1][j]);
-        }
-
-        temp_H = getPerspectiveTransform(points[0], mid_points);
+        Mat best_H = getBestModel(ransac_mosaics);
 
         for (Frame *frame: ransac_mosaics[0]->frames) {
-            pts1 = frame->bound_points[FIRST];
-            pts2 = frame->bound_points[RANSAC];
-            perspectiveTransform(pts1, pts2, temp_H*frame->H);
-            frame->bound_points[RANSAC] = pts2;
+            frame->setHReference(best_H);
         }
+        ransac_mosaics[0]->avg_H =  best_H * ransac_mosaics[0]->last_frame->H;
+        ransac_mosaics[0]->computeOffset();
 
-        temp_distortion = ransac_mosaics[0]->calcDistortion();
+        blender->blendSubMosaic(ransac_mosaics[0]);
+        imshow("Blend-Ransac1", ransac_mosaics[0]->final_scene);
+        imwrite("/home/victor/dataset/output/ransac-00.jpg", ransac_mosaics[0]->final_scene);
+        waitKey(0);
 
-        if (temp_distortion < distortion) {
-            distortion = temp_distortion;
-
-            best_H = temp_H;
-        }
+        sub_mosaics.erase(sub_mosaics.begin()+1);
     }
-
-    for (Frame *frame: ransac_mosaics[0]->frames) {
-        frame->setHReference(best_H);
-    }
-    ransac_mosaics[0]->computeOffset();
-    blender->blendSubMosaic(ransac_mosaics[0]);
-    imshow("Blend-Ransac1", ransac_mosaics[0]->final_scene);
-    imwrite("/home/victor/dataset/output/ransac-00.jpg", ransac_mosaics[0]->final_scene);
-    waitKey(0);
-
-    delete ransac_mosaics[1];
-
 }
 
+// See description in header file
 void Mosaic::getReferencedMosaics(vector<SubMosaic *> &_sub_mosaics){
 
     Mat ref_H;
@@ -177,7 +125,6 @@ void Mosaic::getReferencedMosaics(vector<SubMosaic *> &_sub_mosaics){
     }
 
     _sub_mosaics[1] = _sub_mosaics[0]->clone();
-
     for (Frame *frame: _sub_mosaics[1]->frames) {
         frame->setHReference(ref_H.inv());
     }
@@ -186,7 +133,52 @@ void Mosaic::getReferencedMosaics(vector<SubMosaic *> &_sub_mosaics){
     _sub_mosaics[0]->avg_H = new_ref_H;
 }
 
+// See description in header file
+Mat Mosaic::getBestModel(vector<SubMosaic *> _ransac_mosaics, int _niter){
+    int rnd_frame, rnd_point;
+    Mat temp_H, best_H;
+    float distortion = 1000;
+    float temp_distortion;
+    vector<vector<Point2f> > points(2);
+    vector<Point2f> mid_points(4);
 
+    srand((uint32_t)getTickCount());
+
+    points[0] = vector<Point2f>(4);
+    points[1] = vector<Point2f>(4);
+
+    for (int i=0; i<_niter; i++) {
+        for (int j=0; j<4; j++) {
+            rnd_frame = rand() % _ransac_mosaics[0]->n_frames;
+            rnd_point = rand() % _ransac_mosaics[0]->frames[rnd_frame]->keypoints_pos[!rnd_frame].size();
+
+            points[0][j] = _ransac_mosaics[0]->frames[rnd_frame]->keypoints_pos[!rnd_frame][rnd_point];
+            points[1][j] = _ransac_mosaics[1]->frames[rnd_frame]->keypoints_pos[!rnd_frame][rnd_point];
+
+            mid_points[j] = getMidPoint(points[0][j], points[1][j]);
+        }
+
+        temp_H = getPerspectiveTransform(points[0], mid_points);
+
+        for (Frame *frame: _ransac_mosaics[0]->frames) {
+            perspectiveTransform(frame->bound_points[FIRST], frame->bound_points[RANSAC], temp_H*frame->H);
+        }
+
+        temp_distortion = _ransac_mosaics[0]->calcDistortion();
+
+        if (temp_distortion < distortion) {
+            distortion = temp_distortion;
+
+            best_H = temp_H;
+        }
+    }
+
+    delete _ransac_mosaics[1];
+
+    return best_H;
+}
+
+// See description in header file
 void Mosaic::show(){
     if (test) {
         if (!sub_mosaics[n_subs-1]->final_scene.data) {

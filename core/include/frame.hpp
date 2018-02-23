@@ -25,8 +25,8 @@ enum FrameRef{
 
 enum RansacReference {
     FIRST,
-    SECOND,
-    RANSAC
+    RANSAC,
+    SECOND
 };
 
 /// offset of padding to add in scene after object transformation
