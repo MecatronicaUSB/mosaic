@@ -93,16 +93,21 @@ void Mosaic::compute(){
         ransac_mosaics[0]->computeOffset();
         ransac_mosaics[1]->computeOffset();
 
-        Mat best_H = getBestModel(ransac_mosaics);
 
+        blender->blendSubMosaic(ransac_mosaics[0]);
+        imshow("Blend-Ransac0", ransac_mosaics[0]->final_scene);
+        waitKey(0);
+
+        Mat best_H = getBestModel(ransac_mosaics);
         for (Frame *frame: ransac_mosaics[0]->frames) {
-            frame->setHReference(best_H);
+            frame->setHReference( best_H);
         }
-        ransac_mosaics[0]->avg_H =  best_H * ransac_mosaics[0]->last_frame->H;
+        ransac_mosaics[0]->avg_H = best_H * ransac_mosaics[0]->avg_H;
+
         ransac_mosaics[0]->computeOffset();
 
         blender->blendSubMosaic(ransac_mosaics[0]);
-        imshow("Blend-Ransac1", ransac_mosaics[0]->final_scene);
+        imshow("Blend-Ransac2", ransac_mosaics[0]->final_scene);
         imwrite("/home/victor/dataset/output/ransac-00.jpg", ransac_mosaics[0]->final_scene);
         waitKey(0);
 
@@ -113,8 +118,7 @@ void Mosaic::compute(){
 // See description in header file
 void Mosaic::getReferencedMosaics(vector<SubMosaic *> &_sub_mosaics){
 
-    Mat ref_H;
-    ref_H = _sub_mosaics[0]->avg_H;
+    Mat ref_H = _sub_mosaics[0]->avg_H.clone();
 
     _sub_mosaics[1]->referenceToZero();
     Mat new_ref_H = _sub_mosaics[1]->avg_H.clone();
@@ -123,14 +127,14 @@ void Mosaic::getReferencedMosaics(vector<SubMosaic *> &_sub_mosaics){
         frame->setHReference(ref_H);
         _sub_mosaics[0]->addFrame(frame);
     }
+    new_ref_H = ref_H * new_ref_H;
 
     _sub_mosaics[1] = _sub_mosaics[0]->clone();
     for (Frame *frame: _sub_mosaics[1]->frames) {
         frame->setHReference(ref_H.inv());
     }
 
-    new_ref_H = ref_H * new_ref_H;
-    _sub_mosaics[0]->avg_H = new_ref_H;
+    _sub_mosaics[0]->avg_H = new_ref_H.clone();
 }
 
 // See description in header file
@@ -141,8 +145,11 @@ Mat Mosaic::getBestModel(vector<SubMosaic *> _ransac_mosaics, int _niter){
     float temp_distortion;
     vector<vector<Point2f> > points(2);
     vector<Point2f> mid_points(4);
-
+    vector<vector<Point2f> > aux_points(2);
     srand((uint32_t)getTickCount());
+
+    aux_points[0] = vector<Point2f>(4);
+    aux_points[1] = vector<Point2f>(4);
 
     points[0] = vector<Point2f>(4);
     points[1] = vector<Point2f>(4);
@@ -168,12 +175,17 @@ Mat Mosaic::getBestModel(vector<SubMosaic *> _ransac_mosaics, int _niter){
 
         if (temp_distortion < distortion) {
             distortion = temp_distortion;
-
+            aux_points = points;
             best_H = temp_H;
         }
     }
 
     delete _ransac_mosaics[1];
+
+    for (int j=0; j<4; j++) {
+        cout << points[0][j] << " " << aux_points[0][j] << endl;
+        cout << points[1][j] << " " << aux_points[1][j] << endl << endl;
+    }
 
     return best_H;
 }
