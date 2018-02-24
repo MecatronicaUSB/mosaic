@@ -108,7 +108,7 @@ int Stitcher::stitch(Frame *_object, Frame *_scene, Size _scene_dims){
         matches.push_back(aux_matches);
     }
 
-    float thresh = 0.5;
+    float thresh = 0.8;
     bool good_thresh = true;
     while (good_thresh) {
 
@@ -176,7 +176,7 @@ void Stitcher::updateNeighbors(){
 }
 
 // See description in header file
-void Stitcher::getGoodMatches(int _thresh){
+void Stitcher::getGoodMatches(float _thresh){
     vector<DMatch> aux_matches;
     for (int i=0; i<img[SCENE]->neighbors.size()+1; i++){
         aux_matches.clear();
@@ -257,8 +257,8 @@ void  Stitcher::positionFromKeypoints(){
 
     trackKeypoints();
 
-    points_pos[SCENE] = Mat(img[SCENE]->keypoints_pos[NEXT]);
     points_pos[OBJECT] = Mat(img[OBJECT]->keypoints_pos[PREV]);
+    points_pos[SCENE] = Mat(img[SCENE]->keypoints_pos[NEXT]);
 
     for (int i=0; i<img[SCENE]->neighbors.size(); i++) {
         vconcat(points_pos[SCENE], Mat(neighbors_kp[i]), points_pos[SCENE]);
@@ -267,15 +267,14 @@ void  Stitcher::positionFromKeypoints(){
 
 // See description in header file
 void Stitcher::trackKeypoints(){
-    if (img[SCENE]->keypoints_pos[NEXT].size() >= 4)
+    if (img[SCENE]->keypoints_pos[NEXT].size() >0)
         perspectiveTransform(img[SCENE]->keypoints_pos[NEXT], img[SCENE]->keypoints_pos[NEXT],
                              img[SCENE]->H);
 
     for (int i=0; i<img[SCENE]->neighbors.size(); i++) {
-        if (neighbors_kp[i].size()>=4)
+        if (neighbors_kp[i].size()>0)
             perspectiveTransform(neighbors_kp[i], neighbors_kp[i],
                                  img[SCENE]->neighbors[i]->H);
-           
     }
     
 }

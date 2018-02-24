@@ -102,7 +102,7 @@ class Stitcher {
         /**
          * @brief Discard outliers from initial matches vector
          */
-        void getGoodMatches(int _thresh = 0.5);
+        void getGoodMatches(float _thresh = 0.8);
         /**
          * @brief Select the best keypoint for each cell in the defined grid
          */

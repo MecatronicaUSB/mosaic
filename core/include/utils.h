@@ -19,6 +19,7 @@
 #include <stdlib.h>
 #include <iostream>
 #include <time.h>
+#include <math.h>
 #include <string>
 #include <vector>
 #include <cmath> 

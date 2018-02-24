@@ -108,39 +108,59 @@ float SubMosaic::calcKeypointsError(Frame *_first, Frame *_second){
 
 // See description in header file
 float SubMosaic::calcDistortion(){
-    float sides[2]; 
-    float ratio;
-    float distortion=0;
+    Point2f line[4][2];
+    Point2f v1, v2;
+    float side[4];
+    float cosine[4];
+    float frame_dims = (float)TARGET_WIDTH * (float)TARGET_HEIGHT;
+    float ratio_dims = (float)TARGET_HEIGHT / (float)TARGET_WIDTH ;
+    float o_sides_error=0;
+    float c_sides_error=0;
+    float angle_error=0;
+    float area_error=0;
+    float tot_error=0;
+    float min_ratio=0;
 
-    for (int i=0; i<frames.size()-1; i++) {
-        for (int j=0; j<4; j++) {
-            // sides[0] = getDistance(frames[i]->bound_points[RANSAC][j],
-            //                        frames[i]->bound_points[RANSAC][j<3 ? j+1:0]);
-
-            // sides[1] = getDistance(frames[i+1]->bound_points[RANSAC][j],
-            //                        frames[i+1]->bound_points[RANSAC][j<3 ? j+1:0]);
-
-            // ratio = max(sides[0]/sides[1], sides[1]/sides[0]);
-            // distortion += ratio;
+    for (Frame *frame: frames) {
+        for (int i=0; i<4; i++) {
+            
+            line[i][0] = frame->bound_points[RANSAC][i];
+            line[i][1] = frame->bound_points[RANSAC][i<3?i+1:0];
+            
+            side[i] = getDistance(line[i][0], line[i][1]);
         }
-        sides[0] = getDistance(frames[i]->bound_points[RANSAC][0],
-                               frames[i]->bound_points[RANSAC][1]);
-        sides[1] = getDistance(frames[i]->bound_points[RANSAC][1],
-                               frames[i]->bound_points[RANSAC][2]);
+        for (int i=0; i<4; i++) {
+            v1.x = abs(line[i][1].x - line[i][0].x);
+            v1.y = abs(line[i][1].y - line[i][0].y);
+            v2.x = abs(line[i<3?i+1:0][1].x - line[i<3?i+1:0][0].x);
+            v2.y = abs(line[i<3?i+1:0][1].y - line[i<3?i+1:0][0].y);
+            
+            cosine[i] = (v1.x*v2.x + v1.y*v2.y) / (sqrt(v1.x*v1.x + v1.y*v1.y)*sqrt(v2.x*v2.x + v2.y*v2.y));
+        }
 
-        ratio = max(sides[0]/sides[1], sides[1]/sides[0]);
-        distortion += ratio;      
+        o_sides_error = 1 - 0.5*(min(side[0]/side[2], side[2]/side[0]) +
+                                 min(side[1]/side[3], side[3]/side[1]));
+        
+        min_ratio = min(side[0]/side[1], min(side[1]/side[2], min(side[2]/side[3], side[3]/side[0])));
+        c_sides_error = 1 - min(min_ratio/ratio_dims, ratio_dims/min_ratio);
 
-        sides[0] = getDistance(frames[i]->bound_points[RANSAC][2],
-                               frames[i]->bound_points[RANSAC][3]);
-        sides[1] = getDistance(frames[i]->bound_points[RANSAC][3],
-                               frames[i]->bound_points[RANSAC][0]);
+        vector<Point2f> auxpts = {frame->bound_points[RANSAC][0],
+                                    frame->bound_points[RANSAC][1],
+                                    frame->bound_points[RANSAC][2],
+                                    frame->bound_points[RANSAC][3]};
 
-        ratio = max(sides[0]/sides[1], sides[1]/sides[0]);
-        distortion += ratio; 
+        float area = contourArea(auxpts);
+        float area2 = frame_dims;
+        area_error = 1 - min(contourArea(auxpts)/frame_dims,
+                              frame_dims/contourArea(auxpts));
+
+        angle_error = pow(max(cosine[0], max(cosine[1], max(cosine[2], cosine[3]))), 5);
+
+        //tot_error += max(o_sides_error, max(c_sides_error, max(area_error, angle_error)));
+        tot_error += o_sides_error + c_sides_error+area_error+ angle_error;
     }
 
-    return distortion;
+    return tot_error;
 }
 
 // See description in header file

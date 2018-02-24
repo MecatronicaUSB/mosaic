@@ -17,7 +17,7 @@ float getDistance(Point2f _pt1, Point2f _pt2){
 }
 
 Point2f getMidPoint(Point2f _pt1, Point2f _pt2){
-    return Point2f(abs(_pt2.x - _pt1.x), abs(_pt2.y - _pt1.y));
+    return Point2f((_pt2.x + _pt1.x)/2, (_pt2.y + _pt1.y)/2);
 }
 
 }
