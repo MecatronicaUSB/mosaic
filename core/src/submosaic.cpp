@@ -56,26 +56,30 @@ void SubMosaic::referenceToZero(){
                             -frames[0]->bound_rect.x, 0};
 
     updateOffset(offset);
-
 }
 
 void SubMosaic::computeOffset(){
 
     float top=TARGET_HEIGHT, bottom=0, left=TARGET_WIDTH, right=0;
     for (Frame *frame: frames) {
-        if (frame->bound_rect.x < left)
-            left = frame->bound_rect.x;
-        if (frame->bound_rect.y < top)
-            top = frame->bound_rect.y;
-        if (frame->bound_rect.x + frame->bound_rect.width > right)
-            right = frame->bound_rect.x + frame->bound_rect.width;
-        if (frame->bound_rect.y + frame->bound_rect.height > bottom)
-            bottom = frame->bound_rect.y + frame->bound_rect.height;
+        for (Point2f point: frame->bound_points[FIRST]) {
+            if (point.x < left)
+                left = point.x;
+            if (point.y < top)
+                top = point.y;
+            if (point.x > right)
+                right = point.x;
+            if (point.y > bottom)
+                bottom = point.y;
+        }
     }
     scene_size.width  = right - left;
     scene_size.height = bottom - top;
 
-    vector<float> offset = {max(-top,0.f), 0, max(-left,0.f), 0};
+    vector<float> offset(4);
+    offset[TOP]  = -top;
+    offset[LEFT] = -left;
+
     updateOffset(offset);
 }
 

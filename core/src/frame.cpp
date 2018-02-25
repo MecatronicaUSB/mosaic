@@ -29,7 +29,7 @@ Frame::Frame(Mat _img, bool _pre, int _width, int _height){
         imgChannelStretch(gray, gray, 1, 99);
     }
 
-    bound_rect = Rect2f(0, 0, _width, _height);
+    bound_rect = Rect2f(0, 0, (float)_width, (float)_height);
     // corner points
 	bound_points[FIRST].push_back(Point2f(0, 0));
 	bound_points[FIRST].push_back(Point2f(_width, 0));
@@ -81,7 +81,10 @@ void Frame::resetFrame(){
     bound_points[FIRST][3] = Point2f(0, color.rows);
 
     bound_points[FIRST][4] = Point2f(color.cols/2, color.rows/2);
-    bound_rect = Rect2f(0, 0, color.cols, color.rows);
+    bound_rect = Rect2f(0, 0, (float)color.cols, (float)color.rows);
+
+    keypoints_pos[NEXT].clear();
+
     neighbors.clear();
 }
 
@@ -134,8 +137,28 @@ void Frame::setHReference(Mat _H){
     if (keypoints_pos[NEXT].size())        
         perspectiveTransform(keypoints_pos[NEXT], keypoints_pos[NEXT], _H); 
         
-    bound_rect =  boundingRect(bound_points[FIRST]);
+    updateBoundRect();
     H = _H * H;
+}
+
+void Frame::updateBoundRect(){
+    float top=TARGET_HEIGHT, bottom=0, left=TARGET_WIDTH, right=0;
+
+    for (Point2f point: bound_points[FIRST]) {
+        if (point.x < left)
+            left = point.x;
+        if (point.y < top)
+            top = point.y;
+        if (point.x > right)
+            right = point.x;
+        if (point.y > bottom)
+            bottom = point.y;
+    }
+
+    bound_rect.x = left;
+    bound_rect.y = top;
+    bound_rect.width = right - left;
+    bound_rect.height = bottom - top;
 }
 
 

@@ -18,8 +18,6 @@ namespace m2d
 void Blender::blendSubMosaic(SubMosaic *_sub_mosaic){
     Mat warp_img;
     _sub_mosaic->final_scene.release();
-    _sub_mosaic->scene_size.width += 50;
-    _sub_mosaic->scene_size.height += 50;
     
     _sub_mosaic->final_scene = Mat(_sub_mosaic->scene_size, CV_8UC3, Scalar(0,0,0));
 

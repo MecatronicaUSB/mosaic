@@ -99,6 +99,10 @@ class Frame{
         float boundAreaKeypoints();
         /**
          * @brief 
+         */
+        void updateBoundRect();
+        /**
+         * @brief 
          * @return true 
          * @return false 
          */
