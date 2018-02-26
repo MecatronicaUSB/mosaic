@@ -79,6 +79,11 @@ class SubMosaic{
         void referenceToZero();
         /**
          * @brief 
+         * @return Point2f 
+         */
+        Point2f getCentroid();
+        /**
+         * @brief 
          * @param _frames 
          */
         void updateOffset(vector<float> _offset);

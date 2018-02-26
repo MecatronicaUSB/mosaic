@@ -20,6 +20,10 @@ Point2f getMidPoint(Point2f _pt1, Point2f _pt2){
     return Point2f((_pt2.x + _pt1.x)/2, (_pt2.y + _pt1.y)/2);
 }
 
+int sign(double _num1){
+    return _num1 > 0 ? 1 : -1;
+}
+
 }
 
 void getHistogram(cv::Mat img, int *histogram){    

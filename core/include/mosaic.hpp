@@ -50,6 +50,11 @@ class Mosaic{
         void getReferencedMosaics(vector<SubMosaic *> &_sub_mosaics);
         /**
          * @brief 
+         * @param _sub_mosaics 
+         */
+        void alignMosaics(vector<SubMosaic *> &_sub_mosaics);
+        /**
+         * @brief 
          * @param ransac_mosaics 
          * @return Mat 
          */

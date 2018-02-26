@@ -38,11 +38,14 @@ bool Mosaic::addFrame(Mat _object){
     int status = stitcher->stitch(new_frame,
                                   sub_mosaics[n_subs]->last_frame,
                                   sub_mosaics[n_subs]->scene_size);
-   
+    
+
+
     switch( status ) {
         case OK: {
             sub_mosaics[n_subs]->addFrame(new_frame);
             sub_mosaics[n_subs]->computeOffset();
+
             return true;
         }
         case BAD_DISTORTION:{
@@ -92,6 +95,8 @@ void Mosaic::compute(){
 
         ransac_mosaics[0]->computeOffset();
         ransac_mosaics[1]->computeOffset();
+
+        alignMosaics(ransac_mosaics);
 
         // for (Frame *frame: ransac_mosaics[0]->frames) {
         //     for(int j=0; j<frame->keypoints_pos[PREV].size(); j++){
@@ -186,6 +191,53 @@ Mat Mosaic::getBestModel(vector<SubMosaic *> _ransac_mosaics, int _niter){
     delete _ransac_mosaics[1];
 
     return best_H;
+}
+// See description in header file
+void Mosaic::alignMosaics(vector<SubMosaic *> &_sub_mosaics){
+    Point2f centroid_0 = _sub_mosaics[0]->getCentroid();
+    Point2f centroid_1 = _sub_mosaics[1]->getCentroid();
+
+    vector<float> offset(4);
+
+    offset[TOP]  = max(centroid_1.y - centroid_0.y, 0.f);
+    offset[LEFT] = max(centroid_1.x - centroid_0.x, 0.f);
+    _sub_mosaics[0]->updateOffset(offset);
+
+    offset[TOP]  = max(centroid_0.y - centroid_1.y, 0.f);
+    offset[LEFT] = max(centroid_0.x - centroid_1.x, 0.f);
+    _sub_mosaics[1]->updateOffset(offset);
+
+    Mat points[2];
+
+    for (int i=0; i<_sub_mosaics.size(); i++) {
+        points[i] = Mat(_sub_mosaics[i]->frames[1]->keypoints_pos[NEXT]);
+        for (int j=1; j<_sub_mosaics[i]->frames.size(); j++) {
+            vconcat(points[i], Mat(_sub_mosaics[i]->frames[1]->keypoints_pos[PREV]), points[i]);
+        }
+    }
+
+    Mat M = estimateRigidTransform(points[0], points[1], false);
+    double sx = sign(M.at<double>(0,0))*sqrt(pow(M.at<double>(0,0), 2) + pow(M.at<double>(0,1), 2));
+    double sy = sign(M.at<double>(1,1))*sqrt(pow(M.at<double>(1,0), 2) + pow(M.at<double>(1,1), 2));
+
+    M.at<double>(0,0) /= sx;
+    M.at<double>(0,1) /= sx;
+    M.at<double>(1,0) /= sy;
+    M.at<double>(1,1) /= sy;
+    M.at<double>(2,0) = (double)0;
+    M.at<double>(2,1) = (double)0;
+
+    Mat t = (Mat1d(1,3) << 0.0, 0.0, 1.0);
+    vconcat(M, t, M);
+
+    cout << M << endl;
+
+    for (SubMosaic *sub_mosaic: _sub_mosaics) {
+        for (Frame *frame: sub_mosaic->frames) {
+            frame->setHReference(M);
+        }
+        sub_mosaic->avg_H = M * sub_mosaic->avg_H ;
+    }
 }
 
 // See description in header file

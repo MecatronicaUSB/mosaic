@@ -137,6 +137,10 @@ int Stitcher::stitch(Frame *_object, Frame *_scene, Size _scene_dims){
     }
 
     Mat H = findHomography(points_pos[OBJECT], points_pos[SCENE], CV_RANSAC);
+    // Mat H = estimateRigidTransform(points_pos[OBJECT], points_pos[SCENE], true);
+    // Mat t = (Mat1d(1,3) << 0, 0, 1);
+    // vconcat(H, t, H);
+    // H.at<double>(2, 2) = 1;
 
     if (H.empty()) {
         cout << "Not enought keypoints to calculate homography matrix. Exiting..." <<  endl;

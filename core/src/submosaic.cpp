@@ -203,6 +203,18 @@ void SubMosaic::correct(){
     }
 }
 
+// See description in header file
+Point2f SubMosaic::getCentroid(){
+    Point2f centroid(0, 0);
+
+    for (Frame *frame: frames) {
+        centroid += frame->bound_points[FIRST][4];
+    }
+
+    centroid /= n_frames;
+
+    return centroid;
+}
 
 // See description in header file
 bool SubMosaic::isEmpty(){
