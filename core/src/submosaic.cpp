@@ -73,8 +73,8 @@ void SubMosaic::computeOffset(){
                 bottom = point.y;
         }
     }
-    scene_size.width  = right - left;
-    scene_size.height = bottom - top;
+    scene_size.width  = right - left + 5;
+    scene_size.height = bottom - top + 5;
 
     vector<float> offset(4);
     offset[TOP]  = -top;

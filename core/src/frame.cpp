@@ -20,10 +20,25 @@ Frame::Frame(Mat _img, bool _pre, int _width, int _height){
     bound_points = vector<vector<Point2f> >(3);
     keypoints_pos = vector<vector<Point2f> >(2);
 
+    const float cx = 639.5;
+    const float cy = 359.5;
+    const float fx = 1101;
+    const float fy = 1101;
+
+    const float k1 = -0.359;
+    const float k2 = 0.279;
+    const float p1 = 0;
+    const float p2 = 0;
+    const float k3 = -0.16;
+
+    Mat camera_matrix = (Mat1d(3, 3) << fx, 0, cx, 0, fy, cy, 0, 0, 1);
+    Mat distortion_coeff = (Mat1d(1, 5) << k1, k2, p1, p2, k3);
+
     if (_img.size().width != _width || _img.size().height != _height)
         resize(_img, _img, Size(_width, _height));
-    
-    color = _img.clone();
+ 
+    undistort(_img, color, camera_matrix, distortion_coeff);
+
     cvtColor(color, gray, CV_BGR2GRAY);
     if (_pre) {
         imgChannelStretch(gray, gray, 1, 99);
@@ -37,6 +52,8 @@ Frame::Frame(Mat _img, bool _pre, int _width, int _height){
 	bound_points[FIRST].push_back(Point2f(0, _height));
     // center point
     bound_points[FIRST].push_back(Point2f(_width/2, _height/2));
+
+    //undistortPoints(bound_points[FIRST], bound_points[FIRST], camera_matrix, distortion_coeff);
 
     H = Mat::eye(3, 3, CV_64F);
 

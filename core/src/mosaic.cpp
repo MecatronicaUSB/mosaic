@@ -38,7 +38,7 @@ bool Mosaic::addFrame(Mat _object){
     int status = stitcher->stitch(new_frame,
                                   sub_mosaics[n_subs]->last_frame,
                                   sub_mosaics[n_subs]->scene_size);
-
+   
     switch( status ) {
         case OK: {
             sub_mosaics[n_subs]->addFrame(new_frame);
@@ -58,7 +58,7 @@ bool Mosaic::addFrame(Mat _object){
             sub_mosaics[n_subs]->addFrame(new_frame);
             test = true;
 
-            if (n_subs>2) {
+            if (n_subs>4) {
                 compute();
             }
 
@@ -82,11 +82,11 @@ bool Mosaic::addFrame(Mat _object){
 void Mosaic::compute(){
 
     vector<SubMosaic *> ransac_mosaics(2);
-    ransac_mosaics[0] = sub_mosaics[0];
 
     for (int i=0; i<sub_mosaics.size(); i++) {
 
-        ransac_mosaics[1] = sub_mosaics[1];
+        ransac_mosaics[0] = sub_mosaics[i++];
+        ransac_mosaics[1] = sub_mosaics[i];
 
         getReferencedMosaics(ransac_mosaics);
 
