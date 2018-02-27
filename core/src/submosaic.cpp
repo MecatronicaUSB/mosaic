@@ -122,8 +122,9 @@ float SubMosaic::calcDistortion(){
     float c_sides_error=0;
     float angle_error=0;
     float area_error=0;
-    float tot_error=0;
     float min_ratio=0;
+    float tot_error=0;
+    float temp_error=0;
 
     for (Frame *frame: frames) {
         for (int i=0; i<4; i++) {
@@ -207,11 +208,15 @@ void SubMosaic::correct(){
 Point2f SubMosaic::getCentroid(){
     Point2f centroid(0, 0);
 
+    int n_points=0;
     for (Frame *frame: frames) {
-        centroid += frame->bound_points[FIRST][4];
+        for (Point2f point: frame->bound_points[FIRST]) {
+            centroid += point;
+            n_points++;
+        }
     }
 
-    centroid /= n_frames;
+    centroid /= n_points;
 
     return centroid;
 }

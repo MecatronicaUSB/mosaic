@@ -262,11 +262,13 @@ void  Stitcher::positionFromKeypoints(){
     trackKeypoints();
 
     points_pos[OBJECT] = Mat(img[OBJECT]->keypoints_pos[PREV]);
-    points_pos[SCENE] = Mat(img[SCENE]->keypoints_pos[NEXT]);
 
     for (int i=0; i<img[SCENE]->neighbors.size(); i++) {
-        vconcat(points_pos[SCENE], Mat(neighbors_kp[i]), points_pos[SCENE]);
+        img[SCENE]->keypoints_pos[NEXT].insert(img[SCENE]->keypoints_pos[NEXT].end(),
+                                        neighbors_kp[i].begin(), neighbors_kp[i].end());
     }
+    points_pos[SCENE] = Mat(img[SCENE]->keypoints_pos[NEXT]);
+
 }
 
 // See description in header file

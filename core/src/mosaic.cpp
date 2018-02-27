@@ -88,15 +88,15 @@ void Mosaic::compute(){
 
     for (int i=0; i<sub_mosaics.size(); i++) {
 
-        ransac_mosaics[0] = sub_mosaics[i++];
-        ransac_mosaics[1] = sub_mosaics[i];
+        ransac_mosaics[0] = sub_mosaics[0];
+        ransac_mosaics[1] = sub_mosaics[i+1];
 
         getReferencedMosaics(ransac_mosaics);
 
         ransac_mosaics[0]->computeOffset();
         ransac_mosaics[1]->computeOffset();
 
-        alignMosaics(ransac_mosaics);
+        //alignMosaics(ransac_mosaics);
 
         // for (Frame *frame: ransac_mosaics[0]->frames) {
         //     for(int j=0; j<frame->keypoints_pos[PREV].size(); j++){
@@ -104,7 +104,7 @@ void Mosaic::compute(){
         //     }
         // }
 
-        Mat best_H = getBestModel(ransac_mosaics, 3000);
+        Mat best_H = getBestModel(ransac_mosaics, 2000);
         for (Frame *frame: ransac_mosaics[0]->frames) {
             frame->setHReference( best_H);
         }
@@ -224,20 +224,16 @@ void Mosaic::alignMosaics(vector<SubMosaic *> &_sub_mosaics){
     M.at<double>(0,1) /= sx;
     M.at<double>(1,0) /= sy;
     M.at<double>(1,1) /= sy;
-    M.at<double>(2,0) = (double)0;
-    M.at<double>(2,1) = (double)0;
+    M.at<double>(2,0) = 0;
+    M.at<double>(2,1) = 0;
 
     Mat t = (Mat1d(1,3) << 0.0, 0.0, 1.0);
     vconcat(M, t, M);
 
-    cout << M << endl;
-
-    for (SubMosaic *sub_mosaic: _sub_mosaics) {
-        for (Frame *frame: sub_mosaic->frames) {
-            frame->setHReference(M);
-        }
-        sub_mosaic->avg_H = M * sub_mosaic->avg_H ;
+    for (Frame *frame: _sub_mosaics[0]->frames) {
+        frame->setHReference(M);
     }
+    _sub_mosaics[0]->avg_H = M * _sub_mosaics[1]->avg_H ;
 }
 
 // See description in header file

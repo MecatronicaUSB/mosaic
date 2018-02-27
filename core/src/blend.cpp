@@ -21,6 +21,10 @@ void Blender::blendSubMosaic(SubMosaic *_sub_mosaic){
 
     _sub_mosaic->final_scene = Mat(_sub_mosaic->scene_size, CV_8UC3, Scalar(0,0,0));
 
+
+    vector<Point2f> test = findLocalStitch(_sub_mosaic->frames[1], _sub_mosaic->frames[0]);
+
+
     //reverse(_sub_mosaic->frames.begin(), _sub_mosaic->frames.end());
     for (Frame* frame: _sub_mosaic->frames) {
 
@@ -68,7 +72,33 @@ void Blender::reduceRoi(vector<Point2f> &_points){
         corner.x += 2 * ((corner.x - _points[4].x)>0 ? -1 : 1);
         corner.y += 2 * ((corner.y - _points[4].y)>0 ? -1 : 1);
     }
+}
 
+vector<Point2f> Blender::findLocalStitch(Frame * _object, Frame *_scene){
+    vector<Point2f> local_stitch;
+    vector<BlendPoint> blend_points;
+    float thresh = 0.5;
+    Point2f aux_points[2];
+    for (int i=0; i<_object->keypoints_pos[PREV].size(); i++) {
+        aux_points[PREV] = _object->keypoints_pos[PREV][i];
+        aux_points[NEXT] = _scene->keypoints_pos[NEXT][i];
+        blend_points.push_back(BlendPoint(i, aux_points));
+    }
+
+    sort(blend_points.begin(), blend_points.end());
+
+    vector<Point2f> good_points;
+    for (BlendPoint blend_point: blend_points) {
+        if (blend_point.distance < thresh) {
+            good_points.push_back(blend_point.points[PREV]);
+        } else {
+            break;
+        }
+    }
+
+    convexHull(good_points, local_stitch);
+
+    return local_stitch;
 }
 
 }
