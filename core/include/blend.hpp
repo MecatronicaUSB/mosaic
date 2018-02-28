@@ -18,11 +18,13 @@ namespace m2d
 struct _BlendPoint {
     int index;
     float distance;
-    Point2f *points;
+    Point2f prev;
+    Point2f next;
 
-    _BlendPoint(int _index, Point2f *_points) : index(_index),
-                                                points(_points),
-                                                distance(getDistance(_points[PREV], _points[NEXT])){};
+    _BlendPoint(int _index, Point2f _prev, Point2f _next) : index(_index),
+                                                            prev(_prev),
+                                                            next(_next),
+                                                            distance(getDistance(_prev, _next)){};
 
     bool operator < (const _BlendPoint& pt) const{
         return (distance < pt.distance);

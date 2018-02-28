@@ -61,7 +61,7 @@ bool Mosaic::addFrame(Mat _object){
             sub_mosaics[n_subs]->addFrame(new_frame);
             test = true;
 
-            if (n_subs>4) {
+            if (n_subs>2) {
                 compute();
             }
 
@@ -93,16 +93,30 @@ void Mosaic::compute(){
 
         getReferencedMosaics(ransac_mosaics);
 
-        ransac_mosaics[0]->computeOffset();
-        ransac_mosaics[1]->computeOffset();
+        // ransac_mosaics[0]->computeOffset();
+        // ransac_mosaics[1]->computeOffset();
 
         //alignMosaics(ransac_mosaics);
 
+        // ransac_mosaics[0]->computeOffset();
+        // ransac_mosaics[1]->computeOffset();
+        // blender->blendSubMosaic(ransac_mosaics[0]);
         // for (Frame *frame: ransac_mosaics[0]->frames) {
-        //     for(int j=0; j<frame->keypoints_pos[PREV].size(); j++){
+        //     for(int j=1; j<frame->keypoints_pos[PREV].size(); j++){
         //         circle(ransac_mosaics[0]->final_scene, frame->keypoints_pos[PREV][j], 3, Scalar(255, 0, 0), -1);
         //     }
         // }
+        // imshow("Blend-Ransac0", ransac_mosaics[0]->final_scene);
+        // waitKey(0);
+        // blender->blendSubMosaic(ransac_mosaics[1]);
+        // for (Frame *frame: ransac_mosaics[1]->frames) {
+        //     for(int j=1; j<frame->keypoints_pos[PREV].size(); j++){
+        //         circle(ransac_mosaics[1]->final_scene, frame->keypoints_pos[PREV][j], 3, Scalar(255, 0, 0), -1);
+        //     }
+        // }
+        // imshow("Blend-Ransac1", ransac_mosaics[1]->final_scene);
+        // waitKey(0);
+
 
         Mat best_H = getBestModel(ransac_mosaics, 2000);
         for (Frame *frame: ransac_mosaics[0]->frames) {
@@ -144,15 +158,16 @@ void Mosaic::getReferencedMosaics(vector<SubMosaic *> &_sub_mosaics){
 }
 
 // See description in header file
-Mat Mosaic::getBestModel(vector<SubMosaic *> _ransac_mosaics, int _niter){
+Mat Mosaic::getBestModel(vector<SubMosaic *> &_ransac_mosaics, int _niter){
     int rnd_frame, rnd_point;
     Mat temp_H, best_H;
-    float distortion = 1000;
+    float distortion = 100;
     float temp_distortion;
     vector<vector<Point2f> > points(2);
-    vector<Point2f> mid_points(4);
     vector<vector<Point2f> > aux_points(2);
+    vector<Point2f> mid_points(4);
     vector<Point2f> aux_points2(2);
+
     srand((uint32_t)getTickCount());
 
     aux_points[0] = vector<Point2f>(4);
@@ -194,46 +209,46 @@ Mat Mosaic::getBestModel(vector<SubMosaic *> _ransac_mosaics, int _niter){
 }
 // See description in header file
 void Mosaic::alignMosaics(vector<SubMosaic *> &_sub_mosaics){
-    Point2f centroid_0 = _sub_mosaics[0]->getCentroid();
-    Point2f centroid_1 = _sub_mosaics[1]->getCentroid();
 
-    vector<float> offset(4);
+    // ALIGN THE CENTROIDS
 
-    offset[TOP]  = max(centroid_1.y - centroid_0.y, 0.f);
-    offset[LEFT] = max(centroid_1.x - centroid_0.x, 0.f);
-    _sub_mosaics[0]->updateOffset(offset);
+    // Point2f centroid_0 = _sub_mosaics[0]->getCentroid();
+    // Point2f centroid_1 = _sub_mosaics[1]->getCentroid();
 
-    offset[TOP]  = max(centroid_0.y - centroid_1.y, 0.f);
-    offset[LEFT] = max(centroid_0.x - centroid_1.x, 0.f);
-    _sub_mosaics[1]->updateOffset(offset);
+    // vector<float> offset(4);
+
+    // offset[TOP]  = max(centroid_1.y - centroid_0.y, 0.f);
+    // offset[LEFT] = max(centroid_1.x - centroid_0.x, 0.f);
+    // _sub_mosaics[0]->updateOffset(offset);
+
+    // offset[TOP]  = max(centroid_0.y - centroid_1.y, 0.f);
+    // offset[LEFT] = max(centroid_0.x - centroid_1.x, 0.f);
+    // _sub_mosaics[1]->updateOffset(offset);
 
     Mat points[2];
 
     for (int i=0; i<_sub_mosaics.size(); i++) {
-        points[i] = Mat(_sub_mosaics[i]->frames[1]->keypoints_pos[NEXT]);
+        points[i] = Mat(_sub_mosaics[i]->frames[0]->keypoints_pos[NEXT]);
         for (int j=1; j<_sub_mosaics[i]->frames.size(); j++) {
-            vconcat(points[i], Mat(_sub_mosaics[i]->frames[1]->keypoints_pos[PREV]), points[i]);
+            vconcat(points[i], Mat(_sub_mosaics[i]->frames[j]->keypoints_pos[PREV]), points[i]);
         }
     }
 
-    Mat M = estimateRigidTransform(points[0], points[1], false);
-    double sx = sign(M.at<double>(0,0))*sqrt(pow(M.at<double>(0,0), 2) + pow(M.at<double>(0,1), 2));
-    double sy = sign(M.at<double>(1,1))*sqrt(pow(M.at<double>(1,0), 2) + pow(M.at<double>(1,1), 2));
-
-    M.at<double>(0,0) /= sx;
-    M.at<double>(0,1) /= sx;
-    M.at<double>(1,0) /= sy;
-    M.at<double>(1,1) /= sy;
-    M.at<double>(2,0) = 0;
-    M.at<double>(2,1) = 0;
-
-    Mat t = (Mat1d(1,3) << 0.0, 0.0, 1.0);
-    vconcat(M, t, M);
+    Mat T = estimateRigidTransform(points[0], points[1], false);
+    double sx = sign(T.at<double>(0,0))*sqrt(pow(T.at<double>(0,0), 2) + pow(T.at<double>(0,1), 2));
+    double sy = sign(T.at<double>(1,1))*sqrt(pow(T.at<double>(1,0), 2) + pow(T.at<double>(1,1), 2));
+    
+    Mat M = Mat::eye(3, 3, CV_64F);
+    M.at<double>(0,0) = T.at<double>(0,0)/sx;
+    M.at<double>(0,1) = T.at<double>(0,1)/sx;
+    M.at<double>(1,0) = T.at<double>(1,0)/sy;
+    M.at<double>(1,1) = T.at<double>(1,1)/sy;
 
     for (Frame *frame: _sub_mosaics[0]->frames) {
         frame->setHReference(M);
     }
-    _sub_mosaics[0]->avg_H = M * _sub_mosaics[1]->avg_H ;
+    _sub_mosaics[0]->avg_H = M * _sub_mosaics[0]->avg_H ;
+
 }
 
 // See description in header file

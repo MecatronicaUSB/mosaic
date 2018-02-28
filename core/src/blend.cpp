@@ -22,9 +22,6 @@ void Blender::blendSubMosaic(SubMosaic *_sub_mosaic){
     _sub_mosaic->final_scene = Mat(_sub_mosaic->scene_size, CV_8UC3, Scalar(0,0,0));
 
 
-    vector<Point2f> test = findLocalStitch(_sub_mosaic->frames[1], _sub_mosaic->frames[0]);
-
-
     //reverse(_sub_mosaic->frames.begin(), _sub_mosaic->frames.end());
     for (Frame* frame: _sub_mosaic->frames) {
 
@@ -61,6 +58,12 @@ void Blender::blendSubMosaic(SubMosaic *_sub_mosaic){
         warp_img.copyTo(frame_position, mask);
         // object_position -= _warp_img;
         // object_position += _warp_img;
+    vector<Point2f> test = findLocalStitch(_sub_mosaic->frames[1], _sub_mosaic->frames[0]);
+    for(int i=0; i<50; i++){
+        circle(_sub_mosaic->final_scene, test[i], 3, Scalar(5*i, 0, 0), -1);
+    }
+    imshow("Blend-Ransac0", _sub_mosaic->final_scene);
+    waitKey(0);
         mask.release();
     }
 }
@@ -77,28 +80,22 @@ void Blender::reduceRoi(vector<Point2f> &_points){
 vector<Point2f> Blender::findLocalStitch(Frame * _object, Frame *_scene){
     vector<Point2f> local_stitch;
     vector<BlendPoint> blend_points;
-    float thresh = 0.5;
-    Point2f aux_points[2];
+    float percentile = 0.2;
     for (int i=0; i<_object->keypoints_pos[PREV].size(); i++) {
-        aux_points[PREV] = _object->keypoints_pos[PREV][i];
-        aux_points[NEXT] = _scene->keypoints_pos[NEXT][i];
-        blend_points.push_back(BlendPoint(i, aux_points));
+        blend_points.push_back(BlendPoint(i, _object->keypoints_pos[PREV][i],
+                                             _scene->keypoints_pos[NEXT][i]));
     }
 
     sort(blend_points.begin(), blend_points.end());
 
     vector<Point2f> good_points;
-    for (BlendPoint blend_point: blend_points) {
-        if (blend_point.distance < thresh) {
-            good_points.push_back(blend_point.points[PREV]);
-        } else {
-            break;
-        }
+    for (int i=0; i<blend_points.size(); i++) {
+        good_points.push_back(blend_points[i].prev);
     }
 
-    convexHull(good_points, local_stitch);
-
-    return local_stitch;
+    //convexHull(good_points, local_stitch);
+    
+    return good_points;
 }
 
 }

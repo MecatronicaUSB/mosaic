@@ -124,7 +124,6 @@ float SubMosaic::calcDistortion(){
     float area_error=0;
     float min_ratio=0;
     float tot_error=0;
-    float temp_error=0;
 
     for (Frame *frame: frames) {
         for (int i=0; i<4; i++) {
@@ -143,7 +142,7 @@ float SubMosaic::calcDistortion(){
             cosine[i] = (v1.x*v2.x + v1.y*v2.y) / (sqrt(v1.x*v1.x + v1.y*v1.y)*sqrt(v2.x*v2.x + v2.y*v2.y));
         }
 
-        o_sides_error = 1 - 0.5*(min(side[0]/side[2], side[2]/side[0]) +
+        o_sides_error = 2 - 0.5*(min(side[0]/side[2], side[2]/side[0]) +
                                  min(side[1]/side[3], side[3]/side[1]));
         
         min_ratio = min(side[0]/side[1], min(side[1]/side[2], min(side[2]/side[3], side[3]/side[0])));
@@ -154,15 +153,13 @@ float SubMosaic::calcDistortion(){
                                     frame->bound_points[RANSAC][2],
                                     frame->bound_points[RANSAC][3]};
 
-        float area = contourArea(auxpts);
-        float area2 = frame_dims;
         area_error = 1 - min(contourArea(auxpts)/frame_dims,
                               frame_dims/contourArea(auxpts));
 
         angle_error = pow(max(cosine[0], max(cosine[1], max(cosine[2], cosine[3]))), 5);
 
         //tot_error += max(o_sides_error, max(c_sides_error, max(area_error, angle_error)));
-        tot_error += o_sides_error + c_sides_error+area_error+ angle_error;
+        tot_error += o_sides_error + c_sides_error + area_error + angle_error;
     }
 
     return tot_error;
@@ -210,7 +207,7 @@ Point2f SubMosaic::getCentroid(){
 
     int n_points=0;
     for (Frame *frame: frames) {
-        for (Point2f point: frame->bound_points[FIRST]) {
+        for (const Point2f point: frame->bound_points[FIRST]) {
             centroid += point;
             n_points++;
         }
