@@ -205,15 +205,31 @@ void SubMosaic::correct(){
 Point2f SubMosaic::getCentroid(){
     Point2f centroid(0, 0);
 
-    int n_points=0;
+    // int n_points=0;
+    // for (Frame *frame: frames) {
+    //     for (const Point2f point: frame->bound_points[FIRST]) {
+    //         centroid += point;
+    //         n_points++;
+    //     }
+    // }
+    // centroid /= n_points;
+
+    float top=TARGET_HEIGHT, bottom=0, left=TARGET_WIDTH, right=0;
     for (Frame *frame: frames) {
-        for (const Point2f point: frame->bound_points[FIRST]) {
-            centroid += point;
-            n_points++;
+        for (Point2f point: frame->bound_points[FIRST]) {
+            if (point.x < left)
+                left = point.x;
+            if (point.y < top)
+                top = point.y;
+            if (point.x > right)
+                right = point.x;
+            if (point.y > bottom)
+                bottom = point.y;
         }
     }
-
-    centroid /= n_points;
+    
+    centroid.x = (right + left) / 2;
+    centroid.y = (bottom + top) / 2;
 
     return centroid;
 }

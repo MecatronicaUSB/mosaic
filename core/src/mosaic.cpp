@@ -96,7 +96,7 @@ void Mosaic::compute(){
         // ransac_mosaics[0]->computeOffset();
         // ransac_mosaics[1]->computeOffset();
 
-        //alignMosaics(ransac_mosaics);
+        alignMosaics(ransac_mosaics);
 
         // ransac_mosaics[0]->computeOffset();
         // ransac_mosaics[1]->computeOffset();
@@ -127,7 +127,7 @@ void Mosaic::compute(){
         ransac_mosaics[0]->computeOffset();
 
         blender->blendSubMosaic(ransac_mosaics[0]);
-        imshow("Blend-Ransac2", ransac_mosaics[0]->final_scene);
+        imshow("Blend-Ransac-Final", ransac_mosaics[0]->final_scene);
         imwrite("/home/victor/dataset/output/ransac-00.jpg", ransac_mosaics[0]->final_scene);
         waitKey(0);
 
@@ -164,14 +164,9 @@ Mat Mosaic::getBestModel(vector<SubMosaic *> &_ransac_mosaics, int _niter){
     float distortion = 100;
     float temp_distortion;
     vector<vector<Point2f> > points(2);
-    vector<vector<Point2f> > aux_points(2);
     vector<Point2f> mid_points(4);
-    vector<Point2f> aux_points2(2);
 
     srand((uint32_t)getTickCount());
-
-    aux_points[0] = vector<Point2f>(4);
-    aux_points[1] = vector<Point2f>(4);
 
     points[0] = vector<Point2f>(4);
     points[1] = vector<Point2f>(4);
@@ -197,34 +192,16 @@ Mat Mosaic::getBestModel(vector<SubMosaic *> &_ransac_mosaics, int _niter){
 
         if (temp_distortion < distortion) {
             distortion = temp_distortion;
-            aux_points = points;
-            aux_points2 = mid_points;
             best_H = temp_H;
         }
     }
 
-    delete _ransac_mosaics[1];
+    //delete _ransac_mosaics[0];
 
     return best_H;
 }
 // See description in header file
 void Mosaic::alignMosaics(vector<SubMosaic *> &_sub_mosaics){
-
-    // ALIGN THE CENTROIDS
-
-    // Point2f centroid_0 = _sub_mosaics[0]->getCentroid();
-    // Point2f centroid_1 = _sub_mosaics[1]->getCentroid();
-
-    // vector<float> offset(4);
-
-    // offset[TOP]  = max(centroid_1.y - centroid_0.y, 0.f);
-    // offset[LEFT] = max(centroid_1.x - centroid_0.x, 0.f);
-    // _sub_mosaics[0]->updateOffset(offset);
-
-    // offset[TOP]  = max(centroid_0.y - centroid_1.y, 0.f);
-    // offset[LEFT] = max(centroid_0.x - centroid_1.x, 0.f);
-    // _sub_mosaics[1]->updateOffset(offset);
-
     Mat points[2];
 
     for (int i=0; i<_sub_mosaics.size(); i++) {
@@ -248,6 +225,20 @@ void Mosaic::alignMosaics(vector<SubMosaic *> &_sub_mosaics){
         frame->setHReference(M);
     }
     _sub_mosaics[0]->avg_H = M * _sub_mosaics[0]->avg_H ;
+
+
+    Point2f centroid_0 = _sub_mosaics[0]->getCentroid();
+    Point2f centroid_1 = _sub_mosaics[1]->getCentroid();
+
+    vector<float> offset(4);
+
+    offset[TOP]  = max(centroid_1.y - centroid_0.y, 0.f);
+    offset[LEFT] = max(centroid_1.x - centroid_0.x, 0.f);
+    _sub_mosaics[0]->updateOffset(offset);
+
+    offset[TOP]  = max(centroid_0.y - centroid_1.y, 0.f);
+    offset[LEFT] = max(centroid_0.x - centroid_1.x, 0.f);
+    _sub_mosaics[1]->updateOffset(offset);
 
 }
 

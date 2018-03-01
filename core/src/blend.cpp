@@ -58,12 +58,6 @@ void Blender::blendSubMosaic(SubMosaic *_sub_mosaic){
         warp_img.copyTo(frame_position, mask);
         // object_position -= _warp_img;
         // object_position += _warp_img;
-    vector<Point2f> test = findLocalStitch(_sub_mosaic->frames[1], _sub_mosaic->frames[0]);
-    for(int i=0; i<50; i++){
-        circle(_sub_mosaic->final_scene, test[i], 3, Scalar(5*i, 0, 0), -1);
-    }
-    imshow("Blend-Ransac0", _sub_mosaic->final_scene);
-    waitKey(0);
         mask.release();
     }
 }

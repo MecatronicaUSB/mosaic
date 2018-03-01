@@ -99,7 +99,7 @@ int Stitcher::stitch(Frame *_object, Frame *_scene, Size _scene_dims){
     // Match the keypoints using Knn
     vector<vector<DMatch> > aux_matches;
 
-    matcher->knnMatch( img[OBJECT]->descriptors, img[SCENE]->descriptors, aux_matches, 2);
+    matcher->knnMatch(img[OBJECT]->descriptors, img[SCENE]->descriptors, aux_matches, 2);
     matches.push_back(aux_matches);
     
     for (Frame *neighbor: img[SCENE]->neighbors) {
@@ -183,7 +183,6 @@ void Stitcher::updateNeighbors(){
 void Stitcher::getGoodMatches(float _thresh){
     vector<DMatch> aux_matches;
     for (int i=0; i<img[SCENE]->neighbors.size()+1; i++){
-        aux_matches.clear();
         for (vector<DMatch> match: matches[i]) {
             if ((match[0].distance < _thresh * (match[1].distance)) &&
                 ((int) match.size() <= 2 && (int) match.size() > 0)) {
@@ -193,6 +192,7 @@ void Stitcher::getGoodMatches(float _thresh){
             }
         }
         good_matches.push_back(aux_matches);
+        aux_matches.clear();
     }
 }
 
@@ -200,18 +200,15 @@ void Stitcher::getGoodMatches(float _thresh){
 void Stitcher::gridDetector(){
     vector<vector<DMatch> > grid_matches;
     DMatch best_match;
-    int m=0, best_distance = 100;
     int stepx = img[OBJECT]->color.cols / cells_div;
     int stepy = img[OBJECT]->color.rows / cells_div;
-    int index = 0;
+    int best_distance = 100;
+    int index = 0, m=0;
 
-    grid_matches = good_matches;
-    for (vector<DMatch> &aux: grid_matches) {
-        aux.clear();
-    }
+    grid_matches = vector<vector<DMatch> >(good_matches.size());
 
-    for (int i=0; i<10; i++) {
-        for (int j=0; j<10; j++) {
+    for (int i=0; i<cells_div; i++) {
+        for (int j=0; j<cells_div; j++) {
             best_distance = 100;
             index=0;
             for (int k=0; k<img[SCENE]->neighbors.size()+1; k++) {
@@ -230,8 +227,9 @@ void Stitcher::gridDetector(){
                     m++;
                 }
             }
-            if (best_distance != 100)
+            if (best_distance != 100){
                 grid_matches[index].push_back(best_match);
+            }
         }
     }
     good_matches = grid_matches;
@@ -251,12 +249,12 @@ void  Stitcher::positionFromKeypoints(){
 
     for (int i=0; i<img[SCENE]->neighbors.size(); i++) {
         
-        aux_points.clear();
         for (DMatch good: good_matches[i+1]) {
             img[OBJECT]->keypoints_pos[PREV].push_back(img[OBJECT]->keypoints[good.queryIdx].pt);
             aux_points.push_back(img[SCENE]->neighbors[i]->keypoints[good.trainIdx].pt);
         }
         neighbors_kp.push_back(aux_points);
+        aux_points.clear();
     }
 
     trackKeypoints();
@@ -273,14 +271,16 @@ void  Stitcher::positionFromKeypoints(){
 
 // See description in header file
 void Stitcher::trackKeypoints(){
-    if (img[SCENE]->keypoints_pos[NEXT].size() >0)
+    if (img[SCENE]->keypoints_pos[NEXT].size() >0) {
         perspectiveTransform(img[SCENE]->keypoints_pos[NEXT], img[SCENE]->keypoints_pos[NEXT],
                              img[SCENE]->H);
+    }
 
     for (int i=0; i<img[SCENE]->neighbors.size(); i++) {
-        if (neighbors_kp[i].size()>0)
+        if (neighbors_kp[i].size()>0) {
             perspectiveTransform(neighbors_kp[i], neighbors_kp[i],
                                  img[SCENE]->neighbors[i]->H);
+        }
     }
     
 }
