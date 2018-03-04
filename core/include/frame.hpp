@@ -18,19 +18,22 @@ namespace m2d //!< mosaic 2d namespace
 const int KEY = 0;
 
 /// termporal frame reference for Frame class
-enum FrameRef{
+enum FrameRef
+{
     PREV,
     NEXT
 };
 
-enum RansacReference {
+enum RansacReference
+{
     FIRST,
     RANSAC,
     SECOND
 };
 
 /// offset of padding to add in scene after object transformation
-enum WarpOffset{
+enum WarpOffset
+{
     TOP,
     BOTTOM,
     LEFT,
@@ -41,48 +44,49 @@ enum WarpOffset{
  * @brief All data for each image in a mosaic
  * @detail Contains All data of each image refered to current sub-mosaic or mosaic
  */
-class Frame{
-    public:
-        // ---------- Atributes
-        float frame_error;
-        Mat descriptors;
-        Mat color;                        //!< OpenCV Matrix containing the original image
-        Mat gray;                         //!< OpenCV Matrix containing a gray scale version of image
-        Mat H;                            //!< Homography matrix based on previous frame
-        Rect2f bound_rect;                //!< Minimum bounding rectangle of transformed image
-        vector<vector<Point2f> > bound_points;     //!< Points of the transformmed image (initially at corners)
-        vector<vector<Point2f> > keypoints_pos; //!< Position (X,Y) of good keypoints in image 
-        vector<KeyPoint> keypoints;
-        vector<Frame *> neighbors;         //!< Vector containing all spatially close Frames (Pointers)
+class Frame
+{
+  public:
+    // ---------- Atributes
+    float frame_error;
+    Mat descriptors;
+    Mat color;                             //!< OpenCV Matrix containing the original image
+    Mat gray;                              //!< OpenCV Matrix containing a gray scale version of image
+    Mat H;                                 //!< Homography matrix based on previous frame
+    Rect2f bound_rect;                     //!< Minimum bounding rectangle of transformed image
+    vector<vector<Point2f>> bound_points;  //!< Points of the transformmed image (initially at corners)
+    vector<vector<Point2f>> keypoints_pos; //!< Position (X,Y) of good keypoints in image
+    vector<KeyPoint> keypoints;
+    vector<Frame *> neighbors; //!< Vector containing all spatially close Frames (Pointers)
 
-        // ---------- Methods
-        /**
+    // ---------- Methods
+    /**
          * @brief Default class constructor
          * @param _img OpenCV Matrix containing the BGR version of image
          * @param _key Flag to assign this frame as reference (usefull for SubMosaic Class)
          * @param _width Width to resize the image (Speed purpose)
          * @param _height Height to resize the image (Speed purpose)
          */
-        Frame(Mat _img,  bool _pre = true, int _width = TARGET_WIDTH, int _height = TARGET_HEIGHT);
-        /**
+    Frame(Mat _img, bool _pre = true, int _width = TARGET_WIDTH, int _height = TARGET_HEIGHT);
+    /**
          * @brief 
          */
-        ~Frame();
-        /**
+    ~Frame();
+    /**
          * @brief 
          * @return Frame* 
          */
-        Frame* clone();
-        /**
+    Frame *clone();
+    /**
          * @brief 
          */
-        void resetFrame();
-        /**
+    void resetFrame();
+    /**
          * @brief Change the reference for Homography matrix (Not yet implemented)
          * @param _H Homography matrix
          */
-        void setHReference(Mat _H);
-        /**
+    void setHReference(Mat _H);
+    /**
          * @brief Check if the frame is too much distorted
          * @detail The distortion is besed on follow criteria:
          * - Ratio of semi-diagonals distance. \n
@@ -91,23 +95,21 @@ class Frame{
          * @return true if the frame is good enought 
          * @return false otherwise
          */
-        bool isGoodFrame();
-        /**
+    bool isGoodFrame();
+    /**
          * @brief Calculate the minimun bounding area containing good keypoints 
          * @return float Area with good keypoints inside
          */
-        float boundAreaKeypoints();
-        /**
+    float boundAreaKeypoints();
+    /**
          * @brief 
          */
-        void updateBoundRect();
-        /**
+    void updateBoundRect();
+    /**
          * @brief 
          * @return true 
          * @return false 
          */
-        bool haveKeypoints();
-
+    bool haveKeypoints();
 };
-
 }

@@ -15,52 +15,52 @@ using namespace cv;
 
 namespace m2d //!< mosaic 2d namespace
 {
-    
-class Mosaic{
-    public:
-        // ---------- Atributes
-        int tot_frames;
-        int n_subs;
-        vector<SubMosaic *> sub_mosaics;
-        bool apply_pre;                         //!< flag to apply or not SCB preprocessing algorithm
-        Stitcher *stitcher;
-        Blender *blender;
-        bool test = false;
-        // ---------- Methods
-        Mosaic(bool _pre = true);
-        // TODO:
-        SubMosaic* addSubMosaics(SubMosaic *_sub_mosaic1, SubMosaic *_sub_mosaic2);
-        /**
+
+class Mosaic
+{
+  public:
+    // ---------- Atributes
+    int tot_frames;
+    int n_subs;
+    vector<SubMosaic *> sub_mosaics;
+    bool apply_pre; //!< flag to apply or not SCB preprocessing algorithm
+    Stitcher *stitcher;
+    Blender *blender;
+    bool test = false;
+    // ---------- Methods
+    Mosaic(bool _pre = true);
+    // TODO:
+    SubMosaic *addSubMosaics(SubMosaic *_sub_mosaic1, SubMosaic *_sub_mosaic2);
+    /**
          * @brief 
          * @param _object 
          */
-        bool addFrame(Mat _object);
-        /**
+    bool addFrame(Mat _object);
+    /**
          * @brief 
          * @param n_inter 
          */
-        void compute();
-        /**
+    void compute();
+    /**
          * @brief 
          * @param _first 
          * @param _second 
          * @param _ref 
          * @return SubMosaic* 
          */
-        void getReferencedMosaics(vector<SubMosaic *> &_sub_mosaics);
-        /**
+    void getReferencedMosaics(vector<SubMosaic *> &_sub_mosaics);
+    /**
          * @brief 
          * @param _sub_mosaics 
          */
-        void alignMosaics(vector<SubMosaic *> &_sub_mosaics);
-        /**
+    void alignMosaics(vector<SubMosaic *> &_sub_mosaics);
+    /**
          * @brief 
          * @param ransac_mosaics 
          * @return Mat 
          */
-        Mat getBestModel(vector<SubMosaic *> &_ransac_mosaics, int _niter = 2000);
-        // temporal function
-        void show();
+    Mat getBestModel(vector<SubMosaic *> &_ransac_mosaics, int _niter = 2000);
+    // temporal function
+    void show();
 };
-
 }

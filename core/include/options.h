@@ -9,13 +9,12 @@
 #pragma once
 #include "args.hxx"
 
-
 args::ArgumentParser parser("2D mosaic generation pipeline", "Author: Victor Garcia");
-args::HelpFlag help(parser, "help", "Display this help menu", {'h','?', "help"});
+args::HelpFlag help(parser, "help", "Display this help menu", {'h', '?', "help"});
 
 args::Group matcher(parser, "Select the Feature Matcher:", args::Group::Validators::AtMostOne);
-args::Flag matcher_brutef(matcher, "Brute Force", "Brute force matcher", {'b',"bf"});
-args::Flag matcher_flann(matcher, "Flann", "Flann force matcher (default)", {'f',"flann"});
+args::Flag matcher_brutef(matcher, "Brute Force", "Brute force matcher", {'b', "bf"});
+args::Flag matcher_flann(matcher, "Flann", "Flann force matcher (default)", {'f', "flann"});
 
 args::Group feature(parser, "Select the Feature Extractor and Descriptor:", args::Group::Validators::AtMostOne);
 args::Flag detector_sift(feature, "SIFT", "Use SURF --Scale Invariant Feature Detector--", {"sift"});

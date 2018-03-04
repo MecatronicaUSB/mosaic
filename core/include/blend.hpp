@@ -15,7 +15,8 @@ using namespace cv;
 namespace m2d
 {
 
-struct _BlendPoint {
+struct _BlendPoint
+{
     int index;
     float distance;
     Point2f prev;
@@ -26,34 +27,54 @@ struct _BlendPoint {
                                                             next(_next),
                                                             distance(getDistance(_prev, _next)){};
 
-    bool operator < (const _BlendPoint& pt) const{
+    bool operator<(const _BlendPoint &pt) const
+    {
         return (distance < pt.distance);
     }
 };
 
 typedef _BlendPoint BlendPoint;
 
-class Blender{
-    public:
-        /**
+class Blender
+{
+  public:
+    vector<Mat> warp_imgs;
+    vector<Mat> masks;
+    vector<Rect2f> bound_rect;
+    /**
          * @brief 
          */
-        Blender();
-        /**
+    Blender();
+    /**
          * @brief 
          * @param _sub_mosaic 
          */
-        void blendSubMosaic(SubMosaic *_sub_mosaic);
-        /**
+    void blendSubMosaic(SubMosaic *_sub_mosaic);
+    /**
          * @brief 
          * @param _points 
          */
-        void reduceRoi(vector<Point2f> &_points);
-        /**
+    Mat getMask(Frame *_frame);
+    /**
+     * @brief 
+     * @param _frame 
+     * @param _frame 
+     * @return true 
+     * @return false 
+     */
+    bool checkCollision(Frame *_object, Frame *_scene);
+    /**
+     * @brief 
+     */
+    void cropMask(int _object_index, int _scene_index);
+    /**
          * @brief 
          */
-        vector<Point2f> findLocalStitch(Frame * _object, Frame *_scene);
-        
+    vector<Point2f> findLocalStitch(Frame *_object, Frame *_scene);
+    /**
+         * @brief 
+         * @return Mat 
+         */
+    Mat getWarpImg(Frame *_frame);
 };
-
 }

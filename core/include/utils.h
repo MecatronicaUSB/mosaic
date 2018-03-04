@@ -7,6 +7,10 @@
  */
 
 #pragma once
+
+#include "opencv2/stitching/detail/exposure_compensate.hpp"
+#include "opencv2/stitching/detail/blenders.hpp"
+#include "opencv2/stitching/detail/util.hpp"
 #include <opencv2/xfeatures2d.hpp>
 #include <opencv2/features2d.hpp>
 #include <opencv2/imgcodecs.hpp>
@@ -22,7 +26,7 @@
 #include <math.h>
 #include <string>
 #include <vector>
-#include <cmath> 
+#include <cmath>
 
 using namespace cv;
 using namespace std;
@@ -30,8 +34,8 @@ using namespace std;
 namespace m2d
 {
 
-const int TARGET_WIDTH	= 640;   
-const int TARGET_HEIGHT	= 480;
+const int TARGET_WIDTH = 640;
+const int TARGET_HEIGHT = 480;
 
 /**
  * @brief Calculate the euclidean distance between two given vector in 2D
@@ -44,7 +48,6 @@ float getDistance(Point2f _pt1, Point2f _pt2);
 Point2f getMidPoint(Point2f _pt1, Point2f _pt2);
 
 int sign(double _num1);
-
 }
 
 /**
@@ -53,7 +56,7 @@ int sign(double _num1);
  * @param img OpenCV Matrix container input image
  * @param histogram Integer matrix to store the histogram
  */
-void getHistogram(cv::Mat img, int* histogram);
+void getHistogram(cv::Mat img, int *histogram);
 // Histogram[3][256].
 //      Histogram[0] corresponds to the Blue channel
 //      Histogram[1] corresponds to the Green channel

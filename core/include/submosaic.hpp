@@ -17,91 +17,91 @@ namespace m2d //!< mosaic 2d namespace
 
 class SubMosaic;
 
-typedef struct {                   //!< Struct to relate two SubMosaics
-    SubMosaic* mosaic;              //!< Pointer to SubMosaic
-    float overlap;                  //!< Overlap area between this sub-mosaic and pointed one
-} Hierarchy; 
-
+typedef struct
+{                      //!< Struct to relate two SubMosaics
+    SubMosaic *mosaic; //!< Pointer to SubMosaic
+    float overlap;     //!< Overlap area between this sub-mosaic and pointed one
+} Hierarchy;
 
 /**
  * @brief 
  */
-class SubMosaic{
-    public:
-        // ---------- Atributes
-        int n_frames;                       //!< Number of frames in sub-mosaic
-        Mat final_scene;                    //!< Image containing all blended images (the sub-mosaic)
-        Mat avg_H;                            //!< Average Homography matrix (Matrix that reduces the dostortion error)
-        Frame *last_frame;
-        Size2f scene_size;
-        vector<Frame *> frames;             //!< Vector containing all the frames (Pointers) in sub-mosaic 
-        vector<Hierarchy> neighbors; //!< Vector with all the neighbors SubMosaics (spatially close)
-        // ---------- Methods
-        /**
+class SubMosaic
+{
+  public:
+    // ---------- Atributes
+    int n_frames;    //!< Number of frames in sub-mosaic
+    Mat final_scene; //!< Image containing all blended images (the sub-mosaic)
+    Mat avg_H;       //!< Average Homography matrix (Matrix that reduces the dostortion error)
+    Frame *last_frame;
+    Size2f scene_size;
+    vector<Frame *> frames;      //!< Vector containing all the frames (Pointers) in sub-mosaic
+    vector<Hierarchy> neighbors; //!< Vector with all the neighbors SubMosaics (spatially close)
+    // ---------- Methods
+    /**
          * @brief Default constructor
          */
-        SubMosaic();
-        /**
+    SubMosaic();
+    /**
          * @brief 
          */
-        ~SubMosaic();
-        /**
+    ~SubMosaic();
+    /**
          * @brief 
          * @return SubMosaic 
          */
-        SubMosaic* clone();
-        /**
+    SubMosaic *clone();
+    /**
          * @brief Using the Stitcher class, add the object image to the current sub-mosaic
          * @param _object OpenCV Matrix containig the BGR image to add in the sub-mosaic
          * @return true If the stitch was sucesussfull
          * @return false If the stitch wasn't sucesussfull
          */
-        void addFrame(Frame *_frame);
-        /**
+    void addFrame(Frame *_frame);
+    /**
          * @brief 
          * @param _object 
          * @param _scene 
          * @return float 
          */
-        float calcKeypointsError(Frame *_first, Frame *_second);
-        /**
+    float calcKeypointsError(Frame *_first, Frame *_second);
+    /**
          * @brief 
          * @return float 
          */
-        float calcDistortion();
-        /**
+    float calcDistortion();
+    /**
          * @brief 
          */
-        void computeOffset();
-        /**
+    void computeOffset();
+    /**
          * @brief 
          */
-        void referenceToZero();
-        /**
+    void referenceToZero();
+    /**
          * @brief 
          * @return Point2f 
          */
-        Point2f getCentroid();
-        /**
+    Point2f getCentroid();
+    /**
          * @brief 
          * @param _frames 
          */
-        void updateOffset(vector<float> _offset);
-        /**
+    void updateOffset(vector<float> _offset);
+    /**
          * @brief 
          */
-        void correct();
-        /**
+    void correct();
+    /**
          * @brief Calculate the Homography matrix that reduce the distortion error in the sub-mosaic
          * (Not yet implemented)
          */
-        void calcAverageH();
-        /**
+    void calcAverageH();
+    /**
          * @brief 
          * @return true 
          * @return false 
          */
-        bool isEmpty();
+    bool isEmpty();
 };
-
 }
