@@ -30,3 +30,4 @@ args::Flag output(group_optional, "image-name", "Show final blended images", {'o
 args::Flag apply_pre(group_optional, "Pre-processing", "Apply pre-processing algorithm to test improvement in keypoints search", {"pre"});
 args::Flag use_grid(group_optional, "grid", "Filter keypoints based on grid distribution. the grid is fixed at 10x10 cels", {"grid"});
 args::ValueFlag<std::string> save(group_optional, "image-name", "Save the blended sub-mosaic", {'s'});
+args::ValueFlag<int> blender_bands(group_optional, " ", "number of bands for multi-band blender", {'n'});

@@ -38,13 +38,14 @@ typedef _BlendPoint BlendPoint;
 class Blender
 {
   public:
+    int bands;
     vector<Mat> warp_imgs;
     vector<Mat> masks;
     vector<Rect2f> bound_rect;
     /**
          * @brief 
          */
-    Blender();
+    Blender(int _bands = 5): bands(_bands){};
     /**
          * @brief 
          * @param _sub_mosaic 

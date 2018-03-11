@@ -65,7 +65,7 @@ bool Mosaic::addFrame(Mat _object)
 		sub_mosaics[n_subs]->addFrame(new_frame);
 		test = true;
 
-		if (n_subs > 2)
+		if (n_subs > 15)
 		{
 			compute();
 		}
@@ -99,7 +99,7 @@ void Mosaic::compute()
 	{
 
 		ransac_mosaics[0] = sub_mosaics[0];
-		ransac_mosaics[1] = sub_mosaics[i + 1];
+		ransac_mosaics[1] = sub_mosaics[1];
 
 		getReferencedMosaics(ransac_mosaics);
 
@@ -141,7 +141,8 @@ void Mosaic::compute()
 		imwrite("/home/victor/dataset/output/ransac-00.jpg", ransac_mosaics[0]->final_scene);
 		waitKey(0);
 
-		sub_mosaics.erase(sub_mosaics.begin() + 1);
+		sub_mosaics.erase(sub_mosaics.begin());
+		sub_mosaics.erase(sub_mosaics.begin());
 	}
 }
 
@@ -152,7 +153,7 @@ void Mosaic::getReferencedMosaics(vector<SubMosaic *> &_sub_mosaics)
 	Mat ref_H = _sub_mosaics[0]->avg_H.clone();
 
 	_sub_mosaics[1]->referenceToZero();
-	Mat new_ref_H = _sub_mosaics[1]->avg_H.clone();
+	Mat new_ref_H = ref_H * _sub_mosaics[1]->avg_H.clone();
 
 	for (Frame *frame : _sub_mosaics[1]->frames)
 	{

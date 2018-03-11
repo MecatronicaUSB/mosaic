@@ -21,16 +21,11 @@ Frame::Frame(Mat _img, bool _pre, int _width, int _height)
 	bound_points = vector<vector<Point2f>>(3);
 	keypoints_pos = vector<vector<Point2f>>(2);
 
-	const float cx = 639.5;
-	const float cy = 359.5;
-	const float fx = 1101;
-	const float fy = 1101;
+	const float cx = 639.5, cy = 359.5;
+	const float fx = 1101, fy = 1101;
 
-	const float k1 = -0.359;
-	const float k2 = 0.279;
-	const float p1 = 0;
-	const float p2 = 0;
-	const float k3 = -0.16;
+	const float k1 = -0.359, k2 = 0.279, k3 = -0.16;
+	const float p1 = 0, p2 = 0;
 
 	Mat camera_matrix = (Mat1d(3, 3) << fx, 0, cx, 0, fy, cy, 0, 0, 1);
 	Mat distortion_coeff = (Mat1d(1, 5) << k1, k2, p1, p2, k3);

@@ -130,22 +130,17 @@ float SubMosaic::calcDistortion()
 {
 	Point2f line[4][2];
 	Point2f v1, v2;
-	float side[4];
-	float cosine[4];
+	float side[4], cosine[4];
 	float frame_dims = (float)TARGET_WIDTH * (float)TARGET_HEIGHT;
 	float ratio_dims = (float)TARGET_HEIGHT / (float)TARGET_WIDTH;
-	float o_sides_error = 0;
-	float c_sides_error = 0;
-	float angle_error = 0;
-	float area_error = 0;
-	float min_ratio = 0;
+	float o_sides_error = 0, c_sides_error = 0, angle_error = 0;
+	float area_error = 0, min_ratio = 0;
 	float tot_error = 0;
 
 	for (Frame *frame : frames)
 	{
 		for (int i = 0; i < 4; i++)
 		{
-
 			line[i][0] = frame->bound_points[RANSAC][i];
 			line[i][1] = frame->bound_points[RANSAC][i < 3 ? i + 1 : 0];
 
@@ -162,23 +157,25 @@ float SubMosaic::calcDistortion()
 		}
 
 		o_sides_error = 2 - 0.5 * (min(side[0] / side[2], side[2] / side[0]) +
-															 min(side[1] / side[3], side[3] / side[1]));
+									min(side[1] / side[3], side[3] / side[1]));
 
 		min_ratio = min(side[0] / side[1], min(side[1] / side[2], min(side[2] / side[3], side[3] / side[0])));
 		c_sides_error = 1 - min(min_ratio / ratio_dims, ratio_dims / min_ratio);
 
-		vector<Point2f> auxpts = {frame->bound_points[RANSAC][0],
-															frame->bound_points[RANSAC][1],
-															frame->bound_points[RANSAC][2],
-															frame->bound_points[RANSAC][3]};
+		vector<Point2f> aux_points = {
+			frame->bound_points[RANSAC][0],
+			frame->bound_points[RANSAC][1],
+			frame->bound_points[RANSAC][2],
+			frame->bound_points[RANSAC][3]
+		};
 
-		area_error = 1 - min(contourArea(auxpts) / frame_dims,
-												 frame_dims / contourArea(auxpts));
+		area_error = 1 - min(contourArea(aux_points) / frame_dims,
+												 frame_dims / contourArea(aux_points));
 
 		angle_error = pow(max(cosine[0], max(cosine[1], max(cosine[2], cosine[3]))), 5);
 
 		//tot_error += max(o_sides_error, max(c_sides_error, max(area_error, angle_error)));
-		tot_error += o_sides_error + c_sides_error + area_error + angle_error;
+		tot_error = max(tot_error, o_sides_error + c_sides_error + area_error + angle_error);
 	}
 
 	return tot_error;

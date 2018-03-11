@@ -54,20 +54,25 @@ int main( int argc, char** argv ) {
     file_names = read_filenames(directory);
 
     // Veobose section -----
-    cout<<endl<< "2D mosaic generation pipeline"<<endl;
-    cout<< "Author: Victor Garcia"<<endl<<endl;
+    cout << endl << "2D mosaic generation"<<endl;
+    cout << "Author: Victor Garcia"<<endl<<endl;
     cout << "Built with OpenCV\t" <<yellow<< CV_VERSION << reset << endl;
     cout << "  Directory:\t\t"<<cyan<< directory<<reset << endl;
-    detector_surf  ?
-    cout << "  Feature extractor:\t"<<cyan<<"SURF"<<reset<< endl:
-    detector_sift  ? 
-    cout << "  Feature extractor:\t"<<cyan<<"SIFT"<<reset << endl:
-    detector_akaze ? 
-    cout << "  Feature extractor:\t"<<cyan<<"A-KAZE"<<reset << endl:
-    cout << "  Feature extractor:\t"<<cyan<<"KAZE\t(Default)"<< reset << endl;
-    matcher_brutef ? 
-    cout << "  Feature Matcher:\t"<<cyan<<"BRUTE FORCE"<<reset << endl:
-    cout << "  Feature Matcher:\t"<<cyan<<"FLANN\t(Default)"<<reset << endl;
+    // Feature Extractor
+    cout << "  Feature extractor:\t" << cyan;
+    detector_surf ? cout << "SURF" :
+    detector_sift ? cout << "SIFT" :
+    detector_akaze ? cout << "A-KAZE" : cout << "KAZE\t(Default)";
+    cout << reset << endl;
+    // Feature Matcher
+    cout << "  Feature Matcher:\t" << cyan;
+    matcher_brutef ? cout << "BRUTE FORCE" : cout << "FLANN\t(Default)";
+    cout << reset << endl;
+    // # bands for multiband blender
+    cout << "  Nº bands (blender):\t" << cyan;
+    blender_bands ? cout << args::get(blender_bands) : cout << 5;
+    cout << reset << endl;
+    // Optional commands
     cout << boolalpha;
     cout << "  Apply preprocessing:\t"<<cyan<< apply_pre <<reset << endl;
     cout << "  Use grid detection:\t"<<cyan<< use_grid <<reset << endl<<endl;
@@ -81,6 +86,7 @@ int main( int argc, char** argv ) {
         m2d::USE_KAZE,
         matcher_flann  ? m2d::USE_FLANN : m2d::USE_BRUTE_FORCE        // select feature matcher
     );
+    mosaic.blender = new m2d::Blender(blender_bands ? args::get(blender_bands) : 5);
 
     t = (double) getTickCount();
 

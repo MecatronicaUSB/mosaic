@@ -14,17 +14,19 @@ using namespace cv::detail;
 namespace m2d
 {
 
-Blender::Blender()
-{
-
-}
-
 // See description in header file
 void Blender::blendSubMosaic(SubMosaic *_sub_mosaic)
 {
-	MultiBandBlender multiband(false, 3);
+	MultiBandBlender multiband(false, bands);
 
 	_sub_mosaic->final_scene.release();
+
+	if (_sub_mosaic->calcDistortion() > 5)
+	{
+		cout << "mosaic too distorted to blend" << endl;
+		return;
+	}
+
 	_sub_mosaic->final_scene = Mat(_sub_mosaic->scene_size, CV_8UC3, Scalar(0, 0, 0));
 	multiband.prepare(Rect(Point(0, 0), _sub_mosaic->scene_size));
 
@@ -80,7 +82,6 @@ Mat Blender::getWarpImg(Frame *_frame)
 
 Mat Blender::getMask(Frame *_frame)
 {
-
 	vector<Point2f> aux_points = _frame->bound_points[FIRST];
 
 	for (Point2f &point : aux_points)
@@ -89,11 +90,11 @@ Mat Blender::getMask(Frame *_frame)
 		point.y -= _frame->bound_rect.y;
 	}
 
-	for (Point2f &corner : aux_points)
+	for (int i = 0; i < aux_points.size() - 1; i++)
 	{
 		// point[4] correspond to center point
-		corner.x += 20 * ((corner.x - aux_points[4].x) > 0 ? -1 : 1);
-		corner.y += 20 * ((corner.y - aux_points[4].y) > 0 ? -1 : 1);
+		aux_points[i].x += 5 * (aux_points[4].x - aux_points[i].x) / 100;
+		aux_points[i].y += 5 * (aux_points[4].y - aux_points[i].y) / 100;
 	}
 
 	Point mask_points[4] = {
