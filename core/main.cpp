@@ -101,7 +101,7 @@ int main( int argc, char** argv ) {
             break;
         
         if (output) {
-            mosaic.show();
+            mosaic.print();
         }
     }
     //mosaic.compute();

@@ -40,8 +40,8 @@ bool Mosaic::addFrame(Mat _object)
 	}
 
 	int status = stitcher->stitch(new_frame,
-																sub_mosaics[n_subs]->last_frame,
-																sub_mosaics[n_subs]->scene_size);
+									sub_mosaics[n_subs]->last_frame,
+									sub_mosaics[n_subs]->scene_size);
 
 	switch (status)
 	{
@@ -245,7 +245,7 @@ void Mosaic::alignMosaics(vector<SubMosaic *> &_sub_mosaics)
 }
 
 // See description in header file
-void Mosaic::show()
+void Mosaic::print()
 {
 	if (test)
 	{

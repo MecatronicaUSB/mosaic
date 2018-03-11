@@ -58,10 +58,14 @@ class Blender
     Mat getMask(Frame *_frame);
     /**
      * @brief 
+     * @param _sub_mosaic 
+     */
+    void correctColor(SubMosaic *_sub_mosaic);
+    /**
+     * @brief 
      * @param _frame 
      * @param _frame 
-     * @return true 
-     * @return false 
+     * @return bool 
      */
     bool checkCollision(Frame *_object, Frame *_scene);
     /**

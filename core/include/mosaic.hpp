@@ -61,6 +61,6 @@ class Mosaic
          */
     Mat getBestModel(vector<SubMosaic *> &_ransac_mosaics, int _niter = 2000);
     // temporal function
-    void show();
+    void print();
 };
 }

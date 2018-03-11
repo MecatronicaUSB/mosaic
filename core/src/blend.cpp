@@ -80,6 +80,11 @@ Mat Blender::getWarpImg(Frame *_frame)
 	return warp_img;
 }
 
+void Blender::correctColor(SubMosaic *_sub_mosaic)
+{
+	
+}
+
 Mat Blender::getMask(Frame *_frame)
 {
 	vector<Point2f> aux_points = _frame->bound_points[FIRST];
