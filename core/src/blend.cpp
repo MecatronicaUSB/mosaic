@@ -41,6 +41,7 @@ void Blender::blendSubMosaic(SubMosaic *_sub_mosaic)
 		warp_imgs.push_back(aux_img.clone());
 		masks.push_back(getMask(frame));
 		bound_rect.push_back(frame->bound_rect);
+
 	}
 	Mat result_16s, result_mask;
 	int j = 0;
@@ -49,19 +50,18 @@ void Blender::blendSubMosaic(SubMosaic *_sub_mosaic)
 		j = i + 1;
 		while (j < frames.size())
 		{
-			if (!checkCollision(frames[j], frames[i]))
+			if (checkCollision(frames[j], frames[i]))
 				break;
 			
 			cropMask(j++, i);
 
 		}
-		dilate(masks[i], masks[i], Mat(), Point(-1, -1), 2, 1, 1);
-		multiband.feed(warp_imgs[i], masks[i], Point(bound_rect[i].x, bound_rect[i].y));
+		dilate(masks[i], masks[i],Mat(), Point(-1, -1), 1, 1, 1);
+		multiband.feed(warp_imgs[i], masks[i], Point((int)bound_rect[i].x, (int)bound_rect[i].y));
 	}
 
 	multiband.blend(result_16s, result_mask);
 	result_16s.convertTo(_sub_mosaic->final_scene, CV_8U);
-
 	warp_imgs.clear();
 	masks.clear();
 	bound_rect.clear();
@@ -112,13 +112,18 @@ Mat Blender::getMask(Frame *_frame)
 
 bool Blender::checkCollision(Frame *_object, Frame *_scene)
 {
-	if (_object->bound_rect.x > _scene->bound_rect.x)
-		if (_object->bound_rect.x > _scene->bound_rect.x + _scene->bound_rect.width)
-			return false;
-		
-	if (_object->bound_rect.y > _scene->bound_rect.y)
-		if (_object->bound_rect.y > _scene->bound_rect.y + _scene->bound_rect.height)
-			return false;
+
+	if (_object->bound_rect.x > _scene->bound_rect.x + _scene->bound_rect.width)
+		return false;
+    
+    if (_object->bound_rect.x + _object->bound_rect.width < _scene->bound_rect.x)
+		return false;
+
+	if (_object->bound_rect.y > _scene->bound_rect.y + _scene->bound_rect.height)
+		return false;
+
+    if (_object->bound_rect.y + _object->bound_rect.height > _scene->bound_rect.y)
+        return false;
 
 	return true;
 }

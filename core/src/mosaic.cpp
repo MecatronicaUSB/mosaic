@@ -65,7 +65,7 @@ bool Mosaic::addFrame(Mat _object)
 		sub_mosaics[n_subs]->addFrame(new_frame);
 		test = true;
 
-		if (n_subs > 15)
+		if (n_subs > 5)
 		{
 			compute();
 		}
@@ -107,25 +107,6 @@ void Mosaic::compute()
 		// ransac_mosaics[1]->computeOffset();
 
 		// alignMosaics(ransac_mosaics);
-
-		// ransac_mosaics[0]->computeOffset();
-		// ransac_mosaics[1]->computeOffset();
-		// blender->blendSubMosaic(ransac_mosaics[0]);
-		// for (Frame *frame: ransac_mosaics[0]->frames) {
-		//     for(int j=1; j<frame->keypoints_pos[PREV].size(); j++){
-		//         circle(ransac_mosaics[0]->final_scene, frame->keypoints_pos[PREV][j], 3, Scalar(255, 0, 0), -1);
-		//     }
-		// }
-		// imshow("Blend-Ransac0", ransac_mosaics[0]->final_scene);
-		// waitKey(0);
-		// blender->blendSubMosaic(ransac_mosaics[1]);
-		// for (Frame *frame: ransac_mosaics[1]->frames) {
-		//     for(int j=1; j<frame->keypoints_pos[PREV].size(); j++){
-		//         circle(ransac_mosaics[1]->final_scene, frame->keypoints_pos[PREV][j], 3, Scalar(255, 0, 0), -1);
-		//     }
-		// }
-		// imshow("Blend-Ransac1", ransac_mosaics[1]->final_scene);
-		// waitKey(0);
 
 		Mat best_H = getBestModel(ransac_mosaics, 2000);
 		for (Frame *frame : ransac_mosaics[0]->frames)
