@@ -138,6 +138,16 @@ bool Frame::isGoodFrame()
 	return true;
 }
 
+void Frame::enhance(){
+	vector<Mat> channels;
+
+	split(color, channels);
+	imgChannelStretch(channels[0], channels[0], 1, 99);
+	imgChannelStretch(channels[1], channels[1], 1, 99);
+	imgChannelStretch(channels[2], channels[2], 1, 99);
+	merge(channels, color);
+}
+
 // See description in header file
 float Frame::boundAreaKeypoints()
 {

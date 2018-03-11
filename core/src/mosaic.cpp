@@ -65,7 +65,7 @@ bool Mosaic::addFrame(Mat _object)
 		sub_mosaics[n_subs]->addFrame(new_frame);
 		test = true;
 
-		if (n_subs > 5)
+		if (n_subs > 2)
 		{
 			compute();
 		}

@@ -26,7 +26,7 @@ void Blender::blendSubMosaic(SubMosaic *_sub_mosaic)
 		cout << "mosaic too distorted to blend" << endl;
 		return;
 	}
-
+	correctColor(_sub_mosaic);
 	_sub_mosaic->final_scene = Mat(_sub_mosaic->scene_size, CV_8UC3, Scalar(0, 0, 0));
 	multiband.prepare(Rect(Point(0, 0), _sub_mosaic->scene_size));
 
@@ -75,6 +75,7 @@ Mat Blender::getWarpImg(Frame *_frame)
 	aux_T.at<double>(0, 2) = -_frame->bound_rect.x;
 	aux_T.at<double>(1, 2) = -_frame->bound_rect.y;
 
+	_frame->enhance();
 	warpPerspective(_frame->color, warp_img, aux_T * _frame->H, Size(_frame->bound_rect.width, _frame->bound_rect.height));
 
 	return warp_img;
@@ -82,7 +83,43 @@ Mat Blender::getWarpImg(Frame *_frame)
 
 void Blender::correctColor(SubMosaic *_sub_mosaic)
 {
-	
+	vector<Mat> lab_imgs;
+	Mat lab_img;
+	vector<Scalar> mean, stdev;
+	Scalar avg_mean, aux_mean, avg_stdev, aux_stdev;
+	int n = 0;
+
+
+	for (Frame *frame: _sub_mosaic->frames)
+	{
+		cvtColor(frame->color, lab_img, CV_BGR2Lab);
+		meanStdDev(lab_img, aux_mean, aux_stdev);
+		mean.push_back(aux_mean);
+		avg_mean += aux_mean;
+		stdev.push_back(aux_stdev);
+		avg_stdev += aux_stdev;
+		lab_imgs.push_back(lab_img.clone());
+		n++;
+	}
+	avg_mean /= n;
+	avg_stdev /= n;
+
+	vector<Mat> channels;
+	for (int i = 0; i < lab_imgs.size(); i++)
+	{
+		split(lab_imgs[i], channels);
+		for (int j = 0; j<3; j++)
+		{
+			// channels[j] -= avg_mean.val[j];
+			// channels[j] *= avg_stdev.val[j] / stdev[i].val[j];		
+			// channels[j] += mean[i].val[j];
+			channels[j] = (avg_stdev.val[j]*(channels[j] - mean[i].val[j]) / stdev[i].val[j])
+						+ avg_mean.val[j];
+		}
+		merge(channels, lab_imgs[i]);
+		cvtColor(lab_imgs[i], _sub_mosaic->frames[i]->color, CV_Lab2BGR);
+	}
+
 }
 
 Mat Blender::getMask(Frame *_frame)
