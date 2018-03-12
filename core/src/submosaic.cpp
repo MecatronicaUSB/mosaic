@@ -109,8 +109,8 @@ void SubMosaic::updateOffset(vector<float> _total_offset)
 float SubMosaic::calcKeypointsError(Frame *_first, Frame *_second)
 {
 	float error = 0;
-	for (int i = 0; i < _first->keypoints_pos[PREV].size(); i++)
-		error += getDistance(_first->keypoints_pos[PREV][i], _second->keypoints_pos[NEXT][i]);
+	for (int i = 0; i < _first->grid_points[PREV].size(); i++)
+		error += getDistance(_first->grid_points[PREV][i], _second->grid_points[NEXT][i]);
 
 	return error;
 }
@@ -219,33 +219,33 @@ Point2f SubMosaic::getCentroid()
 {
 	Point2f centroid(0, 0);
 
-	// int n_points=0;
-	// for (Frame *frame: frames) {
-	//     for (const Point2f point: frame->bound_points[FIRST]) {
-	//         centroid += point;
-	//         n_points++;
-	//     }
-	// }
-	// centroid /= n_points;
-
-	float top = TARGET_HEIGHT, bottom = 0, left = TARGET_WIDTH, right = 0;
-	for (Frame *frame : frames)
-	{
-		for (Point2f point : frame->bound_points[FIRST])
-		{
-			if (point.x < left)
-				left = point.x;
-			if (point.y < top)
-				top = point.y;
-			if (point.x > right)
-				right = point.x;
-			if (point.y > bottom)
-				bottom = point.y;
-		}
+	int n_points=0;
+	for (Frame *frame: frames) {
+	    for (const Point2f point: frame->bound_points[FIRST]) {
+	        centroid += point;
+	        n_points++;
+	    }
 	}
+	centroid /= n_points;
 
-	centroid.x = (right + left) / 2;
-	centroid.y = (bottom + top) / 2;
+	// float top = TARGET_HEIGHT, bottom = 0, left = TARGET_WIDTH, right = 0;
+	// for (Frame *frame : frames)
+	// {
+	// 	for (Point2f point : frame->bound_points[FIRST])
+	// 	{
+	// 		if (point.x < left)
+	// 			left = point.x;
+	// 		if (point.y < top)
+	// 			top = point.y;
+	// 		if (point.x > right)
+	// 			right = point.x;
+	// 		if (point.y > bottom)
+	// 			bottom = point.y;
+	// 	}
+	// }
+
+	// centroid.x = (right + left) / 2;
+	// centroid.y = (bottom + top) / 2;
 
 	return centroid;
 }

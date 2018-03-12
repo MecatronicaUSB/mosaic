@@ -55,7 +55,8 @@ class Frame
 		Mat H;                                 //!< Homography matrix based on previous frame
 		Rect2f bound_rect;                     //!< Minimum bounding rectangle of transformed image
 		vector<vector<Point2f>> bound_points;  //!< Points of the transformmed image (initially at corners)
-		vector<vector<Point2f>> keypoints_pos; //!< Position (X,Y) of good keypoints in image
+		vector<vector<Point2f>> grid_points; //!< Position (X,Y) of good keypoints in image
+		vector<vector<Point2f>> good_points; //!< Position (X,Y) of good keypoints in image
 		vector<KeyPoint> keypoints;
 		vector<Frame *> neighbors; //!< Vector containing all spatially close Frames (Pointers)
 

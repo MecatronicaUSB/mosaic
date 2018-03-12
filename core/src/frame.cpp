@@ -19,7 +19,8 @@ Frame::Frame(Mat _img, bool _pre, int _width, int _height)
 {
 
 	bound_points = vector<vector<Point2f>>(3);
-	keypoints_pos = vector<vector<Point2f>>(2);
+	grid_points = vector<vector<Point2f>>(2);
+	good_points = vector<vector<Point2f>>(2);
 
 	const float cx = 639.5, cy = 359.5;
 	const float fx = 1101, fy = 1101;
@@ -50,7 +51,6 @@ Frame::Frame(Mat _img, bool _pre, int _width, int _height)
 	// center point
 	bound_points[FIRST].push_back(Point2f(_width / 2, _height / 2));
 
-	//undistortPoints(bound_points[FIRST], bound_points[FIRST], camera_matrix, distortion_coeff);
 
 	H = Mat::eye(3, 3, CV_64F);
 }
@@ -61,7 +61,8 @@ Frame::~Frame()
 	gray.release();
 	color.release();
 	descriptors.release();
-	keypoints_pos.clear();
+	grid_points.clear();
+	good_points.clear();
 	bound_points.clear();
 	keypoints.clear();
 	neighbors.clear();
@@ -78,7 +79,8 @@ Frame *Frame::clone()
 	new_frame->H = H.clone();
 	new_frame->bound_rect = bound_rect;
 	new_frame->bound_points = bound_points;
-	new_frame->keypoints_pos = keypoints_pos;
+	new_frame->grid_points = grid_points;
+	new_frame->good_points = good_points;	
 	new_frame->keypoints = keypoints;
 	new_frame->neighbors = neighbors;
 
@@ -99,7 +101,7 @@ void Frame::resetFrame()
 	bound_points[FIRST][4] = Point2f(color.cols / 2, color.rows / 2);
 	bound_rect = Rect2f(0, 0, (float)color.cols, (float)color.rows);
 
-	keypoints_pos[NEXT].clear();
+	grid_points[NEXT].clear();
 
 	neighbors.clear();
 }
@@ -144,7 +146,7 @@ void Frame::enhance(){
 	split(color, channels);
 	imgChannelStretch(channels[0], channels[0], 1, 99);
 	imgChannelStretch(channels[1], channels[1], 1, 99);
-	imgChannelStretch(channels[2], channels[2], 1, 99);
+	//imgChannelStretch(channels[2], channels[2], 1, 99);
 	merge(channels, color);
 }
 
@@ -152,7 +154,8 @@ void Frame::enhance(){
 float Frame::boundAreaKeypoints()
 {
 	vector<Point2f> hull;
-	convexHull(keypoints_pos[PREV], hull);
+
+	convexHull(grid_points[PREV], hull);
 
 	return contourArea(hull);
 }
@@ -160,11 +163,10 @@ float Frame::boundAreaKeypoints()
 void Frame::setHReference(Mat _H)
 {
 	perspectiveTransform(bound_points[FIRST], bound_points[FIRST], _H);
-
-	if (keypoints_pos[PREV].size())
-		perspectiveTransform(keypoints_pos[PREV], keypoints_pos[PREV], _H);
-	if (keypoints_pos[NEXT].size())
-		perspectiveTransform(keypoints_pos[NEXT], keypoints_pos[NEXT], _H);
+	if (grid_points[PREV].size())
+		perspectiveTransform(grid_points[PREV], grid_points[PREV], _H);
+	if (grid_points[NEXT].size())
+		perspectiveTransform(grid_points[NEXT], grid_points[NEXT], _H);
 
 	updateBoundRect();
 	H = _H * H;

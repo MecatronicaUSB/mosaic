@@ -183,8 +183,8 @@ int Stitcher::stitch(Frame *_object, Frame *_scene, Size _scene_dims)
 				good_matches.pop_back();
 			}
 			neighbors_kp.clear();
-			img[OBJECT]->keypoints_pos[PREV].clear();
-			img[SCENE]->keypoints_pos[NEXT].clear();
+			img[OBJECT]->grid_points[PREV].clear();
+			img[SCENE]->grid_points[NEXT].clear();
 		}
 	}
 
@@ -192,7 +192,7 @@ int Stitcher::stitch(Frame *_object, Frame *_scene, Size _scene_dims)
 	// Mat H = estimateRigidTransform(points_pos[OBJECT], points_pos[SCENE], true);
 	// Mat t = (Mat1d(1,3) << 0, 0, 1);
 	// vconcat(H, t, H);
-	// H.at<double>(2, 2) = 1;
+	H.at<double>(2, 2) = 1;
 
 	if (H.empty())
 	{
@@ -257,6 +257,14 @@ void Stitcher::getGoodMatches(float _thresh)
 		good_matches.push_back(aux_matches);
 		aux_matches.clear();
 	}
+
+	for (DMatch good : good_matches[0])
+	{
+		//-- Get the keypoints from the good matches
+		img[OBJECT]->good_points[PREV].push_back(img[OBJECT]->keypoints[good.queryIdx].pt);
+		img[SCENE]->good_points[NEXT].push_back(img[SCENE]->keypoints[good.trainIdx].pt);
+	}
+	
 }
 
 // See description in header file
@@ -313,8 +321,8 @@ void Stitcher::positionFromKeypoints()
 	for (DMatch good : good_matches[0])
 	{
 		//-- Get the keypoints from the good matches
-		img[OBJECT]->keypoints_pos[PREV].push_back(img[OBJECT]->keypoints[good.queryIdx].pt);
-		img[SCENE]->keypoints_pos[NEXT].push_back(img[SCENE]->keypoints[good.trainIdx].pt);
+		img[OBJECT]->grid_points[PREV].push_back(img[OBJECT]->keypoints[good.queryIdx].pt);
+		img[SCENE]->grid_points[NEXT].push_back(img[SCENE]->keypoints[good.trainIdx].pt);
 	}
 
 	vector<Point2f> aux_points;
@@ -324,7 +332,7 @@ void Stitcher::positionFromKeypoints()
 
 		for (DMatch good : good_matches[i + 1])
 		{
-			img[OBJECT]->keypoints_pos[PREV].push_back(img[OBJECT]->keypoints[good.queryIdx].pt);
+			img[OBJECT]->grid_points[PREV].push_back(img[OBJECT]->keypoints[good.queryIdx].pt);
 			aux_points.push_back(img[SCENE]->neighbors[i]->keypoints[good.trainIdx].pt);
 		}
 		neighbors_kp.push_back(aux_points);
@@ -333,22 +341,22 @@ void Stitcher::positionFromKeypoints()
 
 	trackKeypoints();
 
-	points_pos[OBJECT] = Mat(img[OBJECT]->keypoints_pos[PREV]);
+	points_pos[OBJECT] = Mat(img[OBJECT]->grid_points[PREV]);
 
 	for (int i = 0; i < img[SCENE]->neighbors.size(); i++)
 	{
-		img[SCENE]->keypoints_pos[NEXT].insert(img[SCENE]->keypoints_pos[NEXT].end(),
+		img[SCENE]->grid_points[NEXT].insert(img[SCENE]->grid_points[NEXT].end(),
 											   neighbors_kp[i].begin(), neighbors_kp[i].end());
 	}
-	points_pos[SCENE] = Mat(img[SCENE]->keypoints_pos[NEXT]);
+	points_pos[SCENE] = Mat(img[SCENE]->grid_points[NEXT]);
 }
 
 // See description in header file
 void Stitcher::trackKeypoints()
 {
-	if (img[SCENE]->keypoints_pos[NEXT].size() > 0)
+	if (img[SCENE]->grid_points[NEXT].size() > 0)
 	{
-		perspectiveTransform(img[SCENE]->keypoints_pos[NEXT], img[SCENE]->keypoints_pos[NEXT],
+		perspectiveTransform(img[SCENE]->grid_points[NEXT], img[SCENE]->grid_points[NEXT],
 							 img[SCENE]->H);
 	}
 
@@ -367,14 +375,14 @@ void Stitcher::drawKeipoints(vector<float> _warp_offset, Mat &_final_scene)
 {
 	vector<Point2f> aux_kp[2];
 
-	aux_kp[0] = img[SCENE]->keypoints_pos[NEXT];
+	aux_kp[0] = img[SCENE]->grid_points[NEXT];
 	for (Point2f &pt : aux_kp[0])
 	{
 		pt.x += _warp_offset[LEFT];
 		pt.y += _warp_offset[TOP];
 	}
 
-	perspectiveTransform(img[OBJECT]->keypoints_pos[PREV], aux_kp[1], img[OBJECT]->H);
+	perspectiveTransform(img[OBJECT]->grid_points[PREV], aux_kp[1], img[OBJECT]->H);
 	for (int j = 0; j < aux_kp[0].size(); j++)
 	{
 		circle(_final_scene, aux_kp[0][j], 3, Scalar(255, 0, 0), -1);
