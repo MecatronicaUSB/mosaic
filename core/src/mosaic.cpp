@@ -106,9 +106,9 @@ void Mosaic::compute()
 		// ransac_mosaics[0]->computeOffset();
 		// ransac_mosaics[1]->computeOffset();
 
-		// alignMosaics(ransac_mosaics);
+		alignMosaics(ransac_mosaics);
 
-		Mat best_H = getBestModel(ransac_mosaics, 2000);
+		Mat best_H = getBestModel(ransac_mosaics, 4000);
 		for (Frame *frame : ransac_mosaics[0]->frames)
 		{
 			frame->setHReference(best_H);
@@ -172,10 +172,10 @@ Mat Mosaic::getBestModel(vector<SubMosaic *> &_ransac_mosaics, int _niter)
 		for (int j = 0; j < 4; j++)
 		{
 			rnd_frame = rand() % _ransac_mosaics[0]->n_frames;
-			rnd_point = rand() % _ransac_mosaics[0]->frames[rnd_frame]->keypoints_pos[!rnd_frame].size();
+			rnd_point = rand() % _ransac_mosaics[0]->frames[rnd_frame]->grid_points[!rnd_frame].size();
 
-			points[0][j] = _ransac_mosaics[0]->frames[rnd_frame]->keypoints_pos[!rnd_frame][rnd_point];
-			points[1][j] = _ransac_mosaics[1]->frames[rnd_frame]->keypoints_pos[!rnd_frame][rnd_point];
+			points[0][j] = _ransac_mosaics[0]->frames[rnd_frame]->grid_points[!rnd_frame][rnd_point];
+			points[1][j] = _ransac_mosaics[1]->frames[rnd_frame]->grid_points[!rnd_frame][rnd_point];
 
 			mid_points[j] = getMidPoint(points[0][j], points[1][j]);
 		}
@@ -203,33 +203,6 @@ Mat Mosaic::getBestModel(vector<SubMosaic *> &_ransac_mosaics, int _niter)
 // See description in header file
 void Mosaic::alignMosaics(vector<SubMosaic *> &_sub_mosaics)
 {
-	Mat points[2];
-
-	for (int i = 0; i < _sub_mosaics.size(); i++)
-	{
-		points[i] = Mat(_sub_mosaics[i]->frames[0]->keypoints_pos[NEXT]);
-		for (int j = 1; j < _sub_mosaics[i]->frames.size(); j++)
-		{
-			vconcat(points[i], Mat(_sub_mosaics[i]->frames[j]->keypoints_pos[PREV]), points[i]);
-		}
-	}
-
-	Mat T = estimateRigidTransform(points[0], points[1], false);
-	double sx = sign(T.at<double>(0, 0)) * sqrt(pow(T.at<double>(0, 0), 2) + pow(T.at<double>(0, 1), 2));
-	double sy = sign(T.at<double>(1, 1)) * sqrt(pow(T.at<double>(1, 0), 2) + pow(T.at<double>(1, 1), 2));
-
-	Mat M = Mat::eye(3, 3, CV_64F);
-	M.at<double>(0, 0) = T.at<double>(0, 0) / sx;
-	M.at<double>(0, 1) = T.at<double>(0, 1) / sx;
-	M.at<double>(1, 0) = T.at<double>(1, 0) / sy;
-	M.at<double>(1, 1) = T.at<double>(1, 1) / sy;
-
-	for (Frame *frame : _sub_mosaics[0]->frames)
-	{
-		frame->setHReference(M);
-	}
-	_sub_mosaics[0]->avg_H = M * _sub_mosaics[0]->avg_H;
-
 	Point2f centroid_0 = _sub_mosaics[0]->getCentroid();
 	Point2f centroid_1 = _sub_mosaics[1]->getCentroid();
 
@@ -242,6 +215,38 @@ void Mosaic::alignMosaics(vector<SubMosaic *> &_sub_mosaics)
 	offset[TOP] = max(centroid_0.y - centroid_1.y, 0.f);
 	offset[LEFT] = max(centroid_0.x - centroid_1.x, 0.f);
 	_sub_mosaics[1]->updateOffset(offset);
+	
+	// Mat points[2];
+
+	// for (int i = 0; i < _sub_mosaics.size(); i++)
+	// {
+	// 	points[i] = Mat(_sub_mosaics[i]->frames[0]->grid_points[NEXT]);
+	// 	for (int j = 1; j < _sub_mosaics[i]->frames.size(); j++)
+	// 	{
+	// 		vconcat(points[i], Mat(_sub_mosaics[i]->frames[j]->grid_points[PREV]), points[i]);
+	// 	}
+	// }
+
+	// Mat T = estimateRigidTransform(points[0], points[1], false);
+	// double sx = sign(T.at<double>(0, 0)) * sqrt(pow(T.at<double>(0, 0), 2) + pow(T.at<double>(0, 1), 2));
+	// double sy = sign(T.at<double>(1, 1)) * sqrt(pow(T.at<double>(1, 0), 2) + pow(T.at<double>(1, 1), 2));
+
+	// Mat M = Mat::eye(3, 3, CV_64F);
+	// M.at<double>(0, 0) = T.at<double>(0, 0) / sx;
+	// M.at<double>(0, 1) = T.at<double>(0, 1) / sx;
+	// M.at<double>(1, 0) = T.at<double>(1, 0) / sy;
+	// M.at<double>(1, 1) = T.at<double>(1, 1) / sy;
+	// // M.at<double>(2, 0) = T.at<double>(2, 0);
+	// // M.at<double>(2, 1) = T.at<double>(2, 1);
+
+	// for (Frame *frame : _sub_mosaics[0]->frames)
+	// {
+	// 	frame->setHReference(M);
+	// }
+	// _sub_mosaics[0]->avg_H = M * _sub_mosaics[0]->avg_H;
+
+
+
 }
 
 // See description in header file

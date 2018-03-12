@@ -26,7 +26,7 @@ void Blender::blendSubMosaic(SubMosaic *_sub_mosaic)
 		cout << "mosaic too distorted to blend" << endl;
 		return;
 	}
-	correctColor(_sub_mosaic);
+
 	_sub_mosaic->final_scene = Mat(_sub_mosaic->scene_size, CV_8UC3, Scalar(0, 0, 0));
 	multiband.prepare(Rect(Point(0, 0), _sub_mosaic->scene_size));
 
@@ -34,6 +34,7 @@ void Blender::blendSubMosaic(SubMosaic *_sub_mosaic)
 	//reverse(_sub_mosaic->frames.begin(), _sub_mosaic->frames.end());
 	Mat aux_img;
 	int k=0;
+	correctColor(_sub_mosaic);
 	for (Frame *frame : frames)
 	{
 		aux_img = getWarpImg(frame);
@@ -75,7 +76,6 @@ Mat Blender::getWarpImg(Frame *_frame)
 	aux_T.at<double>(0, 2) = -_frame->bound_rect.x;
 	aux_T.at<double>(1, 2) = -_frame->bound_rect.y;
 
-	_frame->enhance();
 	warpPerspective(_frame->color, warp_img, aux_T * _frame->H, Size(_frame->bound_rect.width, _frame->bound_rect.height));
 
 	return warp_img;
@@ -91,7 +91,8 @@ void Blender::correctColor(SubMosaic *_sub_mosaic)
 
 
 	for (Frame *frame: _sub_mosaic->frames)
-	{
+	{	
+		frame->enhance();
 		cvtColor(frame->color, lab_img, CV_BGR2Lab);
 		meanStdDev(lab_img, aux_mean, aux_stdev);
 		mean.push_back(aux_mean);
@@ -110,11 +111,8 @@ void Blender::correctColor(SubMosaic *_sub_mosaic)
 		split(lab_imgs[i], channels);
 		for (int j = 0; j<3; j++)
 		{
-			// channels[j] -= avg_mean.val[j];
-			// channels[j] *= avg_stdev.val[j] / stdev[i].val[j];		
-			// channels[j] += mean[i].val[j];
 			channels[j] = (avg_stdev.val[j]*(channels[j] - mean[i].val[j]) / stdev[i].val[j])
-						+ avg_mean.val[j];
+							+ avg_mean.val[j];
 		}
 		merge(channels, lab_imgs[i]);
 		cvtColor(lab_imgs[i], _sub_mosaic->frames[i]->color, CV_Lab2BGR);
@@ -202,22 +200,23 @@ vector<Point2f> Blender::findLocalStitch(Frame *_object, Frame *_scene)
 {
 	vector<Point2f> local_stitch;
 	vector<BlendPoint> blend_points;
-	float percentile = 0.2;
-	for (int i = 0; i < _object->keypoints_pos[PREV].size(); i++)
+
+	for (int i = 0; i < _object->grid_points[PREV].size(); i++)
 	{
-		blend_points.push_back(BlendPoint(i, _object->keypoints_pos[PREV][i],
-										  _scene->keypoints_pos[NEXT][i]));
+		blend_points.push_back(BlendPoint(i, _object->grid_points[PREV][i],
+										  _scene->grid_points[NEXT][i]));
 	}
 
 	sort(blend_points.begin(), blend_points.end());
 
 	vector<Point2f> good_points;
+	int percentile = 5 * blend_points.size() / 100;
 	for (int i = 0; i < blend_points.size(); i++)
 	{
 		good_points.push_back(blend_points[i].prev);
 	}
 
-	//convexHull(good_points, local_stitch);
+	convexHull(good_points, local_stitch);
 
 	return good_points;
 }
