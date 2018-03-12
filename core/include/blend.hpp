@@ -39,6 +39,7 @@ class Blender
 {
   public:
     int bands;
+    vector<Frame *> frames;
     vector<Mat> warp_imgs;
     vector<Mat> masks;
     vector<Rect2f> bound_rect;
@@ -60,7 +61,7 @@ class Blender
      * @brief 
      * @param _sub_mosaic 
      */
-    void correctColor(SubMosaic *_sub_mosaic);
+    void correctColor();
     /**
      * @brief 
      * @param _frame 

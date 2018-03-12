@@ -152,7 +152,6 @@ void Frame::enhance(){
 float Frame::boundAreaKeypoints()
 {
 	vector<Point2f> hull;
-
 	convexHull(keypoints_pos[PREV], hull);
 
 	return contourArea(hull);
@@ -160,8 +159,8 @@ float Frame::boundAreaKeypoints()
 
 void Frame::setHReference(Mat _H)
 {
-
 	perspectiveTransform(bound_points[FIRST], bound_points[FIRST], _H);
+
 	if (keypoints_pos[PREV].size())
 		perspectiveTransform(keypoints_pos[PREV], keypoints_pos[PREV], _H);
 	if (keypoints_pos[NEXT].size())

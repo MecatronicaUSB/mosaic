@@ -26,18 +26,17 @@ void Blender::blendSubMosaic(SubMosaic *_sub_mosaic)
 		cout << "mosaic too distorted to blend" << endl;
 		return;
 	}
-	correctColor(_sub_mosaic);
 	_sub_mosaic->final_scene = Mat(_sub_mosaic->scene_size, CV_8UC3, Scalar(0, 0, 0));
 	multiband.prepare(Rect(Point(0, 0), _sub_mosaic->scene_size));
 
-	vector<Frame *> frames = _sub_mosaic->frames;
+	frames = _sub_mosaic->frames;
 	//reverse(_sub_mosaic->frames.begin(), _sub_mosaic->frames.end());
 	Mat aux_img;
 	int k=0;
 	for (Frame *frame : frames)
 	{
 		aux_img = getWarpImg(frame);
-		aux_img.convertTo(aux_img, CV_16S);
+		//aux_img.convertTo(aux_img, CV_16S);
 		warp_imgs.push_back(aux_img.clone());
 		masks.push_back(getMask(frame));
 		bound_rect.push_back(frame->bound_rect);
@@ -57,6 +56,11 @@ void Blender::blendSubMosaic(SubMosaic *_sub_mosaic)
 
 		}
 		dilate(masks[i], masks[i],Mat(), Point(-1, -1), 1, 1, 1);
+	}
+	correctColor();
+	for (int i = 0; i < frames.size(); i++)
+	{
+		warp_imgs[i].convertTo(aux_img, CV_16S);
 		multiband.feed(warp_imgs[i], masks[i], Point((int)bound_rect[i].x, (int)bound_rect[i].y));
 	}
 
@@ -81,7 +85,7 @@ Mat Blender::getWarpImg(Frame *_frame)
 	return warp_img;
 }
 
-void Blender::correctColor(SubMosaic *_sub_mosaic)
+void Blender::correctColor()
 {
 	vector<Mat> lab_imgs;
 	Mat lab_img;
@@ -90,10 +94,10 @@ void Blender::correctColor(SubMosaic *_sub_mosaic)
 	int n = 0;
 
 
-	for (Frame *frame: _sub_mosaic->frames)
+	for (Frame *frame: frames)
 	{
-		cvtColor(frame->color, lab_img, CV_BGR2Lab);
-		meanStdDev(lab_img, aux_mean, aux_stdev);
+		cvtColor(warp_imgs[n], lab_img, CV_BGR2Lab);
+		meanStdDev(lab_img, aux_mean, aux_stdev, masks[n]);
 		mean.push_back(aux_mean);
 		avg_mean += aux_mean;
 		stdev.push_back(aux_stdev);
@@ -117,7 +121,7 @@ void Blender::correctColor(SubMosaic *_sub_mosaic)
 						+ avg_mean.val[j];
 		}
 		merge(channels, lab_imgs[i]);
-		cvtColor(lab_imgs[i], _sub_mosaic->frames[i]->color, CV_Lab2BGR);
+		cvtColor(lab_imgs[i], frames[i]->color, CV_Lab2BGR);
 	}
 
 }
