@@ -81,10 +81,17 @@ void Blender::blendSubMosaic(SubMosaic *_sub_mosaic)
 		warp_imgs[i].copyTo(aux_img);
 		aux_img.convertTo(aux_img, CV_8U);
 
-		// imshow("warp", aux_img);
-		// imshow("mask", masks[i]);
-		// waitKey(0);
+		Mat roi(_sub_mosaic->final_scene, Rect(bound_rect[i].x,
+												bound_rect[i].y,
+												bound_rect[i].width,
+												bound_rect[i].height));
+		aux_img.copyTo(roi, masks[i]);
+		imshow("warp", aux_img);
+		imshow("mask", masks[i]);		
+		waitKey(0);
 	}
+	imshow("final blend", _sub_mosaic->final_scene);
+	waitKey(0);
 	//multiband.blend(result_16s, result_mask);
 	//result_16s.convertTo(_sub_mosaic->final_scene, CV_8U);
 	warp_imgs.clear();
