@@ -32,37 +32,61 @@ void Blender::blendSubMosaic(SubMosaic *_sub_mosaic)
 
 	vector<Frame *> frames = _sub_mosaic->frames;
 	//reverse(_sub_mosaic->frames.begin(), _sub_mosaic->frames.end());
-	Mat aux_img;
-	int k=0;
+	UMat aux_u_img, aux_u_mask;
+	Mat aux_img, aux_mask;
+	int k = 0;
 	correctColor(_sub_mosaic);
 	for (Frame *frame : frames)
 	{
 		aux_img = getWarpImg(frame);
-		aux_img.convertTo(aux_img, CV_16S);
-		warp_imgs.push_back(aux_img.clone());
-		masks.push_back(getMask(frame));
+		//aux_img.copyTo(aux_u_img);
+		aux_img.convertTo(aux_img, CV_32F);
+		aux_u_img = aux_img.getUMat(ACCESS_RW);
+		warp_imgs.push_back(aux_u_img.clone());
+		aux_mask = getMask(frame);
+		// aux_mask.copyTo(aux_u_mask);
+		aux_u_mask = aux_mask.getUMat(ACCESS_RW);
+		masks.push_back(aux_u_mask.clone());
 		bound_rect.push_back(frame->bound_rect);
-
 	}
 	Mat result_16s, result_mask;
-	int j = 0;
+	// int j = 0;
+	// for (int i = 0; i < frames.size(); i++)
+	// {
+	// 	j = i + 1;
+	// 	while (j < frames.size())
+	// 	{
+	// 		if (checkCollision(frames[j], frames[i]))
+	// 			break;
+			
+	// 		cropMask(j++, i);
+
+	// 	}
+	// 	dilate(masks[i], masks[i],Mat(), Point(-1, -1), 1, 1, 1);
+	// 	//multiband.feed(warp_imgs[i], masks[i], Point((int)bound_rect[i].x, (int)bound_rect[i].y));
+	// }
+
+	vector<Point> pts;
 	for (int i = 0; i < frames.size(); i++)
 	{
-		j = i + 1;
-		while (j < frames.size())
-		{
-			if (checkCollision(frames[j], frames[i]))
-				break;
-			
-			cropMask(j++, i);
-
-		}
-		dilate(masks[i], masks[i],Mat(), Point(-1, -1), 1, 1, 1);
-		multiband.feed(warp_imgs[i], masks[i], Point((int)bound_rect[i].x, (int)bound_rect[i].y));
+		pts.push_back(Point((int)bound_rect[i].x, (int)bound_rect[i].y));
 	}
 
-	multiband.blend(result_16s, result_mask);
-	result_16s.convertTo(_sub_mosaic->final_scene, CV_8U);
+	GraphCutSeamFinder *seam_finder = new GraphCutSeamFinder(GraphCutSeamFinderBase::COST_COLOR);
+
+	seam_finder->find(warp_imgs, pts, masks);
+
+	for (int i = 0; i < frames.size(); i++)
+	{
+		warp_imgs[i].copyTo(aux_img);
+		aux_img.convertTo(aux_img, CV_8U);
+
+		// imshow("warp", aux_img);
+		// imshow("mask", masks[i]);
+		// waitKey(0);
+	}
+	//multiband.blend(result_16s, result_mask);
+	//result_16s.convertTo(_sub_mosaic->final_scene, CV_8U);
 	warp_imgs.clear();
 	masks.clear();
 	bound_rect.clear();
@@ -170,29 +194,29 @@ bool Blender::checkCollision(Frame *_object, Frame *_scene)
 
 void Blender::cropMask(int _object, int _scene)
 {
-	Rect overlap_roi;
+	// Rect overlap_roi;
 
-	overlap_roi.x = max(bound_rect[_scene].x, bound_rect[_object].x) - bound_rect[_object].x;
-	overlap_roi.y = max(bound_rect[_scene].y, bound_rect[_object].y) - bound_rect[_object].y;
+	// overlap_roi.x = max(bound_rect[_scene].x, bound_rect[_object].x) - bound_rect[_object].x;
+	// overlap_roi.y = max(bound_rect[_scene].y, bound_rect[_object].y) - bound_rect[_object].y;
 
-	overlap_roi.width = min(bound_rect[_scene].x + bound_rect[_scene].width,
-							bound_rect[_object].x + bound_rect[_object].width) - 
-						max(bound_rect[_scene].x, bound_rect[_object].x);
+	// overlap_roi.width = min(bound_rect[_scene].x + bound_rect[_scene].width,
+	// 						bound_rect[_object].x + bound_rect[_object].width) - 
+	// 					max(bound_rect[_scene].x, bound_rect[_object].x);
 						
 
-	overlap_roi.height = min(bound_rect[_scene].y + bound_rect[_scene].height,
-							 bound_rect[_object].y + bound_rect[_object].height) - 
-						 max(bound_rect[_scene].y, bound_rect[_object].y);
+	// overlap_roi.height = min(bound_rect[_scene].y + bound_rect[_scene].height,
+	// 						 bound_rect[_object].y + bound_rect[_object].height) - 
+	// 					 max(bound_rect[_scene].y, bound_rect[_object].y);
 						 
 
-	Mat object_roi(masks[_object], overlap_roi);
+	// Mat object_roi(masks[_object], overlap_roi);
 
-	overlap_roi.x = max(bound_rect[_object].x - bound_rect[_scene].x, 0.f);
-	overlap_roi.y = max(bound_rect[_object].y - bound_rect[_scene].y, 0.f);
+	// overlap_roi.x = max(bound_rect[_object].x - bound_rect[_scene].x, 0.f);
+	// overlap_roi.y = max(bound_rect[_object].y - bound_rect[_scene].y, 0.f);
 
-	Mat scene_roi(masks[_scene], overlap_roi);
+	// Mat scene_roi(masks[_scene], overlap_roi);
 
-	scene_roi -= object_roi;
+	// scene_roi -= object_roi;
 
 }
 

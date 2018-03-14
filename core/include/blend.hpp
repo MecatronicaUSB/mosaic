@@ -39,8 +39,8 @@ class Blender
 {
   public:
     int bands;
-    vector<Mat> warp_imgs;
-    vector<Mat> masks;
+    vector<UMat> warp_imgs;
+    vector<UMat> masks;
     vector<Rect2f> bound_rect;
     /**
          * @brief 
