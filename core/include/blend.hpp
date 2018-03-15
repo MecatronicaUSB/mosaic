@@ -55,7 +55,7 @@ class Blender
          * @brief 
          * @param _points 
          */
-    Mat getMask(Frame *_frame);
+    UMat getMask(Frame *_frame);
     /**
      * @brief 
      * @param _sub_mosaic 
@@ -80,6 +80,6 @@ class Blender
          * @brief 
          * @return Mat 
          */
-    Mat getWarpImg(Frame *_frame);
+    UMat getWarpImg(Frame *_frame);
 };
 }

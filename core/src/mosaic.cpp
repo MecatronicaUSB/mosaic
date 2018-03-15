@@ -68,6 +68,7 @@ bool Mosaic::addFrame(Mat _object)
 		if (n_subs > 2)
 		{
 			compute();
+			return false;
 		}
 
 		return true;
@@ -244,8 +245,6 @@ void Mosaic::alignMosaics(vector<SubMosaic *> &_sub_mosaics)
 	// 	frame->setHReference(M);
 	// }
 	// _sub_mosaics[0]->avg_H = M * _sub_mosaics[0]->avg_H;
-
-
 
 }
 

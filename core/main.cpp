@@ -106,7 +106,7 @@ int main( int argc, char** argv ) {
     }
     //mosaic.compute();
 
-    t = 1000000 * ((double) getTickCount() - t) / getTickFrequency();        
+    t = ((double) getTickCount() - t) / getTickFrequency();        
     cout << endl << "\tExecution time:\t" << green << t << reset <<" s" <<endl;
 
     return 0;

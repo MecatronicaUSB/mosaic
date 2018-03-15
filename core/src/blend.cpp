@@ -18,90 +18,57 @@ namespace m2d
 void Blender::blendSubMosaic(SubMosaic *_sub_mosaic)
 {
 	MultiBandBlender multiband(false, bands);
-
 	_sub_mosaic->final_scene.release();
-
-	if (_sub_mosaic->calcDistortion() > 5)
-	{
-		cout << "mosaic too distorted to blend" << endl;
-		return;
-	}
-
 	_sub_mosaic->final_scene = Mat(_sub_mosaic->scene_size, CV_8UC3, Scalar(0, 0, 0));
 	multiband.prepare(Rect(Point(0, 0), _sub_mosaic->scene_size));
 
 	vector<Frame *> frames = _sub_mosaic->frames;
-	//reverse(_sub_mosaic->frames.begin(), _sub_mosaic->frames.end());
-	UMat aux_u_img, aux_u_mask;
-	Mat aux_img, aux_mask;
+
 	int k = 0;
-	correctColor(_sub_mosaic);
 	for (Frame *frame : frames)
 	{
-		aux_img = getWarpImg(frame);
-		//aux_img.copyTo(aux_u_img);
-		aux_img.convertTo(aux_img, CV_32F);
-		aux_u_img = aux_img.getUMat(ACCESS_RW);
-		warp_imgs.push_back(aux_u_img.clone());
-		aux_mask = getMask(frame);
-		// aux_mask.copyTo(aux_u_mask);
-		aux_u_mask = aux_mask.getUMat(ACCESS_RW);
-		masks.push_back(aux_u_mask.clone());
+		warp_imgs.push_back(getWarpImg(frame).clone());
+		masks.push_back(getMask(frame).clone());
 		bound_rect.push_back(frame->bound_rect);
 	}
-	Mat result_16s, result_mask;
-	// int j = 0;
-	// for (int i = 0; i < frames.size(); i++)
-	// {
-	// 	j = i + 1;
-	// 	while (j < frames.size())
-	// 	{
-	// 		if (checkCollision(frames[j], frames[i]))
-	// 			break;
-			
-	// 		cropMask(j++, i);
+  //multiband.feed(warp_imgs[i], masks[i], Point((int)bound_rect[i].x, (int)bound_rect[i].y));
 
-	// 	}
-	// 	dilate(masks[i], masks[i],Mat(), Point(-1, -1), 1, 1, 1);
-	// 	//multiband.feed(warp_imgs[i], masks[i], Point((int)bound_rect[i].x, (int)bound_rect[i].y));
-	// }
-
-	vector<Point> pts;
+	vector<Point> corners;
 	for (int i = 0; i < frames.size(); i++)
 	{
-		pts.push_back(Point((int)bound_rect[i].x, (int)bound_rect[i].y));
+		corners.push_back(Point((int)bound_rect[i].x, (int)bound_rect[i].y));
 	}
 
-	GraphCutSeamFinder *seam_finder = new GraphCutSeamFinder(GraphCutSeamFinderBase::COST_COLOR);
+	GraphCutSeamFinder *seam_finder = new GraphCutSeamFinder(GraphCutSeamFinderBase::COST_COLOR_GRAD);
+	seam_finder->find(warp_imgs, corners, masks);
 
-	seam_finder->find(warp_imgs, pts, masks);
+	correctColor(_sub_mosaic);
 
+	Mat aux_img;
 	for (int i = 0; i < frames.size(); i++)
 	{
 		warp_imgs[i].copyTo(aux_img);
 		aux_img.convertTo(aux_img, CV_8U);
-
-		Mat roi(_sub_mosaic->final_scene, Rect(bound_rect[i].x,
-												bound_rect[i].y,
-												bound_rect[i].width,
-												bound_rect[i].height));
-		aux_img.copyTo(roi, masks[i]);
-		imshow("warp", aux_img);
-		imshow("mask", masks[i]);		
-		waitKey(0);
+		multiband.feed(aux_img, masks[i], Point((int)bound_rect[i].x, (int)bound_rect[i].y));
+		// Mat roi(_sub_mosaic->final_scene, Rect(bound_rect[i].x,
+		// 										bound_rect[i].y,
+		// 										bound_rect[i].width,
+		// 										bound_rect[i].height));
+		// aux_img.copyTo(roi, masks[i]);
 	}
-	imshow("final blend", _sub_mosaic->final_scene);
-	waitKey(0);
-	//multiband.blend(result_16s, result_mask);
-	//result_16s.convertTo(_sub_mosaic->final_scene, CV_8U);
+	Mat result_16s, result_mask;
+	multiband.blend(result_16s, result_mask);
+	result_16s.convertTo(_sub_mosaic->final_scene, CV_8U);
+
 	warp_imgs.clear();
 	masks.clear();
 	bound_rect.clear();
 }
 
-Mat Blender::getWarpImg(Frame *_frame)
+UMat Blender::getWarpImg(Frame *_frame)
 {
 	Mat warp_img;
+	UMat warp_uimg;
 
 	Mat aux_T = Mat::eye(3, 3, CV_64F);
 	aux_T.at<double>(0, 2) = -_frame->bound_rect.x;
@@ -109,7 +76,10 @@ Mat Blender::getWarpImg(Frame *_frame)
 
 	warpPerspective(_frame->color, warp_img, aux_T * _frame->H, Size(_frame->bound_rect.width, _frame->bound_rect.height));
 
-	return warp_img;
+	warp_img.convertTo(warp_img, CV_32F);
+	warp_uimg = warp_img.getUMat(ACCESS_RW);
+
+	return warp_uimg;
 }
 
 void Blender::correctColor(SubMosaic *_sub_mosaic)
@@ -123,7 +93,7 @@ void Blender::correctColor(SubMosaic *_sub_mosaic)
 
 	for (Frame *frame: _sub_mosaic->frames)
 	{	
-		frame->enhance();
+		//frame->enhance();
 		cvtColor(frame->color, lab_img, CV_BGR2Lab);
 		meanStdDev(lab_img, aux_mean, aux_stdev);
 		mean.push_back(aux_mean);
@@ -151,7 +121,7 @@ void Blender::correctColor(SubMosaic *_sub_mosaic)
 
 }
 
-Mat Blender::getMask(Frame *_frame)
+UMat Blender::getMask(Frame *_frame)
 {
 	vector<Point2f> aux_points = _frame->bound_points[FIRST];
 
@@ -178,7 +148,10 @@ Mat Blender::getMask(Frame *_frame)
 	Mat mask(_frame->bound_rect.height, _frame->bound_rect.width, CV_8U, Scalar(0));
 	fillConvexPoly(mask, mask_points, 4, Scalar(255));
 
-	return mask;
+	//mask.convertTo(mask, CV_32F);
+	UMat umask = mask.getUMat(ACCESS_RW);
+
+	return umask;
 }
 
 bool Blender::checkCollision(Frame *_object, Frame *_scene)
