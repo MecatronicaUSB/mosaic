@@ -65,7 +65,7 @@ bool Mosaic::addFrame(Mat _object)
 		sub_mosaics[n_subs]->addFrame(new_frame);
 		test = true;
 
-		if (n_subs > 2)
+		if (n_subs > 1)
 		{
 			compute();
 		}
@@ -94,12 +94,11 @@ void Mosaic::compute()
 {
 
 	vector<SubMosaic *> ransac_mosaics(2);
-
+	ransac_mosaics[0] = sub_mosaics[0];
+	
 	for (int i = 0; i < sub_mosaics.size(); i++)
 	{
-
-		ransac_mosaics[0] = sub_mosaics[0];
-		ransac_mosaics[1] = sub_mosaics[1];
+		ransac_mosaics[1] = sub_mosaics[i+1];
 
 		getReferencedMosaics(ransac_mosaics);
 
@@ -118,12 +117,13 @@ void Mosaic::compute()
 		ransac_mosaics[0]->computeOffset();
 
 		blender->blendSubMosaic(ransac_mosaics[0]);
+		resize(ransac_mosaics[0]->final_scene, ransac_mosaics[0]->final_scene, Size(640, 480));
 		imshow("Blend-Ransac-Final", ransac_mosaics[0]->final_scene);
 		imwrite("/home/victor/dataset/output/ransac-00.jpg", ransac_mosaics[0]->final_scene);
 		waitKey(0);
 
-		sub_mosaics.erase(sub_mosaics.begin());
-		sub_mosaics.erase(sub_mosaics.begin());
+		// sub_mosaics.erase(sub_mosaics.begin());
+		// sub_mosaics.erase(sub_mosaics.begin());
 	}
 }
 

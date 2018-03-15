@@ -26,10 +26,6 @@ void Blender::blendSubMosaic(SubMosaic *_sub_mosaic)
 		cout << "mosaic too distorted to blend" << endl;
 		return;
 	}
-<<<<<<< HEAD
-=======
-
->>>>>>> 6ee7b2632caa6624a706b5cf7a740e157928b6b6
 	_sub_mosaic->final_scene = Mat(_sub_mosaic->scene_size, CV_8UC3, Scalar(0, 0, 0));
 	multiband.prepare(Rect(Point(0, 0), _sub_mosaic->scene_size));
 
@@ -37,7 +33,6 @@ void Blender::blendSubMosaic(SubMosaic *_sub_mosaic)
 	//reverse(_sub_mosaic->frames.begin(), _sub_mosaic->frames.end());
 	Mat aux_img;
 	int k=0;
-	correctColor(_sub_mosaic);
 	for (Frame *frame : frames)
 	{
 		aux_img = getWarpImg(frame);
@@ -119,7 +114,7 @@ void Blender::correctColor()
 		for (int j = 0; j<3; j++)
 		{
 			channels[j] = (avg_stdev.val[j]*(channels[j] - mean[i].val[j]) / stdev[i].val[j])
-							+ avg_mean.val[j];
+										+ avg_mean.val[j];
 		}
 		merge(channels, lab_imgs[i]);
 		cvtColor(lab_imgs[i], frames[i]->color, CV_Lab2BGR);
@@ -183,15 +178,13 @@ void Blender::cropMask(int _object, int _scene)
 	overlap_roi.y = max(bound_rect[_scene].y, bound_rect[_object].y) - bound_rect[_object].y;
 
 	overlap_roi.width = min(bound_rect[_scene].x + bound_rect[_scene].width,
-							bound_rect[_object].x + bound_rect[_object].width) - 
-						max(bound_rect[_scene].x, bound_rect[_object].x);
-						
+											bound_rect[_object].x + bound_rect[_object].width) - 
+											max(bound_rect[_scene].x, bound_rect[_object].x);
 
 	overlap_roi.height = min(bound_rect[_scene].y + bound_rect[_scene].height,
-							 bound_rect[_object].y + bound_rect[_object].height) - 
-						 max(bound_rect[_scene].y, bound_rect[_object].y);
+							 						 bound_rect[_object].y + bound_rect[_object].height) - 
+													 max(bound_rect[_scene].y, bound_rect[_object].y);
 						 
-
 	Mat object_roi(masks[_object], overlap_roi);
 
 	overlap_roi.x = max(bound_rect[_object].x - bound_rect[_scene].x, 0.f);
