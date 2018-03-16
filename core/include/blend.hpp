@@ -73,6 +73,13 @@ class Blender
      */
     void cropMask(int _object_index, int _scene_index);
     /**
+     * @brief 
+     * @param _object 
+     * @param _scene 
+     * @return Mat 
+     */
+    Mat getOverlapFrame(int _object, int _scene);
+    /**
          * @brief 
          */
     vector<Point2f> findLocalStitch(Frame *_object, Frame *_scene);

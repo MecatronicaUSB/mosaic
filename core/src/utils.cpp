@@ -22,6 +22,17 @@ Point2f getMidPoint(Point2f _pt1, Point2f _pt2)
 	return Point2f((_pt2.x + _pt1.x) / 2, (_pt2.y + _pt1.y) / 2);
 }
 
+void enhanceImage(Mat &_img)
+{
+	vector<Mat> channels;
+
+	split(_img, channels);
+	imgChannelStretch(channels[0], channels[0], 1, 99);
+	imgChannelStretch(channels[1], channels[1], 1, 99);
+	imgChannelStretch(channels[2], channels[2], 1, 99);
+	merge(channels, _img);
+}
+
 int sign(double _num1)
 {
 	return _num1 > 0 ? 1 : -1;

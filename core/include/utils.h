@@ -47,6 +47,8 @@ float getDistance(Point2f _pt1, Point2f _pt2);
 
 Point2f getMidPoint(Point2f _pt1, Point2f _pt2);
 
+void enhanceImage(Mat &_img);
+
 int sign(double _num1);
 }
 
