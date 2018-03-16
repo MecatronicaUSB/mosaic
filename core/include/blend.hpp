@@ -78,7 +78,7 @@ class Blender
      * @param _scene 
      * @return Mat 
      */
-    Mat getOverlapFrame(int _object, int _scene);
+    Mat getOverlapMask(int _object, int _scene);
     /**
          * @brief 
          */

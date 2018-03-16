@@ -26,11 +26,18 @@ void enhanceImage(Mat &_img)
 {
 	vector<Mat> channels;
 
+	cvtColor( _img, _img, CV_BGR2Lab);
+	split(_img, channels);
+	GaussianBlur(channels[0], channels[0], Size(5, 5), 0, 0);
+	merge(channels, _img);
+	cvtColor( _img, _img, CV_Lab2BGR);
+
 	split(_img, channels);
 	imgChannelStretch(channels[0], channels[0], 1, 99);
 	imgChannelStretch(channels[1], channels[1], 1, 99);
 	imgChannelStretch(channels[2], channels[2], 1, 99);
 	merge(channels, _img);
+
 }
 
 int sign(double _num1)

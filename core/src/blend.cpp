@@ -40,22 +40,21 @@ void Blender::blendSubMosaic(SubMosaic *_sub_mosaic)
 	}
 
 	GraphCutSeamFinder *seam_finder = new GraphCutSeamFinder(GraphCutSeamFinderBase::COST_COLOR_GRAD);
-	seam_finder->find(warp_imgs, corners, masks);
-
 	correctColor(_sub_mosaic);
+	seam_finder->find(warp_imgs, corners, masks);
 
 	Mat aux_img;
 	for (int i = 0; i < frames.size(); i++)
 	{
 		warp_imgs[i].copyTo(aux_img);
-		aux_img.convertTo(aux_img, CV_8U);
+		// aux_img.convertTo(aux_img, CV_8U);
 		//multiband.feed(aux_img, masks[i], Point((int)bound_rect[i].x, (int)bound_rect[i].y));
 		Mat roi(_sub_mosaic->final_scene, Rect(bound_rect[i].x,
 												bound_rect[i].y,
 												bound_rect[i].width,
 												bound_rect[i].height));
 		aux_img.copyTo(roi, masks[i]);
-		imwrite("/home/victor/dataset/output/graph-0"+to_string(i)+".jpg", _sub_mosaic->final_scene);
+		//imwrite("/home/victor/dataset/output/graph-0"+to_string(i)+".jpg", _sub_mosaic->final_scene);
 	}
 
 	enhanceImage(_sub_mosaic->final_scene);
@@ -87,30 +86,40 @@ UMat Blender::getWarpImg(Frame *_frame)
 
 void Blender::correctColor(SubMosaic *_sub_mosaic)
 {
+	vector<Mat> lab_imgs;
+	Mat lab_img;
+	vector<Scalar> mean, stdev;
+	Scalar avg_mean, aux_mean, avg_stdev, aux_stdev;
+	int n = 0;
 
-	Mat lab_img, overlap;
-	Scalar obj_mean, sc_mean, obj_stdev, sc_stdev;
+
+	for (Frame *frame: _sub_mosaic->frames)
+	{	
+		//frame->enhance();
+		cvtColor(frame->color, lab_img, CV_BGR2Lab);
+		meanStdDev(lab_img, aux_mean, aux_stdev);
+		mean.push_back(aux_mean);
+		avg_mean += aux_mean;
+		stdev.push_back(aux_stdev);
+		avg_stdev += aux_stdev;
+		lab_imgs.push_back(lab_img.clone());
+		n++;
+	}
+	avg_mean /= n;
+	avg_stdev /= n;
 
 	vector<Mat> channels;
-	for (int i=0; i<warp_imgs.size()-1; i++)
+	for (int i = 0; i < lab_imgs.size(); i++)
 	{
-		overlap = getOverlapFrame(i+1, i);
-		cvtColor(overlap, lab_img, CV_BGR2Lab);
-		meanStdDev(lab_img, sc_mean, sc_stdev);
-
-		cvtColor(warp_imgs[i+1], lab_img, CV_BGR2Lab);
-		meanStdDev(lab_img, obj_mean, obj_stdev);
-
-		split(lab_img, channels);
+		split(lab_imgs[i], channels);
 		for (int j = 0; j<3; j++)
 		{
-			channels[j] = (sc_stdev.val[j]*(channels[j] - obj_mean.val[j]) / obj_stdev.val[j])
-										+ sc_mean.val[j];
+			channels[j] = (avg_stdev.val[j]*(channels[j] - mean[i].val[j]) / stdev[i].val[j])
+							+ avg_mean.val[j];
 		}
-		merge(channels, lab_img);
-		cvtColor(lab_img, warp_imgs[i+1], CV_Lab2BGR);
+		merge(channels, _sub_mosaic->frames[i]->color);
+		cvtColor(lab_imgs[i], _sub_mosaic->frames[i]->color, CV_Lab2BGR);
 	}
-
 }
 
 UMat Blender::getMask(Frame *_frame)
@@ -164,7 +173,7 @@ bool Blender::checkCollision(Frame *_object, Frame *_scene)
 	return true;
 }
 
-Mat Blender::getOverlapFrame(int _object, int _scene)
+Mat Blender::getOverlapMask(int _object, int _scene)
 {
 	Rect overlap_roi;
 
@@ -190,7 +199,8 @@ Mat Blender::getOverlapFrame(int _object, int _scene)
 	overlap_roi.y = max(bound_rect[_object].y - bound_rect[_scene].y, 0.f);
 
 	Mat scene_roi(sc_mask, overlap_roi);
-
+		imshow("test overlap 1", scene_roi);
+		imshow("test overlap 2", object_roi);
 	Mat result_mask;
 	bitwise_and(scene_roi, object_roi, result_mask);
 
@@ -198,6 +208,9 @@ Mat Blender::getOverlapFrame(int _object, int _scene)
 	warp_imgs[_scene].copyTo(scene_crop);
 	scene_crop = scene_crop(overlap_roi);
 	scene_crop.copyTo(scene_crop, result_mask);
+
+		imshow("test overlap 3", scene_crop);
+		waitKey(0);
 	return scene_crop;
 }
 
