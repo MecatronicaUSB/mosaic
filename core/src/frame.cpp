@@ -152,7 +152,6 @@ float Frame::boundAreaKeypoints()
 
 void Frame::setHReference(Mat _H)
 {
-
 	perspectiveTransform(bound_points[FIRST], bound_points[FIRST], _H);
 	if (grid_points[PREV].size())
 		perspectiveTransform(grid_points[PREV], grid_points[PREV], _H);

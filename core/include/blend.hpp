@@ -60,7 +60,7 @@ class Blender
      * @brief 
      * @param _sub_mosaic 
      */
-    void correctColor(SubMosaic *_sub_mosaic);
+    void correctColor();
     /**
      * @brief 
      * @param _frame 

@@ -84,7 +84,7 @@ UMat Blender::getWarpImg(Frame *_frame)
 	return warp_uimg;
 }
 
-void Blender::correctColor(SubMosaic *_sub_mosaic)
+void Blender::correctColor()
 {
 	vector<Mat> lab_imgs;
 	Mat lab_img;
@@ -115,7 +115,7 @@ void Blender::correctColor(SubMosaic *_sub_mosaic)
 		for (int j = 0; j<3; j++)
 		{
 			channels[j] = (avg_stdev.val[j]*(channels[j] - mean[i].val[j]) / stdev[i].val[j])
-							+ avg_mean.val[j];
+										+ avg_mean.val[j];
 		}
 		merge(channels, _sub_mosaic->frames[i]->color);
 		cvtColor(lab_imgs[i], _sub_mosaic->frames[i]->color, CV_Lab2BGR);

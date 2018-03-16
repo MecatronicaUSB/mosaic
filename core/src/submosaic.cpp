@@ -24,9 +24,8 @@ SubMosaic::SubMosaic()
 SubMosaic::~SubMosaic()
 {
 	for (Frame *frame : frames)
-	{
 		delete frame;
-	}
+	
 	final_scene.release();
 	avg_H.release();
 	neighbors.clear();
@@ -41,9 +40,7 @@ SubMosaic *SubMosaic::clone()
 	new_sub_mosaic->scene_size = scene_size;
 	//new_sub_mosaic->neighbors = neighbors;
 	for (Frame *frame : frames)
-	{
 		new_sub_mosaic->addFrame(frame->clone());
-	}
 
 	return new_sub_mosaic;
 }
@@ -58,9 +55,7 @@ void SubMosaic::addFrame(Frame *_frame)
 
 void SubMosaic::referenceToZero()
 {
-
-	vector<float> offset = {-frames[0]->bound_rect.y, 0,
-													-frames[0]->bound_rect.x, 0};
+	vector<float> offset = {-frames[0]->bound_rect.y, 0, -frames[0]->bound_rect.x, 0};
 
 	updateOffset(offset);
 }
@@ -97,19 +92,17 @@ void SubMosaic::updateOffset(vector<float> _total_offset)
 {
 
 	if (!_total_offset[TOP] && !_total_offset[LEFT])
-	{
 		return;
-	}
+	
 
-	Mat t = Mat::eye(3, 3, CV_64F);
-	t.at<double>(0, 2) = _total_offset[LEFT];
-	t.at<double>(1, 2) = _total_offset[TOP];
+	Mat T = Mat::eye(3, 3, CV_64F);
+	T.at<double>(0, 2) = _total_offset[LEFT];
+	T.at<double>(1, 2) = _total_offset[TOP];
 
 	for (Frame *frame : frames)
-	{
-		frame->setHReference(t);
-	}
-	avg_H = t * avg_H;
+		frame->setHReference(T);
+	
+	avg_H = T * avg_H;
 }
 
 // See description in header file
@@ -117,11 +110,8 @@ float SubMosaic::calcKeypointsError(Frame *_first, Frame *_second)
 {
 	float error = 0;
 	for (int i = 0; i < _first->grid_points[PREV].size(); i++)
-	{
-		error += getDistance(_first->grid_points[PREV][i],
-												 _second->grid_points[NEXT][i]);
-		//error += abs(Mat(_first->grid_points[PREV]) - Mat(_second->grid_points[NEXT]))
-	}
+		error += getDistance(_first->grid_points[PREV][i], _second->grid_points[NEXT][i]);
+
 	return error;
 }
 
