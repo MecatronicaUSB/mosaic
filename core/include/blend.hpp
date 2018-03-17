@@ -41,6 +41,7 @@ class Blender
     int bands;
     vector<UMat> warp_imgs;
     vector<UMat> masks;
+    vector<UMat> full_masks;
     vector<Rect2f> bound_rect;
     /**
          * @brief 
@@ -60,7 +61,7 @@ class Blender
      * @brief 
      * @param _sub_mosaic 
      */
-    void correctColor();
+    void correctColor(SubMosaic *_sub_mosaic);
     /**
      * @brief 
      * @param _frame 
@@ -76,9 +77,9 @@ class Blender
      * @brief 
      * @param _object 
      * @param _scene 
-     * @return Mat 
+     * @return vector<Mat> 
      */
-    Mat getOverlapMask(int _object, int _scene);
+    vector<Mat> getOverlapMasks(int _object, int _scene);
     /**
          * @brief 
          */

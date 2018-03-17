@@ -15,8 +15,6 @@ using namespace cv;
 namespace m2d //!< mosaic 2d namespace
 {
 
-const int KEY = 0;
-
 /// termporal frame reference for Frame class
 enum FrameRef
 {

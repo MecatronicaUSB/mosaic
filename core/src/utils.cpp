@@ -22,20 +22,20 @@ Point2f getMidPoint(Point2f _pt1, Point2f _pt2)
 	return Point2f((_pt2.x + _pt1.x) / 2, (_pt2.y + _pt1.y) / 2);
 }
 
-void enhanceImage(Mat &_img)
+void enhanceImage(Mat &_img, Mat mask)
 {
 	vector<Mat> channels;
 
-	cvtColor( _img, _img, CV_BGR2Lab);
-	split(_img, channels);
-	GaussianBlur(channels[0], channels[0], Size(5, 5), 0, 0);
-	merge(channels, _img);
-	cvtColor( _img, _img, CV_Lab2BGR);
+	// cvtColor( _img, _img, CV_BGR2HSV);
+	// split(_img, channels);
+	// imgChannelStretch(channels[2], channels[2], 1, 99);
+	// merge(channels, _img);
+	// cvtColor( _img, _img, CV_HSV2BGR);
 
 	split(_img, channels);
-	imgChannelStretch(channels[0], channels[0], 1, 99);
-	imgChannelStretch(channels[1], channels[1], 1, 99);
-	imgChannelStretch(channels[2], channels[2], 1, 99);
+	imgChannelStretch(channels[0], channels[0], 1, 99, mask);
+	imgChannelStretch(channels[1], channels[1], 1, 99, mask);
+	imgChannelStretch(channels[2], channels[2], 1, 99, mask);
 	merge(channels, _img);
 
 }
@@ -46,7 +46,7 @@ int sign(double _num1)
 }
 }
 
-void getHistogram(cv::Mat img, int *histogram)
+void getHistogram(cv::Mat img, int *histogram, Mat mask)
 {
 	int i = 0, j = 0;
 	//    std::cout << "gH: Initializing histogram vector" << endl;
@@ -63,14 +63,9 @@ void getHistogram(cv::Mat img, int *histogram)
 
 	// Computing the histogram as a cumulative of each integer value. WARNING: this will fail for any non-integer image matrix
 	for (i = 0; i < height; i++)
-	{
 		for (j = 0; j < width; j++)
-		{
-			unsigned char value = img.at<unsigned char>(i, j);
-			//cout << "i: " << i << " j: " << j << " > " << value << endl;
-			histogram[value] += 1;
-		}
-	}
+			if (mask.at<unsigned char>(i, j) != 0)
+				histogram[img.at<unsigned char>(i, j)]++;
 }
 
 void printHistogram(int histogram[256], std::string filename, cv::Scalar color)
@@ -113,12 +108,14 @@ void printHistogram(int histogram[256], std::string filename, cv::Scalar color)
 }
 
 // Now it will operate in a single channel of the provided image. So, future implementations will require a function call per channel (still faster)
-void imgChannelStretch(cv::Mat imgOriginal, cv::Mat imgStretched, int lowerPercentile, int higherPercentile)
+void imgChannelStretch(cv::Mat imgOriginal, cv::Mat imgStretched, int lowerPercentile, int higherPercentile, Mat mask)
 {
 	// Computing the histograms
 	int histogram[256];
+	if (!mask.data)
+		mask = Mat(imgOriginal.size(), CV_8U, Scalar(255));
 
-	getHistogram(imgOriginal, histogram);
+	getHistogram(imgOriginal, histogram, mask);
 
 	// Computing the percentiles. We force invalid values as initial values (just in case)
 	int channelLowerPercentile = -1, channelHigherPercentile = -1;

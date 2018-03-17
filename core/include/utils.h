@@ -18,6 +18,7 @@
 #include <opencv2/highgui.hpp>
 #include <opencv2/opencv.hpp>
 #include <opencv2/core.hpp>
+#include <assert.h>
 #include <dirent.h>
 #include <stdlib.h>
 #include <stdlib.h>
@@ -37,6 +38,7 @@ namespace m2d
 const int TARGET_WIDTH = 640;
 const int TARGET_HEIGHT = 480;
 
+
 /**
  * @brief Calculate the euclidean distance between two given vector in 2D
  * @param _pt1 First floating point OpenCV coordinate 
@@ -47,7 +49,7 @@ float getDistance(Point2f _pt1, Point2f _pt2);
 
 Point2f getMidPoint(Point2f _pt1, Point2f _pt2);
 
-void enhanceImage(Mat &_img);
+void enhanceImage(Mat &_img, Mat mask = Mat());
 
 int sign(double _num1);
 }
@@ -58,7 +60,7 @@ int sign(double _num1);
  * @param img OpenCV Matrix container input image
  * @param histogram Integer matrix to store the histogram
  */
-void getHistogram(cv::Mat img, int *histogram);
+void getHistogram(cv::Mat img, int *histogram, Mat mask);
 // Histogram[3][256].
 //      Histogram[0] corresponds to the Blue channel
 //      Histogram[1] corresponds to the Green channel
@@ -88,7 +90,7 @@ void printHistogram(int histogram[256], std::string filename, cv::Scalar color);
  * 0 and 100.\n
  * \e lowerPercentile must be smaller than \e higherPercentile
  */
-void imgChannelStretch(cv::Mat imgOriginal, cv::Mat imgStretched, int lowerPercentile, int higherPercentile);
+void imgChannelStretch(cv::Mat imgOriginal, cv::Mat imgStretched, int lowerPercentile, int higherPercentile, Mat mask = Mat());
 // Transform imgOriginal so that, for each channel histogram, its
 // lowerPercentile and higherPercentile values are moved to 0 and 255,
 // respectively. Values in between are linearly scaled. Values smaller

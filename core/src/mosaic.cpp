@@ -118,7 +118,7 @@ void Mosaic::compute()
 		ransac_mosaics[0]->computeOffset();
 
 		blender->blendSubMosaic(ransac_mosaics[0]);
-		resize(ransac_mosaics[0]->final_scene, ransac_mosaics[0]->final_scene, Size(640, 480));
+		resize(ransac_mosaics[0]->final_scene, ransac_mosaics[0]->final_scene, Size(1066, 800));
 		imshow("Blend-Ransac-Final", ransac_mosaics[0]->final_scene);
 		imwrite("/home/victor/dataset/output/ransac-00.jpg", ransac_mosaics[0]->final_scene);
 		waitKey(0);

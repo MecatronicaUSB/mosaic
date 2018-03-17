@@ -39,7 +39,7 @@ Frame::Frame(Mat _img, bool _pre, int _width, int _height)
 	cvtColor(color, gray, CV_BGR2GRAY);
 	if (_pre)
 	{
-		imgChannelStretch(gray, gray, 1, 99);
+		imgChannelStretch(gray, gray, 1, 99, Mat());
 	}
 
 	bound_rect = Rect2f(0, 0, (float)_width, (float)_height);
