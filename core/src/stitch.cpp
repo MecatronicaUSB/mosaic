@@ -71,56 +71,6 @@ Stitcher::Stitcher(bool _grid, int _detector, int _matcher)
 }
 
 // See description in header file
-void Stitcher::setDetector(int _detector)
-{
-	switch (_detector)
-	{
-	case USE_KAZE:
-	{
-		detector = KAZE::create();
-		break;
-	}
-	case USE_AKAZE:
-	{
-		detector = AKAZE::create();
-		break;
-	}
-	default:
-	{
-		break;
-	}
-	}
-}
-
-// See description in header file
-void Stitcher::setMatcher(int _matcher)
-{
-	switch (_matcher)
-	{
-	case USE_BRUTE_FORCE:
-	{
-		matcher = BFMatcher::create();
-		break;
-	}
-	case USE_FLANN:
-	{
-		matcher = FlannBasedMatcher::create();
-		break;
-	}
-	default:
-	{
-		break;
-	}
-	}
-}
-
-// See description in header file
-void Stitcher::setScene(Frame *_frame)
-{
-	img[SCENE] = _frame;
-}
-
-// See description in header file
 int Stitcher::stitch(Frame *_object, Frame *_scene, Size _scene_dims)
 {
 
@@ -171,7 +121,7 @@ int Stitcher::stitch(Frame *_object, Frame *_scene, Size _scene_dims)
 		// Convert the keypoints into a vector containing the correspond X,Y position in image
 		positionFromKeypoints();
 
-		if (points_pos[OBJECT].rows > 4 && points_pos[SCENE].rows > 4)
+		if (object_points.rows > 4 && scene_points[PERSPECTIVE].rows > 4)
 		{
 			good_thresh = false;
 		}
@@ -188,10 +138,7 @@ int Stitcher::stitch(Frame *_object, Frame *_scene, Size _scene_dims)
 		}
 	}
 
-	Mat H = findHomography(points_pos[OBJECT], points_pos[SCENE], CV_RANSAC);
-	// Mat H = estimateRigidTransform(points_pos[OBJECT], points_pos[SCENE], true);
-	// Mat t = (Mat1d(1,3) << 0, 0, 1);
-	// vconcat(H, t, H);
+	Mat H = findHomography(object_points, scene_points[PERSPECTIVE], CV_RANSAC);
 	H.at<double>(2, 2) = 1;
 
 	if (H.empty())
@@ -200,7 +147,12 @@ int Stitcher::stitch(Frame *_object, Frame *_scene, Size _scene_dims)
 		return NO_HOMOGRAPHY;
 	}
 
-	img[OBJECT]->setHReference(H);
+	Mat R = estimateRigidTransform(object_points, scene_points[PERSPECTIVE], false);
+	R.copyTo(img[OBJECT]->E(Rect(0, 0, 3, 2)));
+	removeScale(img[OBJECT]->E);
+	
+	img[OBJECT]->setHReference(H, PERSPECTIVE);
+	img[OBJECT]->setHReference(img[OBJECT]->E, EUCLIDEAN);
 
 	if (!img[OBJECT]->isGoodFrame())
 	{
@@ -339,35 +291,47 @@ void Stitcher::positionFromKeypoints()
 		aux_points.clear();
 	}
 
-	trackKeypoints();
+	vector<Point2f> euclidean_points = trackKeypoints();
 
-	points_pos[OBJECT] = Mat(img[OBJECT]->grid_points[PREV]);
+	object_points = Mat(img[OBJECT]->grid_points[PREV]);
 
 	for (int i = 0; i < img[SCENE]->neighbors.size(); i++)
 	{
 		img[SCENE]->grid_points[NEXT].insert(img[SCENE]->grid_points[NEXT].end(),
 											   neighbors_kp[i].begin(), neighbors_kp[i].end());
 	}
-	points_pos[SCENE] = Mat(img[SCENE]->grid_points[NEXT]);
+	scene_points[PERSPECTIVE] = Mat(img[SCENE]->grid_points[NEXT]);
+	scene_points[EUCLIDEAN] = Mat(euclidean_points);
 }
 
 // See description in header file
-void Stitcher::trackKeypoints()
+vector<Point2f> Stitcher::trackKeypoints()
 {
+	vector<vector<Point2f> > euclidean_points;
+	vector<Point2f> aux_points;
 	if (img[SCENE]->grid_points[NEXT].size() > 0)
 	{
-		perspectiveTransform(img[SCENE]->grid_points[NEXT], img[SCENE]->grid_points[NEXT],
-							 img[SCENE]->H);
+		perspectiveTransform(img[SCENE]->grid_points[NEXT], aux_points, img[SCENE]->E);
+		perspectiveTransform(img[SCENE]->grid_points[NEXT], img[SCENE]->grid_points[NEXT], img[SCENE]->H);
+		euclidean_points.push_back(aux_points);		 
 	}
 
 	for (int i = 0; i < img[SCENE]->neighbors.size(); i++)
 	{
 		if (neighbors_kp[i].size() > 0)
 		{
-			perspectiveTransform(neighbors_kp[i], neighbors_kp[i],
-								 img[SCENE]->neighbors[i]->H);
+			perspectiveTransform(neighbors_kp[i], aux_points, img[SCENE]->neighbors[i]->E);
+			perspectiveTransform(neighbors_kp[i], neighbors_kp[i], img[SCENE]->neighbors[i]->H);
+			euclidean_points.push_back(aux_points);
 		}
 	}
+	aux_points.clear();
+	for (int i = 0; i < euclidean_points.size(); i++)
+	{
+		aux_points.insert(aux_points.end(), euclidean_points[i].begin(), euclidean_points[i].end());
+	}
+
+	return aux_points;
 }
 
 // See description in header file

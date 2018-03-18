@@ -22,11 +22,11 @@ enum FrameRef
 	NEXT
 };
 
-enum RansacReference
+enum BoundPointsRef
 {
-	FIRST,
-	RANSAC,
-	SECOND
+	PERSPECTIVE,
+	EUCLIDEAN,
+	RANSAC
 };
 
 /// offset of padding to add in scene after object transformation
@@ -51,6 +51,7 @@ class Frame
 		Mat color;                             //!< OpenCV Matrix containing the original image
 		Mat gray;                              //!< OpenCV Matrix containing a gray scale version of image
 		Mat H;                                 //!< Homography matrix based on previous frame
+		Mat E;                                 //!< Homography matrix based on previous frame
 		Rect2f bound_rect;                     //!< Minimum bounding rectangle of transformed image
 		vector<vector<Point2f>> bound_points;  //!< Points of the transformmed image (initially at corners)
 		vector<vector<Point2f>> grid_points; //!< Position (X,Y) of good keypoints in image
@@ -84,7 +85,7 @@ class Frame
 		 * @brief Change the reference for Homography matrix (Not yet implemented)
 		 * @param _H Homography matrix
 		 */
-		void setHReference(Mat _H);
+		void setHReference(Mat _H, int _ref = PERSPECTIVE);
 		/**
 		 * @brief Check if the frame is too much distorted
 		 * @detail The distortion is besed on follow criteria:

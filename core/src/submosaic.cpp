@@ -66,7 +66,7 @@ void SubMosaic::computeOffset()
 	float top = TARGET_HEIGHT, bottom = 0, left = TARGET_WIDTH, right = 0;
 	for (Frame *frame : frames)
 	{
-		for (Point2f point : frame->bound_points[FIRST])
+		for (Point2f point : frame->bound_points[PERSPECTIVE])
 		{
 			if (point.x < left)
 				left = point.x;
@@ -171,48 +171,48 @@ float SubMosaic::calcDistortion()
 	return tot_error;
 }
 
-// See description in header file
-void SubMosaic::correct()
-{
-	float temp_distortion = 0, distortion = 0;
-	Mat temp_avg_H;
-	avg_H = Mat::eye(3, 3, CV_64F);
+// // See description in header file
+// void SubMosaic::correct()
+// {
+// 	float temp_distortion = 0, distortion = 0;
+// 	Mat temp_avg_H;
+// 	avg_H = Mat::eye(3, 3, CV_64F);
 
-	for (Frame *frame : frames)
-	{
-		frame->gray.release();
-		frame->bound_points[SECOND] = frame->bound_points[FIRST];
-	}
+// 	for (Frame *frame : frames)
+// 	{
+// 		frame->gray.release();
+// 		frame->bound_points[SECOND] = frame->bound_points[PERSPECTIVE];
+// 	}
 
-	distortion = calcDistortion();
+// 	distortion = calcDistortion();
 
-	cout << distortion << endl
-			 << endl;
+// 	cout << distortion << endl
+// 			 << endl;
 
-	for (int i = 1; i < frames.size(); i++)
-	{
-		temp_avg_H = frames[i]->H.inv();
+// 	for (int i = 1; i < frames.size(); i++)
+// 	{
+// 		temp_avg_H = frames[i]->H.inv();
 
-		for (Frame *frame : frames)
-		{
-			perspectiveTransform(frame->bound_points[FIRST], frame->bound_points[SECOND], temp_avg_H * frame->H);
-		}
+// 		for (Frame *frame : frames)
+// 		{
+// 			perspectiveTransform(frame->bound_points[PERSPECTIVE], frame->bound_points[SECOND], temp_avg_H * frame->H);
+// 		}
 
-		temp_distortion = calcDistortion();
+// 		temp_distortion = calcDistortion();
 
-		if (temp_distortion < distortion)
-		{
-			distortion = temp_distortion;
-			avg_H = temp_avg_H;
-		}
-	}
+// 		if (temp_distortion < distortion)
+// 		{
+// 			distortion = temp_distortion;
+// 			avg_H = temp_avg_H;
+// 		}
+// 	}
 
-	for (Frame *frame : frames)
-	{
-		//frame->H = frame->H * avg_H;
-		frame->setHReference(avg_H);
-	}
-}
+// 	for (Frame *frame : frames)
+// 	{
+// 		//frame->H = frame->H * avg_H;
+// 		frame->setHReference(avg_H);
+// 	}
+// }
 
 // See description in header file
 Point2f SubMosaic::getCentroid()
@@ -221,7 +221,7 @@ Point2f SubMosaic::getCentroid()
 
 	int n_points=0;
 	for (Frame *frame: frames) {
-	    for (const Point2f point: frame->bound_points[FIRST]) {
+	    for (const Point2f point: frame->bound_points[PERSPECTIVE]) {
 	        centroid += point;
 	        n_points++;
 	    }
@@ -231,7 +231,7 @@ Point2f SubMosaic::getCentroid()
 	// float top = TARGET_HEIGHT, bottom = 0, left = TARGET_WIDTH, right = 0;
 	// for (Frame *frame : frames)
 	// {
-	// 	for (Point2f point : frame->bound_points[FIRST])
+	// 	for (Point2f point : frame->bound_points[PERSPECTIVE])
 	// 	{
 	// 		if (point.x < left)
 	// 			left = point.x;

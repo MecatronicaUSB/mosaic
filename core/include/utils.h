@@ -51,6 +51,8 @@ Point2f getMidPoint(Point2f _pt1, Point2f _pt2);
 
 void enhanceImage(Mat &_img, Mat mask = Mat());
 
+void removeScale(Mat &_H);
+
 int sign(double _num1);
 }
 

@@ -118,7 +118,7 @@ void Mosaic::compute()
 		ransac_mosaics[0]->computeOffset();
 
 		blender->blendSubMosaic(ransac_mosaics[0]);
-		resize(ransac_mosaics[0]->final_scene, ransac_mosaics[0]->final_scene, Size(1066, 800));
+		//resize(ransac_mosaics[0]->final_scene, ransac_mosaics[0]->final_scene, Size(1066, 800));
 		imshow("Blend-Ransac-Final", ransac_mosaics[0]->final_scene);
 		imwrite("/home/victor/dataset/output/ransac-00.jpg", ransac_mosaics[0]->final_scene);
 		waitKey(0);
@@ -185,7 +185,8 @@ Mat Mosaic::getBestModel(vector<SubMosaic *> &_ransac_mosaics, int _niter)
 
 		for (Frame *frame : _ransac_mosaics[0]->frames)
 		{
-			perspectiveTransform(frame->bound_points[FIRST], frame->bound_points[RANSAC], temp_H * frame->H);
+			perspectiveTransform(frame->bound_points[PERSPECTIVE],
+								 frame->bound_points[RANSAC], temp_H * frame->H);
 		}
 
 		temp_distortion = _ransac_mosaics[0]->calcDistortion();

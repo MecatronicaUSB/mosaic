@@ -47,8 +47,7 @@ void Blender::blendSubMosaic(SubMosaic *_sub_mosaic)
 	for (int i = 0; i < frames.size(); i++)
 	{
 		warp_imgs[i].copyTo(aux_img);
-		aux_img.convertTo(aux_img, CV_8U);
-
+		//enhanceImage(aux_img, full_masks[i].getMat(ACCESS_RW));
 		// multiband.feed(aux_img, masks[i], Point((int)bound_rect[i].x, (int)bound_rect[i].y));
 		roi = Mat(_sub_mosaic->final_scene, Rect(bound_rect[i].x,
 												bound_rect[i].y,
@@ -64,7 +63,7 @@ void Blender::blendSubMosaic(SubMosaic *_sub_mosaic)
 
 	// enhanceImage(_sub_mosaic->final_scene, final_mask);
 
-	Mat result_16s, result_mask;
+	// Mat result_16s, result_mask;
 	// multiband.blend(result_16s, result_mask);
 	// result_16s.convertTo(_sub_mosaic->final_scene, CV_8U);
 
@@ -130,7 +129,7 @@ void Blender::correctColor(SubMosaic *_sub_mosaic)
 
 UMat Blender::getMask(Frame *_frame)
 {
-	vector<Point2f> aux_points = _frame->bound_points[FIRST];
+	vector<Point2f> aux_points = _frame->bound_points[PERSPECTIVE];
 
 	for (Point2f &point : aux_points)
 	{

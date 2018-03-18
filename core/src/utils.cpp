@@ -26,18 +26,26 @@ void enhanceImage(Mat &_img, Mat mask)
 {
 	vector<Mat> channels;
 
-	// cvtColor( _img, _img, CV_BGR2HSV);
-	// split(_img, channels);
-	// imgChannelStretch(channels[2], channels[2], 1, 99);
-	// merge(channels, _img);
-	// cvtColor( _img, _img, CV_HSV2BGR);
-
 	split(_img, channels);
 	imgChannelStretch(channels[0], channels[0], 1, 99, mask);
 	imgChannelStretch(channels[1], channels[1], 1, 99, mask);
 	imgChannelStretch(channels[2], channels[2], 1, 99, mask);
 	merge(channels, _img);
 
+}
+
+void removeScale(Mat &_H)
+{
+	assert(_H.rows == 3 && _H.cols == 3);
+	assert(_H.at<double>(2, 0) == 0 && _H.at<double>(2, 1) == 0);
+
+	double sx = sign(_H.at<double>(0, 0)) * sqrt(pow(_H.at<double>(0, 0), 2) + pow(_H.at<double>(0, 1), 2));
+	double sy = sign(_H.at<double>(1, 1)) * sqrt(pow(_H.at<double>(1, 0), 2) + pow(_H.at<double>(1, 1), 2));
+
+	_H.at<double>(0, 0) = _H.at<double>(0, 0) / sx;
+	_H.at<double>(0, 1) = _H.at<double>(0, 1) / sx;
+	_H.at<double>(1, 0) = _H.at<double>(1, 0) / sy;
+	_H.at<double>(1, 1) = _H.at<double>(1, 1) / sy;
 }
 
 int sign(double _num1)

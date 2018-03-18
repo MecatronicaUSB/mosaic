@@ -44,20 +44,24 @@ Frame::Frame(Mat _img, bool _pre, int _width, int _height)
 
 	bound_rect = Rect2f(0, 0, (float)_width, (float)_height);
 	// corner points
-	bound_points[FIRST].push_back(Point2f(0, 0));
-	bound_points[FIRST].push_back(Point2f(_width, 0));
-	bound_points[FIRST].push_back(Point2f(_width, _height));
-	bound_points[FIRST].push_back(Point2f(0, _height));
-	// center point
-	bound_points[FIRST].push_back(Point2f(_width / 2, _height / 2));
+	bound_points[PERSPECTIVE].push_back(Point2f(0, 0));
+	bound_points[PERSPECTIVE].push_back(Point2f(_width, 0));
+	bound_points[PERSPECTIVE].push_back(Point2f(_width, _height));
+	bound_points[PERSPECTIVE].push_back(Point2f(0, _height));
 
+	bound_points[EUCLIDEAN] = bound_points[PERSPECTIVE];
+
+	// center point
+	bound_points[PERSPECTIVE].push_back(Point2f(_width / 2, _height / 2));
 
 	H = Mat::eye(3, 3, CV_64F);
+	E = Mat::eye(3, 3, CV_64F);
 }
 
 Frame::~Frame()
 {
 	H.release();
+	E.release();
 	gray.release();
 	color.release();
 	descriptors.release();
@@ -77,6 +81,7 @@ Frame *Frame::clone()
 	new_frame->descriptors = descriptors.clone();
 	//new_frame->gray = gray.clone();
 	new_frame->H = H.clone();
+	new_frame->E = E.clone();
 	new_frame->bound_rect = bound_rect;
 	new_frame->bound_points = bound_points;
 	new_frame->grid_points = grid_points;
@@ -93,12 +98,12 @@ void Frame::resetFrame()
 
 	H = Mat::eye(3, 3, CV_64F);
 
-	bound_points[FIRST][0] = Point2f(0, 0);
-	bound_points[FIRST][1] = Point2f(color.cols, 0);
-	bound_points[FIRST][2] = Point2f(color.cols, color.rows);
-	bound_points[FIRST][3] = Point2f(0, color.rows);
+	bound_points[PERSPECTIVE][0] = Point2f(0, 0);
+	bound_points[PERSPECTIVE][1] = Point2f(color.cols, 0);
+	bound_points[PERSPECTIVE][2] = Point2f(color.cols, color.rows);
+	bound_points[PERSPECTIVE][3] = Point2f(0, color.rows);
 
-	bound_points[FIRST][4] = Point2f(color.cols / 2, color.rows / 2);
+	bound_points[PERSPECTIVE][4] = Point2f(color.cols / 2, color.rows / 2);
 	bound_rect = Rect2f(0, 0, (float)color.cols, (float)color.rows);
 
 	grid_points[NEXT].clear();
@@ -116,14 +121,14 @@ bool Frame::isGoodFrame()
 	{
 		// 5th point correspond to center of image
 		// Getting the distance between corner points to the center (all semi diagonal distances)
-		semi_diag[i] = getDistance(bound_points[FIRST][i], bound_points[FIRST][4]);
+		semi_diag[i] = getDistance(bound_points[PERSPECTIVE][i], bound_points[PERSPECTIVE][4]);
 	}
 	// ratio beween semi diagonals
 	ratio[0] = max(semi_diag[0] / semi_diag[2], semi_diag[2] / semi_diag[0]);
 	ratio[1] = max(semi_diag[1] / semi_diag[3], semi_diag[3] / semi_diag[1]);
 
 	// Area of distorted images
-	area = contourArea(bound_points[FIRST]);
+	area = contourArea(bound_points[PERSPECTIVE]);
 
 	// enclosing area with good keypoints
 	keypoints_area = boundAreaKeypoints();
@@ -150,23 +155,27 @@ float Frame::boundAreaKeypoints()
 	return contourArea(hull);
 }
 
-void Frame::setHReference(Mat _H)
+void Frame::setHReference(Mat _H, int _ref)
 {
-	perspectiveTransform(bound_points[FIRST], bound_points[FIRST], _H);
-	if (grid_points[PREV].size())
-		perspectiveTransform(grid_points[PREV], grid_points[PREV], _H);
-	if (grid_points[NEXT].size())
-		perspectiveTransform(grid_points[NEXT], grid_points[NEXT], _H);
+	perspectiveTransform(bound_points[_ref], bound_points[_ref], _H);
+	if (_ref == PERSPECTIVE)
+	{
+		if (grid_points[PREV].size())
+			perspectiveTransform(grid_points[PREV], grid_points[PREV], _H);
+		if (grid_points[NEXT].size())
+			perspectiveTransform(grid_points[NEXT], grid_points[NEXT], _H);
 
-	updateBoundRect();
-	H = _H * H;
+		updateBoundRect();
+		H = _H * H;
+	}
+
 }
 
 void Frame::updateBoundRect()
 {
 	float top = TARGET_HEIGHT, bottom = 0, left = TARGET_WIDTH, right = 0;
 
-	for (Point2f point : bound_points[FIRST])
+	for (Point2f point : bound_points[PERSPECTIVE])
 	{
 		if (point.x < left)
 			left = point.x;
