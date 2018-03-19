@@ -18,6 +18,7 @@ namespace m2d
 void Blender::blendSubMosaic(SubMosaic *_sub_mosaic)
 {
 	MultiBandBlender multiband(false, bands);
+	_sub_mosaic->computeOffset();
 	_sub_mosaic->final_scene.release();
 	_sub_mosaic->final_scene = Mat(_sub_mosaic->scene_size, CV_8UC3, Scalar(0, 0, 0));
 	multiband.prepare(Rect(Point(0, 0), _sub_mosaic->scene_size));
