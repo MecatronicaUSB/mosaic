@@ -48,11 +48,10 @@ Frame::Frame(Mat _img, bool _pre, int _width, int _height)
 	bound_points[PERSPECTIVE].push_back(Point2f(_width, 0));
 	bound_points[PERSPECTIVE].push_back(Point2f(_width, _height));
 	bound_points[PERSPECTIVE].push_back(Point2f(0, _height));
-
-	bound_points[EUCLIDEAN] = bound_points[PERSPECTIVE];
-
 	// center point
 	bound_points[PERSPECTIVE].push_back(Point2f(_width / 2, _height / 2));
+
+	bound_points[EUCLIDEAN] = bound_points[PERSPECTIVE];
 
 	H = Mat::eye(3, 3, CV_64F);
 	E = Mat::eye(3, 3, CV_64F);

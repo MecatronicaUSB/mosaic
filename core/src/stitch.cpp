@@ -151,7 +151,7 @@ int Stitcher::stitch(Frame *_object, Frame *_scene, Size _scene_dims)
 	R.copyTo(img[OBJECT]->E(Rect(0, 0, 3, 2)));
 	removeScale(img[OBJECT]->E);
 	
-	img[OBJECT]->setHReference(H, PERSPECTIVE);
+	img[OBJECT]->setHReference(img[OBJECT]->E, PERSPECTIVE);
 	img[OBJECT]->setHReference(img[OBJECT]->E, EUCLIDEAN);
 
 	if (!img[OBJECT]->isGoodFrame())

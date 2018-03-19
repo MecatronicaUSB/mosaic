@@ -171,48 +171,106 @@ float SubMosaic::calcDistortion()
 	return tot_error;
 }
 
-// // See description in header file
-// void SubMosaic::correct()
-// {
-// 	float temp_distortion = 0, distortion = 0;
-// 	Mat temp_avg_H;
-// 	avg_H = Mat::eye(3, 3, CV_64F);
+// See description in header file
+void SubMosaic::correct()
+{
+	vector<vector<Point2f> > corner_points = getCornerPoints();
+	Mat correct_H = getPerspectiveTransform(corner_points[PERSPECTIVE], corner_points[EUCLIDEAN]);
 
-// 	for (Frame *frame : frames)
-// 	{
-// 		frame->gray.release();
-// 		frame->bound_points[SECOND] = frame->bound_points[PERSPECTIVE];
-// 	}
+	for (Frame *frame : frames)
+		frame->setHReference(correct_H);
+	
+	avg_H = correct_H * avg_H;
+}
 
-// 	distortion = calcDistortion();
+vector<vector<Point2f> > SubMosaic::getCornerPoints()
+{
+	Point2f first, second, third, fourth;
+	float d1, d2, d3, d4;
+	int i1, i2, i3, i4;
+	int ref = 0, prev = 1;
+	for (int i=0; i<2; i++)
+	{	
+		d1 = getDistance(frames[ref]->bound_points[EUCLIDEAN][0], frames[prev]->bound_points[EUCLIDEAN][4]);
+		d2 = getDistance(frames[ref]->bound_points[EUCLIDEAN][1], frames[prev]->bound_points[EUCLIDEAN][4]);
+		d3 = getDistance(frames[ref]->bound_points[EUCLIDEAN][2], frames[prev]->bound_points[EUCLIDEAN][4]);
+		d4 = getDistance(frames[ref]->bound_points[EUCLIDEAN][3], frames[prev]->bound_points[EUCLIDEAN][4]);
+		if (d1 > d2)
+		{
+			if (d2 > d4)
+			{
+				third = frames[ref]->bound_points[EUCLIDEAN][0];
+				fourth = frames[ref]->bound_points[EUCLIDEAN][1];
+				i3 = 0;
+				i4 = 1;
+			}
+			else if (d1 > d3)
+			{
+				third = frames[ref]->bound_points[EUCLIDEAN][0];				
+				fourth = frames[ref]->bound_points[EUCLIDEAN][3];
+				i3 = 0;
+				i4 = 3;
+			}
+			else
+			{
+				third = frames[ref]->bound_points[EUCLIDEAN][2];				
+				fourth = frames[ref]->bound_points[EUCLIDEAN][3];
+				i3 = 2;
+				i4 = 3;
+			}
+		}
+		else
+		{
+			if (d4 > d2)
+			{
+				third = frames[ref]->bound_points[EUCLIDEAN][2];
+				fourth = frames[ref]->bound_points[EUCLIDEAN][3];
+				i3 = 2;
+				i4 = 3;
+			}
+			else if (d3 > d1)
+			{
+				third = frames[ref]->bound_points[EUCLIDEAN][1];				
+				fourth = frames[ref]->bound_points[EUCLIDEAN][2];
+				i3 = 1;
+				i4 = 2;
+			}
+			else
+			{
+				third = frames[ref]->bound_points[EUCLIDEAN][0];				
+				fourth = frames[ref]->bound_points[EUCLIDEAN][1];
+				i3 = 0;
+				i4 = 1;
+			}
+		}
+		if (ref==0)
+		{
+			first = third;
+			second = fourth;
+			i1 = i3;
+			i2 = i4;
+			ref += n_frames-1;
+			prev = ref - 1;
+		}
+	}
+	vector<vector<Point2f> > corner_points(2);
+	vector<Point2f> euclidean_points;
+	euclidean_points.push_back(first);
+	euclidean_points.push_back(second);
+	euclidean_points.push_back(third);
+	euclidean_points.push_back(fourth);
 
-// 	cout << distortion << endl
-// 			 << endl;
+	vector<Point2f> perspective_points;
+	perspective_points.push_back(frames[0]->bound_points[PERSPECTIVE][i1]);
+	perspective_points.push_back(frames[0]->bound_points[PERSPECTIVE][i2]);
+	perspective_points.push_back(frames[ref]->bound_points[PERSPECTIVE][i3]);
+	perspective_points.push_back(frames[ref]->bound_points[PERSPECTIVE][i4]);
 
-// 	for (int i = 1; i < frames.size(); i++)
-// 	{
-// 		temp_avg_H = frames[i]->H.inv();
+	corner_points[EUCLIDEAN]= euclidean_points;
+	corner_points[PERSPECTIVE]= perspective_points;
 
-// 		for (Frame *frame : frames)
-// 		{
-// 			perspectiveTransform(frame->bound_points[PERSPECTIVE], frame->bound_points[SECOND], temp_avg_H * frame->H);
-// 		}
-
-// 		temp_distortion = calcDistortion();
-
-// 		if (temp_distortion < distortion)
-// 		{
-// 			distortion = temp_distortion;
-// 			avg_H = temp_avg_H;
-// 		}
-// 	}
-
-// 	for (Frame *frame : frames)
-// 	{
-// 		//frame->H = frame->H * avg_H;
-// 		frame->setHReference(avg_H);
-// 	}
-// }
+	return corner_points;
+}
 
 // See description in header file
 Point2f SubMosaic::getCentroid()

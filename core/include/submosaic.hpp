@@ -93,6 +93,11 @@ class SubMosaic
          */
     void correct();
     /**
+     * @brief 
+     * @return vector<vector<Point2f> > 
+     */
+    vector<vector<Point2f> > getCornerPoints();
+    /**
          * @brief Calculate the Homography matrix that reduce the distortion error in the sub-mosaic
          * (Not yet implemented)
          */

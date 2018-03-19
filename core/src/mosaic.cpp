@@ -49,7 +49,6 @@ bool Mosaic::addFrame(Mat _object)
 	{
 		sub_mosaics[n_subs]->addFrame(new_frame);
 		// sub_mosaics[n_subs]->computeOffset();
-
 		return true;
 	}
 	case BAD_DISTORTION:
@@ -57,7 +56,7 @@ bool Mosaic::addFrame(Mat _object)
 		// sub_mosaics[n_subs]->correct();
 		sub_mosaics[n_subs]->avg_H = new_frame->H.clone();
 
-		//sub_mosaics[n_subs]->computeOffset();
+		// sub_mosaics[n_subs]->computeOffset();
 		sub_mosaics.push_back(new SubMosaic());
 		n_subs++;
 
@@ -103,8 +102,9 @@ void Mosaic::compute()
 
 		getReferencedMosaics(ransac_mosaics);
 
-		// ransac_mosaics[0]->computeOffset();
-		// ransac_mosaics[1]->computeOffset();
+		// ransac_mosaics[0]->correct();
+
+		// ransac_mosaics[1]->correct();
 
 		alignMosaics(ransac_mosaics);
 
@@ -115,7 +115,7 @@ void Mosaic::compute()
 		}
 		ransac_mosaics[0]->avg_H = best_H * ransac_mosaics[0]->avg_H;
 
-		ransac_mosaics[0]->computeOffset();
+		// ransac_mosaics[0]->computeOffset();
 
 		blender->blendSubMosaic(ransac_mosaics[0]);
 		//resize(ransac_mosaics[0]->final_scene, ransac_mosaics[0]->final_scene, Size(1066, 800));
