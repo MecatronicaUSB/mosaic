@@ -146,21 +146,29 @@ int Stitcher::stitch(Frame *_object, Frame *_scene, Size _scene_dims)
 		cout << "Not enought keypoints to calculate homography matrix. Exiting..." << endl;
 		return NO_HOMOGRAPHY;
 	}
+	
+	img[OBJECT]->setHReference(H, PERSPECTIVE);
 
 	Mat R = estimateRigidTransform(object_points, scene_points[PERSPECTIVE], false);
-	R.copyTo(img[OBJECT]->E(Rect(0, 0, 3, 2)));
-	removeScale(img[OBJECT]->E);
-	
-	img[OBJECT]->setHReference(img[OBJECT]->E, PERSPECTIVE);
-	img[OBJECT]->setHReference(img[OBJECT]->E, EUCLIDEAN);
+	if (R.empty())
+	{
+		cout << "Can't estimate euclidean transformation..." << endl;
 
-	if (!img[OBJECT]->isGoodFrame())
+		cleanNeighborsData();
+		return BAD_DISTORTION;
+	}
+	if (0)//!img[OBJECT]->isGoodFrame())
 	{
 		cout << "Frame too distorted. Creating new Sub-Mosaic..." << endl;
 
 		cleanNeighborsData();
 		return BAD_DISTORTION;
 	}
+
+	R.copyTo(img[OBJECT]->E(Rect(0, 0, 3, 2)));
+	removeScale(img[OBJECT]->E);
+	//cout << img[OBJECT]->E << endl;
+	img[OBJECT]->setHReference(img[OBJECT]->E, EUCLIDEAN);
 
 	updateNeighbors();
 

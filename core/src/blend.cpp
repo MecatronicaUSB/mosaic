@@ -38,7 +38,7 @@ void Blender::blendSubMosaic(SubMosaic *_sub_mosaic)
   	//multiband.feed(warp_imgs[i], masks[i], Point((int)bound_rect[i].x, (int)bound_rect[i].y));
 
 	GraphCutSeamFinder *seam_finder = new GraphCutSeamFinder(GraphCutSeamFinderBase::COST_COLOR_GRAD);
-	seam_finder->find(warp_imgs, corners, masks);
+	// seam_finder->find(warp_imgs, corners, masks);
 
 	correctColor(_sub_mosaic);
 

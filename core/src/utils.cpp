@@ -38,9 +38,10 @@ void removeScale(Mat &_H)
 {
 	assert(_H.rows == 3 && _H.cols == 3);
 	assert(_H.at<double>(2, 0) == 0 && _H.at<double>(2, 1) == 0);
-
-	double sx = sign(_H.at<double>(0, 0)) * sqrt(pow(_H.at<double>(0, 0), 2) + pow(_H.at<double>(0, 1), 2));
-	double sy = sign(_H.at<double>(1, 1)) * sqrt(pow(_H.at<double>(1, 0), 2) + pow(_H.at<double>(1, 1), 2));
+	// sign(_H.at<double>(0, 0)) * 
+	// sign(_H.at<double>(1, 1)) *
+	double sx = sqrt(pow(_H.at<double>(0, 0), 2) + pow(_H.at<double>(0, 1), 2));
+	double sy = sqrt(pow(_H.at<double>(1, 0), 2) + pow(_H.at<double>(1, 1), 2));
 
 	_H.at<double>(0, 0) = _H.at<double>(0, 0) / sx;
 	_H.at<double>(0, 1) = _H.at<double>(0, 1) / sx;

@@ -187,6 +187,7 @@ void SubMosaic::correct()
 		frame->setHReference(correct_H);
 	
 	avg_H = correct_H * avg_H;
+	avg_E = correct_H * avg_E;
 }
 
 vector<vector<Point2f> > SubMosaic::getCornerPoints()

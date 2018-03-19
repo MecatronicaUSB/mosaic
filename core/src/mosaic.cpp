@@ -43,30 +43,38 @@ bool Mosaic::addFrame(Mat _object)
 									sub_mosaics[n_subs]->last_frame,
 									sub_mosaics[n_subs]->scene_size);
 
+	if (sub_mosaics[n_subs]->n_frames > 15)
+	{
+		status = BAD_DISTORTION;
+	}
 	switch (status)
 	{
 	case OK:
 	{
 		sub_mosaics[n_subs]->addFrame(new_frame);
 		// sub_mosaics[n_subs]->computeOffset();
-		if (sub_mosaics[n_subs]->n_frames < 15)
-			return true;
-		
-		blender->blendSubMosaic(sub_mosaics[n_subs]);
-		resize(sub_mosaics[n_subs]->final_scene, sub_mosaics[n_subs]->final_scene, Size(1066, 800));
-		imshow("Blend-Ransac-Final", sub_mosaics[n_subs]->final_scene);
-		imwrite("/home/victor/dataset/output/euclidean-00.jpg", sub_mosaics[n_subs]->final_scene);
-		waitKey(0);
+
+		// sub_mosaics[n_subs]->correct();
+		// blender->blendSubMosaic(sub_mosaics[n_subs]);
+		// //imwrite("/home/victor/dataset/output/euclidean-correcttion-00.jpg", sub_mosaics[n_subs]->final_scene);
+		// resize(sub_mosaics[n_subs]->final_scene, sub_mosaics[n_subs]->final_scene, Size(640, 480));
+		// imshow("Blend-Ransac-Final", sub_mosaics[n_subs]->final_scene);
+		// waitKey(0);
 		
 		return true;
 	}
 	case BAD_DISTORTION:
 	{
-		// sub_mosaics[n_subs]->correct();
 		sub_mosaics[n_subs]->avg_H = new_frame->H.clone();
 		sub_mosaics[n_subs]->avg_E = new_frame->E.clone();
+		sub_mosaics[n_subs]->correct();
 
-		// sub_mosaics[n_subs]->computeOffset();
+		blender->blendSubMosaic(sub_mosaics[n_subs]);
+		imwrite("/home/victor/dataset/output/ec-000.jpg", sub_mosaics[n_subs]->final_scene);
+		resize(sub_mosaics[n_subs]->final_scene, sub_mosaics[n_subs]->final_scene, Size(640, 480));
+		imshow("Blend-Ransac-Final", sub_mosaics[n_subs]->final_scene);
+		waitKey(0);
+
 		sub_mosaics.push_back(new SubMosaic());
 		n_subs++;
 
@@ -74,7 +82,7 @@ bool Mosaic::addFrame(Mat _object)
 		sub_mosaics[n_subs]->addFrame(new_frame);
 		test = true;
 
-		if (n_subs > 3)
+		if (n_subs > 1)
 		{
 			compute();
 			return false;
@@ -92,6 +100,7 @@ bool Mosaic::addFrame(Mat _object)
 		// TODO: evaluate this case
 		return false;
 	}
+
 	default:
 	{
 		return false;
