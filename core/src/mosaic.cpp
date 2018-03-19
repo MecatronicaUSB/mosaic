@@ -49,12 +49,22 @@ bool Mosaic::addFrame(Mat _object)
 	{
 		sub_mosaics[n_subs]->addFrame(new_frame);
 		// sub_mosaics[n_subs]->computeOffset();
+		if (sub_mosaics[n_subs]->n_frames < 15)
+			return true;
+		
+		blender->blendSubMosaic(sub_mosaics[n_subs]);
+		resize(sub_mosaics[n_subs]->final_scene, sub_mosaics[n_subs]->final_scene, Size(1066, 800));
+		imshow("Blend-Ransac-Final", sub_mosaics[n_subs]->final_scene);
+		imwrite("/home/victor/dataset/output/euclidean-00.jpg", sub_mosaics[n_subs]->final_scene);
+		waitKey(0);
+		
 		return true;
 	}
 	case BAD_DISTORTION:
 	{
 		// sub_mosaics[n_subs]->correct();
 		sub_mosaics[n_subs]->avg_H = new_frame->H.clone();
+		sub_mosaics[n_subs]->avg_E = new_frame->E.clone();
 
 		// sub_mosaics[n_subs]->computeOffset();
 		sub_mosaics.push_back(new SubMosaic());
@@ -64,7 +74,7 @@ bool Mosaic::addFrame(Mat _object)
 		sub_mosaics[n_subs]->addFrame(new_frame);
 		test = true;
 
-		if (n_subs > 1)
+		if (n_subs > 3)
 		{
 			compute();
 			return false;
@@ -103,10 +113,16 @@ void Mosaic::compute()
 		getReferencedMosaics(ransac_mosaics);
 
 		// ransac_mosaics[0]->correct();
-
+		// blender->blendSubMosaic(ransac_mosaics[0]);
+		// resize(ransac_mosaics[0]->final_scene, ransac_mosaics[0]->final_scene, Size(1066, 800));
+		// imshow("Blend-Ransac-Final", ransac_mosaics[0]->final_scene);
+		// waitKey(0);
 		// ransac_mosaics[1]->correct();
+		//ransac_mosaics[0]->correct();
+		//ransac_mosaics[1]->correct();
 
 		alignMosaics(ransac_mosaics);
+		// ransac_mosaics[0]->computeOffset();
 
 		Mat best_H = getBestModel(ransac_mosaics, 4000);
 		for (Frame *frame : ransac_mosaics[0]->frames)
@@ -114,11 +130,11 @@ void Mosaic::compute()
 			frame->setHReference(best_H);
 		}
 		ransac_mosaics[0]->avg_H = best_H * ransac_mosaics[0]->avg_H;
-
+		// ransac_mosaics[0]->correct();
 		// ransac_mosaics[0]->computeOffset();
 
 		blender->blendSubMosaic(ransac_mosaics[0]);
-		//resize(ransac_mosaics[0]->final_scene, ransac_mosaics[0]->final_scene, Size(1066, 800));
+		resize(ransac_mosaics[0]->final_scene, ransac_mosaics[0]->final_scene, Size(1066, 800));
 		imshow("Blend-Ransac-Final", ransac_mosaics[0]->final_scene);
 		imwrite("/home/victor/dataset/output/ransac-00.jpg", ransac_mosaics[0]->final_scene);
 		waitKey(0);
@@ -133,24 +149,30 @@ void Mosaic::getReferencedMosaics(vector<SubMosaic *> &_sub_mosaics)
 {
 
 	Mat ref_H = _sub_mosaics[0]->avg_H.clone();
+	Mat ref_E = _sub_mosaics[0]->avg_E.clone();
 
 	_sub_mosaics[1]->referenceToZero();
 	Mat new_ref_H = ref_H * _sub_mosaics[1]->avg_H.clone();
+	Mat new_ref_E = ref_E * _sub_mosaics[1]->avg_E.clone();
 
 	for (Frame *frame : _sub_mosaics[1]->frames)
 	{
-		frame->setHReference(ref_H);
+		frame->setHReference(ref_H, PERSPECTIVE);
+		frame->setHReference(ref_E, EUCLIDEAN);
 		_sub_mosaics[0]->addFrame(frame);
 	}
 	new_ref_H = ref_H * new_ref_H;
+	new_ref_E = ref_E * new_ref_E;
 
 	_sub_mosaics[1] = _sub_mosaics[0]->clone();
 	for (Frame *frame : _sub_mosaics[1]->frames)
 	{
-		frame->setHReference(ref_H.inv());
+		frame->setHReference(ref_H.inv(), PERSPECTIVE);
+		frame->setHReference(ref_E.inv(), EUCLIDEAN);
 	}
 
 	_sub_mosaics[0]->avg_H = new_ref_H.clone();
+	_sub_mosaics[0]->avg_E = new_ref_E.clone();
 }
 
 // See description in header file

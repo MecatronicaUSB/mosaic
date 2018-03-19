@@ -33,6 +33,7 @@ class SubMosaic
     int n_frames;    //!< Number of frames in sub-mosaic
     Mat final_scene; //!< Image containing all blended images (the sub-mosaic)
     Mat avg_H;       //!< Average Homography matrix (Matrix that reduces the dostortion error)
+    Mat avg_E;       //!< Average Homography matrix (Matrix that reduces the dostortion error)
     Frame *last_frame;
     Size2f scene_size;
     vector<Frame *> frames;      //!< Vector containing all the frames (Pointers) in sub-mosaic

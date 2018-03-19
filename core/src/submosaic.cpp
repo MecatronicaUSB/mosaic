@@ -19,6 +19,7 @@ SubMosaic::SubMosaic()
 	n_frames = 0;
 	scene_size = Size2f(TARGET_WIDTH, TARGET_HEIGHT);
 	avg_H = Mat::eye(3, 3, CV_64F);
+	avg_E = Mat::eye(3, 3, CV_64F);
 }
 
 SubMosaic::~SubMosaic()
@@ -28,6 +29,7 @@ SubMosaic::~SubMosaic()
 	
 	final_scene.release();
 	avg_H.release();
+	avg_E.release();
 	neighbors.clear();
 }
 
@@ -37,6 +39,7 @@ SubMosaic *SubMosaic::clone()
 	SubMosaic *new_sub_mosaic = new SubMosaic();
 	new_sub_mosaic->final_scene = final_scene.clone();
 	new_sub_mosaic->avg_H = avg_H.clone();
+	new_sub_mosaic->avg_E = avg_E.clone();
 	new_sub_mosaic->scene_size = scene_size;
 	//new_sub_mosaic->neighbors = neighbors;
 	for (Frame *frame : frames)
@@ -93,16 +96,19 @@ void SubMosaic::updateOffset(vector<float> _total_offset)
 
 	if (!_total_offset[TOP] && !_total_offset[LEFT])
 		return;
-	
 
 	Mat T = Mat::eye(3, 3, CV_64F);
 	T.at<double>(0, 2) = _total_offset[LEFT];
 	T.at<double>(1, 2) = _total_offset[TOP];
 
 	for (Frame *frame : frames)
-		frame->setHReference(T);
+	{
+		frame->setHReference(T, PERSPECTIVE);
+		frame->setHReference(T, EUCLIDEAN);
+	}
 	
 	avg_H = T * avg_H;
+	avg_E = T * avg_E;
 }
 
 // See description in header file
@@ -185,86 +191,57 @@ void SubMosaic::correct()
 
 vector<vector<Point2f> > SubMosaic::getCornerPoints()
 {
-	Point2f first, second, third, fourth;
-	float d1, d2, d3, d4;
-	int i1, i2, i3, i4;
-	int ref = 0, prev = 1;
-	for (int i=0; i<2; i++)
-	{	
-		d1 = getDistance(frames[ref]->bound_points[EUCLIDEAN][0], frames[prev]->bound_points[EUCLIDEAN][4]);
-		d2 = getDistance(frames[ref]->bound_points[EUCLIDEAN][1], frames[prev]->bound_points[EUCLIDEAN][4]);
-		d3 = getDistance(frames[ref]->bound_points[EUCLIDEAN][2], frames[prev]->bound_points[EUCLIDEAN][4]);
-		d4 = getDistance(frames[ref]->bound_points[EUCLIDEAN][3], frames[prev]->bound_points[EUCLIDEAN][4]);
-		if (d1 > d2)
-		{
-			if (d2 > d4)
-			{
-				third = frames[ref]->bound_points[EUCLIDEAN][0];
-				fourth = frames[ref]->bound_points[EUCLIDEAN][1];
-				i3 = 0;
-				i4 = 1;
-			}
-			else if (d1 > d3)
-			{
-				third = frames[ref]->bound_points[EUCLIDEAN][0];				
-				fourth = frames[ref]->bound_points[EUCLIDEAN][3];
-				i3 = 0;
-				i4 = 3;
-			}
-			else
-			{
-				third = frames[ref]->bound_points[EUCLIDEAN][2];				
-				fourth = frames[ref]->bound_points[EUCLIDEAN][3];
-				i3 = 2;
-				i4 = 3;
-			}
-		}
-		else
-		{
-			if (d4 > d2)
-			{
-				third = frames[ref]->bound_points[EUCLIDEAN][2];
-				fourth = frames[ref]->bound_points[EUCLIDEAN][3];
-				i3 = 2;
-				i4 = 3;
-			}
-			else if (d3 > d1)
-			{
-				third = frames[ref]->bound_points[EUCLIDEAN][1];				
-				fourth = frames[ref]->bound_points[EUCLIDEAN][2];
-				i3 = 1;
-				i4 = 2;
-			}
-			else
-			{
-				third = frames[ref]->bound_points[EUCLIDEAN][0];				
-				fourth = frames[ref]->bound_points[EUCLIDEAN][1];
-				i3 = 0;
-				i4 = 1;
-			}
-		}
-		if (ref==0)
-		{
-			first = third;
-			second = fourth;
-			i1 = i3;
-			i2 = i4;
-			ref += n_frames-1;
-			prev = ref - 1;
-		}
-	}
-	vector<vector<Point2f> > corner_points(2);
-	vector<Point2f> euclidean_points;
-	euclidean_points.push_back(first);
-	euclidean_points.push_back(second);
-	euclidean_points.push_back(third);
-	euclidean_points.push_back(fourth);
+	int pi1=0, pi2=0, pi3=0, pi4=0;
+	int fi1=0, fi2=0, fi3=0, fi4=0;
+	float top = TARGET_HEIGHT, bottom = 0, left = TARGET_WIDTH, right = 0;
 
+	int frame_index=0, point_index;
+	for (Frame *frame: frames)
+	{
+		point_index=0;
+		for (Point2f point: frame->bound_points[EUCLIDEAN])
+		{	
+			if (point.y < top)
+			{
+				top = point.y;
+				pi1 = point_index;
+				fi1 = frame_index;
+			}
+			if (point.y > bottom)
+			{
+				bottom = point.y;
+				pi2 = point_index;
+				fi2 = frame_index;
+			}
+			if (point.x < left)
+			{
+				left = point.x;
+				pi3 = point_index;
+				fi3 = frame_index;
+			}
+			if (point.x > right)
+			{
+				right = point.x;
+				pi4 = point_index;
+				fi4 = frame_index;
+			}
+			point_index++;
+		}
+		frame_index++;
+	}
+
+	vector<vector<Point2f> > corner_points(2);
+
+	vector<Point2f> euclidean_points;
+	euclidean_points.push_back(frames[fi1]->bound_points[EUCLIDEAN][pi1]);
+	euclidean_points.push_back(frames[fi2]->bound_points[EUCLIDEAN][pi2]);
+	euclidean_points.push_back(frames[fi3]->bound_points[EUCLIDEAN][pi3]);
+	euclidean_points.push_back(frames[fi4]->bound_points[EUCLIDEAN][pi4]);
 	vector<Point2f> perspective_points;
-	perspective_points.push_back(frames[0]->bound_points[PERSPECTIVE][i1]);
-	perspective_points.push_back(frames[0]->bound_points[PERSPECTIVE][i2]);
-	perspective_points.push_back(frames[ref]->bound_points[PERSPECTIVE][i3]);
-	perspective_points.push_back(frames[ref]->bound_points[PERSPECTIVE][i4]);
+	perspective_points.push_back(frames[fi1]->bound_points[PERSPECTIVE][pi1]);
+	perspective_points.push_back(frames[fi2]->bound_points[PERSPECTIVE][pi2]);
+	perspective_points.push_back(frames[fi3]->bound_points[PERSPECTIVE][pi3]);
+	perspective_points.push_back(frames[fi4]->bound_points[PERSPECTIVE][pi4]);
 
 	corner_points[EUCLIDEAN]= euclidean_points;
 	corner_points[PERSPECTIVE]= perspective_points;
