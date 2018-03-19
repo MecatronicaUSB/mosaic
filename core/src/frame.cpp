@@ -95,8 +95,8 @@ Frame *Frame::clone()
 // See description in header file
 void Frame::resetFrame()
 {
-
 	H = Mat::eye(3, 3, CV_64F);
+	E = Mat::eye(3, 3, CV_64F);
 
 	bound_points[PERSPECTIVE][0] = Point2f(0, 0);
 	bound_points[PERSPECTIVE][1] = Point2f(color.cols, 0);
@@ -105,6 +105,8 @@ void Frame::resetFrame()
 
 	bound_points[PERSPECTIVE][4] = Point2f(color.cols / 2, color.rows / 2);
 	bound_rect = Rect2f(0, 0, (float)color.cols, (float)color.rows);
+
+	bound_points[EUCLIDEAN] = bound_points[PERSPECTIVE]; 
 
 	grid_points[NEXT].clear();
 

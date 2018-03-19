@@ -48,7 +48,7 @@ bool Mosaic::addFrame(Mat _object)
 	case OK:
 	{
 		sub_mosaics[n_subs]->addFrame(new_frame);
-		sub_mosaics[n_subs]->computeOffset();
+		// sub_mosaics[n_subs]->computeOffset();
 
 		return true;
 	}
