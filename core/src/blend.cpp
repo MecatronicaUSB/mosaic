@@ -70,6 +70,7 @@ void Blender::blendSubMosaic(SubMosaic *_sub_mosaic)
 
 	warp_imgs.clear();
 	masks.clear();
+	full_masks.clear();
 	bound_rect.clear();
 }
 
