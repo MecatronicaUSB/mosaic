@@ -16,11 +16,12 @@ namespace m2d //!< mosaic 2d namespace
 {
 
 // See description in header file
-Stitcher::Stitcher(bool _grid, int _detector, int _matcher)
+Stitcher::Stitcher(bool _grid, int _detector, int _matcher, int _mode)
 {
 	use_grid = _grid;
 	cells_div = 10;
 
+	stitch_mode = _mode;
 	switch (_detector)
 	{
 	case USE_KAZE:
@@ -71,7 +72,7 @@ Stitcher::Stitcher(bool _grid, int _detector, int _matcher)
 }
 
 // See description in header file
-int Stitcher::stitch(Frame *_object, Frame *_scene, Size _scene_dims)
+int Stitcher::stitch(Frame *_object, Frame *_scene, Size _scene_dims, int _mode)
 {
 
 	img[OBJECT] = _object;
@@ -137,39 +138,47 @@ int Stitcher::stitch(Frame *_object, Frame *_scene, Size _scene_dims)
 			img[SCENE]->grid_points[NEXT].clear();
 		}
 	}
+	Mat R = estimateRigidTransform(object_points, scene_points[PERSPECTIVE], false);
 
-	Mat H = findHomography(object_points, scene_points[PERSPECTIVE], CV_RANSAC);
-	H.at<double>(2, 2) = 1;
-
-	if (H.empty())
+	switch (_mode)
 	{
-		cout << "Not enought keypoints to calculate homography matrix. Exiting..." << endl;
-		return NO_HOMOGRAPHY;
+	case SIMPLE:
+	{
+		if (R.empty())
+		{
+			cout << "Not enought keypoints to calculate transformation matrix. Exiting..." << endl;
+			cleanNeighborsData();
+			return NO_HOMOGRAPHY;
+		}
+		R.copyTo(img[OBJECT]->E(Rect(0, 0, 3, 2)));
+		removeScale(img[OBJECT]->E);
+		img[OBJECT]->setHReference(img[OBJECT]->E, PERSPECTIVE);
+		break;
+	}
+	case FULL:
+	{
+		Mat H = findHomography(object_points, scene_points[PERSPECTIVE], CV_RANSAC);
+		H.at<double>(2, 2) = 1;
+		if (H.empty() || R.empty())
+		{
+			cout << "Not enought keypoints to calculate transformation matrix. Exiting..." << endl;
+			return NO_HOMOGRAPHY;
+		}
+		R.copyTo(img[OBJECT]->E(Rect(0, 0, 3, 2)));
+		removeScale(img[OBJECT]->E);
+		img[OBJECT]->setHReference(img[OBJECT]->E, EUCLIDEAN);
+		img[OBJECT]->setHReference(H, PERSPECTIVE);
+
+		if (!img[OBJECT]->isGoodFrame())
+		{
+			cout << "Frame too distorted. Creating new Sub-Mosaic..." << endl;
+			cleanNeighborsData();
+			return BAD_DISTORTION;
+		}
+		break;
+	}
 	}
 	
-	img[OBJECT]->setHReference(H, PERSPECTIVE);
-
-	Mat R = estimateRigidTransform(object_points, scene_points[PERSPECTIVE], false);
-	if (R.empty())
-	{
-		cout << "Can't estimate euclidean transformation..." << endl;
-
-		cleanNeighborsData();
-		return BAD_DISTORTION;
-	}
-	if (0)//!img[OBJECT]->isGoodFrame())
-	{
-		cout << "Frame too distorted. Creating new Sub-Mosaic..." << endl;
-
-		cleanNeighborsData();
-		return BAD_DISTORTION;
-	}
-
-	R.copyTo(img[OBJECT]->E(Rect(0, 0, 3, 2)));
-	removeScale(img[OBJECT]->E);
-	//cout << img[OBJECT]->E << endl;
-	img[OBJECT]->setHReference(img[OBJECT]->E, EUCLIDEAN);
-
 	updateNeighbors();
 
 	return OK;
@@ -188,11 +197,11 @@ void Stitcher::cleanNeighborsData()
 void Stitcher::updateNeighbors()
 {
 	img[OBJECT]->neighbors.push_back(img[SCENE]);
-	for (int i = 0; i < img[SCENE]->neighbors.size(); i++)
+	for (Frame *neighbor: img[SCENE]->neighbors)
 	{
-		if (good_matches[i + 1].size() > 4)
+		if (img[OBJECT]->checkCollision(neighbor))
 		{
-			img[OBJECT]->neighbors.push_back(img[SCENE]->neighbors[i]);
+			img[OBJECT]->neighbors.push_back(neighbor);
 		}
 	}
 	cleanNeighborsData();

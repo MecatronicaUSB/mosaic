@@ -48,7 +48,7 @@
             "request": "launch",
             "program": "${workspaceRoot}/core/mosaic",
             "args": ["/home/victor/dataset/frames/MVI_0234",
-                     "--grid", "--pre", "-o", "-f", "-n 3"],
+                     "--grid", "--pre", "-o", "-f"],
             "stopAtEntry": false,
             "cwd": "${workspaceRoot}",
             "environment": [],

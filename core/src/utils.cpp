@@ -53,6 +53,7 @@ int sign(double _num1)
 {
 	return _num1 > 0 ? 1 : -1;
 }
+
 }
 
 void getHistogram(cv::Mat img, int *histogram, Mat mask)

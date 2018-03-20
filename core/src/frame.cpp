@@ -194,6 +194,24 @@ void Frame::updateBoundRect()
 	bound_rect.height = bottom - top;
 }
 
+bool Frame::checkCollision(Frame *_object)
+{
+
+	if (_object->bound_rect.x > bound_rect.x + bound_rect.width)
+		return false;
+    
+    if (_object->bound_rect.x + _object->bound_rect.width < bound_rect.x)
+		return false;
+
+	if (_object->bound_rect.y > bound_rect.y + bound_rect.height)
+		return false;
+
+    if (_object->bound_rect.y + _object->bound_rect.height > bound_rect.y)
+        return false;
+
+	return true;
+}
+
 bool Frame::haveKeypoints()
 {
 	return keypoints.size() > 0 ? true : false;

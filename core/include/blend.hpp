@@ -39,6 +39,7 @@ class Blender
 {
   public:
     int bands;
+    int graph_cut;
     vector<UMat> warp_imgs;
     vector<UMat> masks;
     vector<UMat> full_masks;
@@ -46,7 +47,7 @@ class Blender
     /**
          * @brief 
          */
-    Blender(int _bands = 5): bands(_bands){};
+    Blender(int _bands = 5, int _cut_line = 0): bands(_bands), graph_cut(_cut_line){};
     /**
          * @brief 
          * @param _sub_mosaic 
@@ -62,13 +63,6 @@ class Blender
      * @param _sub_mosaic 
      */
     void correctColor(SubMosaic *_sub_mosaic);
-    /**
-     * @brief 
-     * @param _frame 
-     * @param _frame 
-     * @return bool 
-     */
-    bool checkCollision(Frame *_object, Frame *_scene);
     /**
      * @brief 
      */

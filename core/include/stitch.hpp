@@ -49,6 +49,7 @@ class Stitcher
   public:
     // ---------- Atributes
     bool use_grid; //!< flag to use or not the grid detection
+    int stitch_mode;
     int cells_div; //!< number (n) of cell divisions in grid detector (if used)
     Mat offset_h;
     vector<vector<vector<DMatch>>> matches;   //!< Vector of OpenCV Matches
@@ -65,7 +66,7 @@ class Stitcher
      * @param _detector enum value to set the desired feature Detector and descriptor
      * @param _matcher enum value to set the desired feature matcher
      */
-    Stitcher(bool _grid = false, int _detector = USE_KAZE, int _matcher = USE_BRUTE_FORCE);
+    Stitcher(bool _grid = false, int _detector = USE_KAZE, int _matcher = USE_BRUTE_FORCE, int _mode = SIMPLE);
     /**
      * @brief Warp and stitch the object image in the current scene
      * @param _object OpenCV Matrix containing the image to add to scene
@@ -79,7 +80,7 @@ class Stitcher
      * @return true If the stitch was sucessfull
      * @return false If the stitch wasn't sucessfull
      */
-    int stitch(Frame *_object, Frame *_scene, Size _scene_dims);
+    int stitch(Frame *_object, Frame *_scene, Size _scene_dims, int _mode = SIMPLE);
 
   private:
     // ---------- Atributes

@@ -111,6 +111,13 @@ class Frame
 		void updateBoundRect();
 		/**
 		 * @brief 
+		 * @param _object 
+		 * @return true 
+		 * @return false 
+		 */
+		bool checkCollision(Frame *_object);
+		/**
+		 * @brief 
 		 * @return true 
 		 * @return false 
 		 */

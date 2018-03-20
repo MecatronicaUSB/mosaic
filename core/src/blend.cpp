@@ -17,12 +17,14 @@ namespace m2d
 // See description in header file
 void Blender::blendSubMosaic(SubMosaic *_sub_mosaic)
 {
-	MultiBandBlender multiband(false, bands);
 	_sub_mosaic->computeOffset();
 	_sub_mosaic->final_scene.release();
 	_sub_mosaic->final_scene = Mat(_sub_mosaic->scene_size, CV_8UC3, Scalar(0, 0, 0));
-	multiband.prepare(Rect(Point(0, 0), _sub_mosaic->scene_size));
 
+	MultiBandBlender multiband(false, bands);
+	if (bands > 0)
+		multiband.prepare(Rect(Point(0, 0), _sub_mosaic->scene_size));
+		
 	vector<Frame *> frames = _sub_mosaic->frames;
 	// correctColor(_sub_mosaic);
 	int k = 0;
@@ -35,11 +37,13 @@ void Blender::blendSubMosaic(SubMosaic *_sub_mosaic)
 		bound_rect.push_back(frame->bound_rect);
 		corners.push_back(Point(frame->bound_rect.x, frame->bound_rect.y));
 	}
-  	//multiband.feed(warp_imgs[i], masks[i], Point((int)bound_rect[i].x, (int)bound_rect[i].y));
-
-	GraphCutSeamFinder *seam_finder = new GraphCutSeamFinder(GraphCutSeamFinderBase::COST_COLOR_GRAD);
-	// seam_finder->find(warp_imgs, corners, masks);
-
+  
+	if (graph_cut)
+	{
+		GraphCutSeamFinder *seam_finder = new GraphCutSeamFinder(GraphCutSeamFinderBase::COST_COLOR_GRAD);
+		seam_finder->find(warp_imgs, corners, masks);
+	}
+	
 	correctColor(_sub_mosaic);
 
 	Mat aux_img;
@@ -48,25 +52,32 @@ void Blender::blendSubMosaic(SubMosaic *_sub_mosaic)
 	for (int i = 0; i < frames.size(); i++)
 	{
 		warp_imgs[i].copyTo(aux_img);
-		//enhanceImage(aux_img, full_masks[i].getMat(ACCESS_RW));
-		// multiband.feed(aux_img, masks[i], Point((int)bound_rect[i].x, (int)bound_rect[i].y));
-		roi = Mat(_sub_mosaic->final_scene, Rect(bound_rect[i].x,
-												bound_rect[i].y,
-												bound_rect[i].width,
-												bound_rect[i].height));
-		aux_img.copyTo(roi, masks[i]);
-		roi = Mat(final_mask, Rect(bound_rect[i].x,
-								 bound_rect[i].y,
-								 bound_rect[i].width,
-								 bound_rect[i].height));
-		masks[i].copyTo(roi, masks[i]);
+		if (bands > 0)
+		{
+			multiband.feed(aux_img, masks[i], Point((int)bound_rect[i].x, (int)bound_rect[i].y));
+		}
+		else
+		{
+			roi = Mat(_sub_mosaic->final_scene, Rect(bound_rect[i].x,
+													bound_rect[i].y,
+													bound_rect[i].width,
+													bound_rect[i].height));
+			aux_img.copyTo(roi, masks[i]);
+			roi = Mat(final_mask, Rect(bound_rect[i].x,
+									bound_rect[i].y,
+									bound_rect[i].width,
+									bound_rect[i].height));
+			masks[i].copyTo(roi, masks[i]);
+		}
 	}
 
 	// enhanceImage(_sub_mosaic->final_scene, final_mask);
-
-	// Mat result_16s, result_mask;
-	// multiband.blend(result_16s, result_mask);
-	// result_16s.convertTo(_sub_mosaic->final_scene, CV_8U);
+	if (bands > 0)
+	{
+		Mat result_16s, result_mask;
+		multiband.blend(result_16s, result_mask);
+		result_16s.convertTo(_sub_mosaic->final_scene, CV_8U);
+	}
 
 	warp_imgs.clear();
 	masks.clear();
@@ -160,24 +171,6 @@ UMat Blender::getMask(Frame *_frame)
 	UMat umask = mask.getUMat(ACCESS_RW);
 
 	return umask;
-}
-
-bool Blender::checkCollision(Frame *_object, Frame *_scene)
-{
-
-	if (_object->bound_rect.x > _scene->bound_rect.x + _scene->bound_rect.width)
-		return false;
-    
-    if (_object->bound_rect.x + _object->bound_rect.width < _scene->bound_rect.x)
-		return false;
-
-	if (_object->bound_rect.y > _scene->bound_rect.y + _scene->bound_rect.height)
-		return false;
-
-    if (_object->bound_rect.y + _object->bound_rect.height > _scene->bound_rect.y)
-        return false;
-
-	return true;
 }
 
 vector<Mat> Blender::getOverlapMasks(int _object, int _scene)

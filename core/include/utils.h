@@ -35,9 +35,14 @@ using namespace std;
 namespace m2d
 {
 
+enum MosaicMode
+{
+  SIMPLE,
+  FULL
+};
+
 const int TARGET_WIDTH = 640;
 const int TARGET_HEIGHT = 480;
-
 
 /**
  * @brief Calculate the euclidean distance between two given vector in 2D

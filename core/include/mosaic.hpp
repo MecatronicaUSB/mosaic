@@ -22,13 +22,14 @@ class Mosaic
     // ---------- Atributes
     int tot_frames;
     int n_subs;
+    int mosaic_mode;
     vector<SubMosaic *> sub_mosaics;
+    vector<SubMosaic *> final_mosaics;
     bool apply_pre; //!< flag to apply or not SCB preprocessing algorithm
     Stitcher *stitcher;
     Blender *blender;
-    bool test = false;
     // ---------- Methods
-    Mosaic(bool _pre = true);
+    Mosaic(bool _pre = true, int _mode = SIMPLE);
     // TODO:
     SubMosaic *addSubMosaics(SubMosaic *_sub_mosaic1, SubMosaic *_sub_mosaic2);
     /**
@@ -60,6 +61,13 @@ class Mosaic
          * @return Mat 
          */
     Mat getBestModel(vector<SubMosaic *> &_ransac_mosaics, int _niter = 2000);
+    /**
+     * @brief 
+     * @param _object 
+     * @param _scece 
+     * @return float 
+     */
+    float getOverlap(SubMosaic *_object, SubMosaic *_scene);
     // temporal function
     void print();
 };

@@ -72,21 +72,30 @@ int main( int argc, char** argv ) {
     cout << "  Nº bands (blender):\t" << cyan;
     blender_bands ? cout << args::get(blender_bands) : cout << 5;
     cout << reset << endl;
+    // Mosaic mode
+    cout << "  Mosaic Mode:\t\t" << cyan;
+    mosaic_mode ? cout << "Full" : cout << "Simple";
+    cout << reset << endl;
+    // Seam finder
+    cout << "  Seam finder:\t\t" << cyan;
+    mosaic_mode ? cout << "Graph cut" : cout << "Simple";
+    cout << reset << endl;
     // Optional commands
     cout << boolalpha;
     cout << "  Apply preprocessing:\t"<<cyan<< apply_pre <<reset << endl;
     cout << "  Use grid detection:\t"<<cyan<< use_grid <<reset << endl<<endl;
 
-    m2d::Mosaic mosaic(apply_pre);
+    m2d::Mosaic mosaic(apply_pre, mosaic_mode ? args::get(mosaic_mode) : 0);
     mosaic.stitcher = new m2d::Stitcher(
         use_grid,                                                   
-        detector_surf  ? m2d::USE_SURF :
-        detector_sift  ? m2d::USE_SIFT :
-        detector_akaze ? m2d::USE_AKAZE:
-        m2d::USE_KAZE,
-        matcher_flann  ? m2d::USE_FLANN : m2d::USE_BRUTE_FORCE        // select feature matcher
+        detector_surf  ? m2d::USE_SURF  :
+        detector_sift  ? m2d::USE_SIFT  :
+        detector_akaze ? m2d::USE_AKAZE : m2d::USE_KAZE,
+        matcher_flann  ? m2d::USE_FLANN : m2d::USE_BRUTE_FORCE,
+        mosaic_mode ? args::get(mosaic_mode) : 0
     );
-    mosaic.blender = new m2d::Blender(blender_bands ? args::get(blender_bands) : 5);
+    mosaic.blender = new m2d::Blender(blender_bands ? args::get(blender_bands) : 0,
+                                      cut_line ? args::get(cut_line) : 0);
 
     t = (double) getTickCount();
 
@@ -100,10 +109,11 @@ int main( int argc, char** argv ) {
         if(!mosaic.addFrame(img))
             break;
         
-        if (output) {
-            mosaic.print();
-        }
     }
+    if (output) {
+        mosaic.print();
+    }
+
     //mosaic.compute();
 
     t = ((double) getTickCount() - t) / getTickFrequency();        

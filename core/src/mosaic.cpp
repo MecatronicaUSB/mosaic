@@ -15,8 +15,9 @@ namespace m2d //!< mosaic 2d namespace
 {
 
 // See description in header file
-Mosaic::Mosaic(bool _pre)
+Mosaic::Mosaic(bool _pre, int _mode)
 {
+	mosaic_mode = _mode;
 	apply_pre = _pre;
 	n_subs = 0;
 	tot_frames = 0;
@@ -41,12 +42,10 @@ bool Mosaic::addFrame(Mat _object)
 
 	int status = stitcher->stitch(new_frame,
 									sub_mosaics[n_subs]->last_frame,
-									sub_mosaics[n_subs]->scene_size);
+									sub_mosaics[n_subs]->scene_size,
+									mosaic_mode);
 
-	if (sub_mosaics[n_subs]->n_frames > 15)
-	{
-		status = BAD_DISTORTION;
-	}
+
 	switch (status)
 	{
 	case OK:
@@ -68,25 +67,28 @@ bool Mosaic::addFrame(Mat _object)
 		sub_mosaics[n_subs]->avg_H = new_frame->H.clone();
 		sub_mosaics[n_subs]->avg_E = new_frame->E.clone();
 		sub_mosaics[n_subs]->correct();
-
-		blender->blendSubMosaic(sub_mosaics[n_subs]);
-		imwrite("/home/victor/dataset/output/ec-000.jpg", sub_mosaics[n_subs]->final_scene);
-		resize(sub_mosaics[n_subs]->final_scene, sub_mosaics[n_subs]->final_scene, Size(640, 480));
-		imshow("Blend-Ransac-Final", sub_mosaics[n_subs]->final_scene);
-		waitKey(0);
+		float overlap;
+		Hierarchy first, second;
+		if (n_subs > 0)
+		{
+			float overlap = getOverlap(sub_mosaics[n_subs-1], sub_mosaics[n_subs]);
+			first.overlap = overlap;
+			first.mosaic = sub_mosaics[n_subs];
+			second.overlap = overlap;
+			second.mosaic = sub_mosaics[n_subs-1];
+		}
 
 		sub_mosaics.push_back(new SubMosaic());
 		n_subs++;
 
 		new_frame->resetFrame();
 		sub_mosaics[n_subs]->addFrame(new_frame);
-		test = true;
 
-		if (n_subs > 1)
-		{
-			compute();
-			return false;
-		}
+		// if (n_subs > 1)
+		// {
+		// 	compute();
+		// 	return false;
+		// }
 
 		return true;
 	}
@@ -97,8 +99,17 @@ bool Mosaic::addFrame(Mat _object)
 	}
 	case NO_HOMOGRAPHY:
 	{
-		// TODO: evaluate this case
-		return false;
+		if (mosaic_mode == FULL)
+		{
+			compute();
+		}
+		final_mosaics.push_back(sub_mosaics[0]);
+		sub_mosaics.clear();
+		sub_mosaics.push_back(new SubMosaic());
+		n_subs = 0;
+		new_frame->resetFrame();
+		sub_mosaics[n_subs]->addFrame(new_frame);
+		return true;
 	}
 
 	default:
@@ -111,8 +122,10 @@ bool Mosaic::addFrame(Mat _object)
 // See description in header file
 void Mosaic::compute()
 {
-
 	vector<SubMosaic *> ransac_mosaics(2);
+
+
+
 	ransac_mosaics[0] = sub_mosaics[0];
 	
 	for (int i = 0; i < sub_mosaics.size(); i++)
@@ -280,19 +293,22 @@ void Mosaic::alignMosaics(vector<SubMosaic *> &_sub_mosaics)
 
 }
 
+float Mosaic::getOverlap(SubMosaic *_object, SubMosaic *_scene)
+{
+
+}
+
 // See description in header file
 void Mosaic::print()
 {
-	if (test)
+	int n=0;
+	for (SubMosaic *sub_mosaic: sub_mosaics)
 	{
-		if (!sub_mosaics[n_subs - 1]->final_scene.data)
-		{
-			// blender->blendSubMosaic(sub_mosaics[n_subs-1]);
-			// imshow("Blend", sub_mosaics[n_subs-1]->final_scene);
-			// imwrite("/home/victor/dataset/output/neighbor-"+to_string(n_subs)+".jpg", sub_mosaics[n_subs-1]->final_scene);
-			// waitKey(0);
-			test = false;
-		}
+		blender->blendSubMosaic(sub_mosaic);
+		imwrite("/home/victor/dataset/output/final-000"+to_string(n++)+".jpg", sub_mosaic->final_scene);
+		resize(sub_mosaic->final_scene, sub_mosaic->final_scene, Size(1066, 800));
+		imshow("Blend-Ransac-Final", sub_mosaic->final_scene);
+		waitKey(0);
 	}
 }
 }
