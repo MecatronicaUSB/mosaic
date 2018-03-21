@@ -21,7 +21,6 @@ Mosaic::Mosaic(bool _pre)
 	n_subs = 0;
 	n_mosaics = 0;
 	tot_frames = 0;
-	sub_mosaics.push_back(new SubMosaic());
 	blender = new Blender();
 }
 
@@ -34,6 +33,9 @@ void Mosaic::feed(Mat _img)
 // See description in header file
 void Mosaic::compute(int _mode)
 {
+
+	stitcher->detectFeatures(frames);
+
 	int last_frame;
 	float distortion, best_distortion;
 

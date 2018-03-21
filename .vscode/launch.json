@@ -47,7 +47,7 @@
             "type": "cppdbg",
             "request": "launch",
             "program": "${workspaceRoot}/core/mosaic",
-            "args": ["/home/victor/dataset/frames/MVI_0234",
+            "args": ["/home/victor/dataset/frames/MVI_0234-3",
                      "--grid", "--pre", "-o", "-f", "-m", "1"],
             "stopAtEntry": false,
             "cwd": "${workspaceRoot}",
