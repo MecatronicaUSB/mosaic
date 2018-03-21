@@ -15,63 +15,90 @@ namespace m2d //!< mosaic 2d namespace
 {
 
 // See description in header file
-Mosaic::Mosaic(bool _pre, int _mode)
+Mosaic::Mosaic(bool _pre)
 {
-	mosaic_mode = _mode;
 	apply_pre = _pre;
 	n_subs = 0;
+	n_mosaics = 0;
 	tot_frames = 0;
 	sub_mosaics.push_back(new SubMosaic());
 	blender = new Blender();
 }
 
-// See description in header file
-bool Mosaic::addFrame(Mat _object)
+void Mosaic::feed(Mat _img)
 {
-	tot_frames++;
+	frames.push_back(new Frame(_img.clone(), apply_pre));
+	cout << flush << "\rTotal images: " << frames.size();
+}
 
-	cout << "Sub Mosaic # " << n_subs + 1 << " # Frames: " << sub_mosaics[n_subs]->n_frames + 1;
-	cout << flush << "\r";
-	Frame *new_frame = new Frame(_object.clone(), apply_pre);
+// See description in header file
+void Mosaic::compute(int _mode)
+{
+	int last_frame;
+	float distortion, best_distortion;
 
-	if (sub_mosaics[n_subs]->isEmpty())
+	sub_mosaics.push_back(new SubMosaic());
+	sub_mosaics[0]->addFrame(frames[0]);
+	for (int i = 0; i<frames.size()-1; i++)
 	{
-		sub_mosaics[n_subs]->addFrame(new_frame);
-		return true;
-	}
-
-	int status = stitcher->stitch(new_frame,
-									sub_mosaics[n_subs]->last_frame,
-									sub_mosaics[n_subs]->scene_size,
-									mosaic_mode);
-
-
-	switch (status)
-	{
-	case OK:
-	{
-		sub_mosaics[n_subs]->addFrame(new_frame);
-		// sub_mosaics[n_subs]->computeOffset();
-
-		// sub_mosaics[n_subs]->correct();
-		// blender->blendSubMosaic(sub_mosaics[n_subs]);
-		// //imwrite("/home/victor/dataset/output/euclidean-correcttion-00.jpg", sub_mosaics[n_subs]->final_scene);
-		// resize(sub_mosaics[n_subs]->final_scene, sub_mosaics[n_subs]->final_scene, Size(640, 480));
-		// imshow("Blend-Ransac-Final", sub_mosaics[n_subs]->final_scene);
-		// waitKey(0);
-		
-		return true;
-	}
-	case BAD_DISTORTION:
-	{
-		sub_mosaics[n_subs]->avg_H = new_frame->H.clone();
-		sub_mosaics[n_subs]->avg_E = new_frame->E.clone();
-		// sub_mosaics[n_subs]->correct();
-		float overlap;
-		Hierarchy aux_1, aux_2;
-		if (n_subs > 0)
+		last_frame = i+1;
+		best_distortion=100;
+		distortion=0;
+		while (last_frame < frames.size())
 		{
-			float overlap = getOverlap(sub_mosaics[n_subs-1], sub_mosaics[n_subs]);
+			stitcher->stitch(frames[last_frame], frames[i]);
+			if (!frames[last_frame]->H.empty())
+			{
+				frames[last_frame]->setHReference(frames[last_frame]->H, PERSPECTIVE);
+				distortion = frames[last_frame]->calcDistortion();
+				if (distortion < best_distortion)
+				{
+					best_distortion = distortion;
+					if (last_frame > i + 1)
+					{
+						delete frames[i + 1];
+						frames.erase(frames.begin() + i + 1);	
+					}
+				}
+				last_frame++;
+			}
+			else
+				break;
+		}
+		if (last_frame == i+1)
+		{
+			sub_mosaics.push_back(new SubMosaic());
+			n_subs++;
+			frames[i+1]->resetFrame();
+			sub_mosaics[n_subs]->addFrame(frames[i+1]);
+			vector<SubMosaic *> aux_mosaic;
+			for (SubMosaic *sub_mosaic : sub_mosaics)
+			{
+				aux_mosaic.push_back(sub_mosaic);
+			}
+			final_mosaics.push_back(aux_mosaic);
+			n_mosaics++;
+			aux_mosaic.clear();
+		}
+		else
+		{
+			for (int j=last_frame; j>i+1; j--)
+			{
+				frames[j]->resetFrame();
+			}
+			sub_mosaics[n_subs]->addFrame(frames[i+1]);
+			sub_mosaics[n_subs]->avg_H.release();
+			sub_mosaics[n_subs]->avg_H = frames[i+1]->H.clone();
+		}
+	}
+
+	float overlap;
+	for (vector<SubMosaic *> final_mosaic : final_mosaics)
+	{
+		for (SubMosaic *sub_mosaic : final_mosaic)
+		{
+			Hierarchy aux_1, aux_2;
+			overlap = getOverlap(sub_mosaics[n_subs-1], sub_mosaics[n_subs]);
 			aux_1.overlap = overlap;
 			aux_1.mosaic = sub_mosaics[n_subs-1];
 			aux_2.overlap = overlap;
@@ -79,112 +106,57 @@ bool Mosaic::addFrame(Mat _object)
 			sub_mosaics[n_subs]->neighbors.push_back(aux_1);
 			sub_mosaics[n_subs-1]->neighbors.push_back(aux_2);
 		}
-
-		sub_mosaics.push_back(new SubMosaic());
-		n_subs++;
-
-		new_frame->resetFrame();
-		sub_mosaics[n_subs]->addFrame(new_frame);
-
-		if (n_subs > 10)
-		{
-			compute();
-			return false;
-		}
-
-		return true;
 	}
-	case NO_KEYPOINTS:
-	{
-		// TODO: evaluate this case
-		return false;
-	}
-	case NO_HOMOGRAPHY:
-	{
-		if (mosaic_mode == FULL)
-		{
-			compute();
-		}
-		final_mosaics.push_back(sub_mosaics[0]);
-		sub_mosaics.clear();
-		sub_mosaics.push_back(new SubMosaic());
-		n_subs = 0;
-		new_frame->resetFrame();
-		sub_mosaics[n_subs]->addFrame(new_frame);
-		return true;
-	}
-
-	default:
-	{
-		return false;
-	}
-	}
+	merge();
 }
 
 // See description in header file
-void Mosaic::compute()
+void Mosaic::merge()
 {
 	vector<SubMosaic *> ransac_mosaics(2);
 
 	float best_overlap = 0;
 	
-	// for (int i = 0; i < sub_mosaics.size(); i++)
-	while(sub_mosaics.size()>2)
+	for (vector<SubMosaic *> final_mosaic : final_mosaics)
 	{
-		// best_overlap = -1;
-		// for (SubMosaic *sub_mosaic : sub_mosaics)
-		// {
-		// 	for (Hierarchy neighbor: sub_mosaic->neighbors)
-		// 		if (neighbor.overlap > best_overlap)
-		// 		{
-		// 			best_overlap = neighbor.overlap;
-		// 			ransac_mosaics[0] = sub_mosaic;
-		// 			ransac_mosaics[1] = neighbor.mosaic;
-		// 		}
-		// }
-		ransac_mosaics[0] = sub_mosaics[0];
-		ransac_mosaics[1] = sub_mosaics[1];
-		getReferencedMosaics(ransac_mosaics);
-
-		// ransac_mosaics[0]->correct();
-		// blender->blendSubMosaic(ransac_mosaics[0]);
-		// resize(ransac_mosaics[0]->final_scene, ransac_mosaics[0]->final_scene, Size(1066, 800));
-		// imshow("Blend-Ransac-Final", ransac_mosaics[0]->final_scene);
-		// waitKey(0);
-		// ransac_mosaics[1]->correct();
-		//ransac_mosaics[0]->correct();
-		//ransac_mosaics[1]->correct();
-
-		alignMosaics(ransac_mosaics);
-		// ransac_mosaics[0]->computeOffset();
-
-		Mat best_H = getBestModel(ransac_mosaics, 4000);
-		for (Frame *frame : ransac_mosaics[0]->frames)
+		while(final_mosaic.size() > 2)
 		{
-			frame->setHReference(best_H);
+			best_overlap = -1;
+			for (SubMosaic *sub_mosaic : final_mosaic)
+			{
+				for (Hierarchy neighbor: sub_mosaic->neighbors)
+					if (neighbor.overlap > best_overlap)
+					{
+						best_overlap = neighbor.overlap;
+						ransac_mosaics[0] = sub_mosaic;
+						ransac_mosaics[1] = neighbor.mosaic;
+					}
+			}
+			ransac_mosaics[0] = sub_mosaics[0];
+			ransac_mosaics[1] = sub_mosaics[1];
+			getReferencedMosaics(ransac_mosaics);
+			alignMosaics(ransac_mosaics);
+			Mat best_H = getBestModel(ransac_mosaics, 4000);
+
+			for (Frame *frame : ransac_mosaics[0]->frames)
+				frame->setHReference(best_H);
+			ransac_mosaics[0]->avg_H = best_H * ransac_mosaics[0]->avg_H;
+
+			for (int i=0; i<ransac_mosaics[0]->neighbors.size(); i++)
+				if (ransac_mosaics[1] == ransac_mosaics[0]->neighbors[i].mosaic)
+				{
+					ransac_mosaics[0]->neighbors.erase(ransac_mosaics[0]->neighbors.begin()+i);
+					for (int j=0; j<ransac_mosaics[1]->neighbors.size(); j++)
+						if (ransac_mosaics[1]->neighbors[j].mosaic != ransac_mosaics[0])
+							ransac_mosaics[0]->neighbors.push_back(ransac_mosaics[1]->neighbors[j]);
+				}
+			
+			for (int i=0; i<final_mosaic.size(); i++)
+				if (ransac_mosaics[1] == final_mosaic[i])
+					final_mosaic.erase(final_mosaic.begin() + i);
+
+			delete ransac_mosaics[1];
 		}
-		ransac_mosaics[0]->avg_H = best_H * ransac_mosaics[0]->avg_H;
-		// ransac_mosaics[0]->correct();
-		// ransac_mosaics[0]->computeOffset();
-
-		blender->blendSubMosaic(ransac_mosaics[0]);
-		resize(ransac_mosaics[0]->final_scene, ransac_mosaics[0]->final_scene, Size(1066, 800));
-		imshow("Blend-Ransac-Final", ransac_mosaics[0]->final_scene);
-		imwrite("/home/victor/dataset/output/ransac-00.jpg", ransac_mosaics[0]->final_scene);
-		waitKey(0);
-
-		// for (int i = 0; i < sub_mosaics.size(); i++)
-		// 	if (sub_mosaics[i] = ransac_mosaics[1])
-		// 		sub_mosaics.erase(sub_mosaics.begin()+i);
-
-		// for (int i = 0; i < ransac_mosaics[0]->neighbors.size(); i++)
-		// 	if (ransac_mosaics[0]->neighbors[i].mosaic = ransac_mosaics[1])
-		// 		ransac_mosaics[0]->neighbors.erase(ransac_mosaics[0]->neighbors.begin()+i);
-
-		// delete ransac_mosaics[1];
-
-		sub_mosaics.erase(sub_mosaics.begin());
-		sub_mosaics.erase(sub_mosaics.begin());
 	}
 }
 

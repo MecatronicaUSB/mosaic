@@ -22,26 +22,32 @@ class Mosaic
     // ---------- Atributes
     int tot_frames;
     int n_subs;
-    int mosaic_mode;
+    int n_mosaics;
+    vector<Frame *> frames;
+    vector<Frame *> buffer;
     vector<SubMosaic *> sub_mosaics;
-    vector<SubMosaic *> final_mosaics;
+    vector<vector<SubMosaic *> > final_mosaics;
     bool apply_pre; //!< flag to apply or not SCB preprocessing algorithm
     Stitcher *stitcher;
     Blender *blender;
     // ---------- Methods
-    Mosaic(bool _pre = true, int _mode = SIMPLE);
+    Mosaic(bool _pre = true);
     // TODO:
     SubMosaic *addSubMosaics(SubMosaic *_sub_mosaic1, SubMosaic *_sub_mosaic2);
     /**
          * @brief 
          * @param _object 
          */
-    bool addFrame(Mat _object);
+    void feed(Mat _object);
+    /**
+     * @brief 
+     */
+    void compute(int _mode);
     /**
          * @brief 
          * @param n_inter 
          */
-    void compute();
+    void merge();
     /**
          * @brief 
          * @param _first 

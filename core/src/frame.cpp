@@ -112,6 +112,55 @@ void Frame::resetFrame()
 	neighbors.clear();
 }
 
+float Frame::calcDistortion()
+{
+	Point2f line[4][2];
+	Point2f v1, v2;
+	float side[4], cosine[4];
+	float frame_dims = (float)TARGET_WIDTH * (float)TARGET_HEIGHT;
+	float ratio_dims = (float)TARGET_HEIGHT / (float)TARGET_WIDTH;
+	float o_sides_error = 0, c_sides_error = 0, angle_error = 0;
+	float area_error = 0, min_ratio = 0;
+	float tot_error = 0;
+
+	for (int i = 0; i < 4; i++)
+	{
+		line[i][0] = bound_points[RANSAC][i];
+		line[i][1] = bound_points[RANSAC][i < 3 ? i + 1 : 0];
+
+		side[i] = getDistance(line[i][0], line[i][1]);
+	}
+	for (int i = 0; i < 4; i++)
+	{
+		v1.x = abs(line[i][1].x - line[i][0].x);
+		v1.y = abs(line[i][1].y - line[i][0].y);
+		v2.x = abs(line[i < 3 ? i + 1 : 0][1].x - line[i < 3 ? i + 1 : 0][0].x);
+		v2.y = abs(line[i < 3 ? i + 1 : 0][1].y - line[i < 3 ? i + 1 : 0][0].y);
+
+		cosine[i] = (v1.x * v2.x + v1.y * v2.y) / (sqrt(v1.x * v1.x + v1.y * v1.y) * sqrt(v2.x * v2.x + v2.y * v2.y));
+	}
+
+	o_sides_error = 2 - 0.5 * (min(side[0] / side[2], side[2] / side[0]) +
+								min(side[1] / side[3], side[3] / side[1]));
+
+	min_ratio = min(side[0] / side[1], min(side[1] / side[2], min(side[2] / side[3], side[3] / side[0])));
+	c_sides_error = 1 - min(min_ratio / ratio_dims, ratio_dims / min_ratio);
+
+	vector<Point2f> aux_points = {
+		bound_points[RANSAC][0],
+		bound_points[RANSAC][1],
+		bound_points[RANSAC][2],
+		bound_points[RANSAC][3]
+	};
+
+	area_error = 1 - min(contourArea(aux_points) / frame_dims,
+												frame_dims / contourArea(aux_points));
+
+	angle_error = pow(max(cosine[0], max(cosine[1], max(cosine[2], cosine[3]))), 5);
+
+	tot_error = o_sides_error + c_sides_error + area_error + angle_error;
+}
+
 // See description in header file
 bool Frame::isGoodFrame()
 {

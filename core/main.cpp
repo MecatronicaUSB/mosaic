@@ -85,7 +85,7 @@ int main( int argc, char** argv ) {
     cout << "  Apply preprocessing:\t"<<cyan<< apply_pre <<reset << endl;
     cout << "  Use grid detection:\t"<<cyan<< use_grid <<reset << endl<<endl;
 
-    m2d::Mosaic mosaic(apply_pre, mosaic_mode ? args::get(mosaic_mode) : 0);
+    m2d::Mosaic mosaic(apply_pre);
     mosaic.stitcher = new m2d::Stitcher(
         use_grid,                                                   
         detector_surf  ? m2d::USE_SURF  :
@@ -103,18 +103,14 @@ int main( int argc, char** argv ) {
         img = imread(file_names[i], IMREAD_COLOR);
         if (!img.data) {
             cout<< red <<" --(!) Error reading image "<< reset << endl;
-            return -1;
+            continue;
         }
-
-        if(!mosaic.addFrame(img))
-            break;
-        
+        mosaic.feed(img);
     }
-    if (output) {
-        mosaic.print();
-    }
-
-    //mosaic.compute();
+    mosaic.compute( mosaic_mode ? args::get(mosaic_mode) : 1 );
+    // if (output) {
+    //     mosaic.print();
+    // }
 
     t = ((double) getTickCount() - t) / getTickFrequency();        
     cout << endl << "\tExecution time:\t" << green << t << reset <<" s" <<endl;

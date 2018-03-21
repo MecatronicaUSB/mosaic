@@ -71,29 +71,27 @@ Stitcher::Stitcher(bool _grid, int _detector, int _matcher, int _mode)
 	}
 }
 
-// See description in header file
-int Stitcher::stitch(Frame *_object, Frame *_scene, Size _scene_dims, int _mode)
+void Stitcher::detectFeatures(vector<Frame *> _frames)
 {
+	for (int i = 0; i < _frames.size(); i++)
+	{
+		detector->detectAndCompute(_frames[i]->gray, Mat(),
+									_frames[i]->keypoints,
+									_frames[i]->descriptors);
+		if (!_frames[i]->haveKeypoints())
+		{
+			delete _frames[i];
+			_frames.erase(_frames.begin() + i);
+		}
+		_frames[i]->gray.release();
+	}
+}
 
+// See description in header file
+void Stitcher::stitch(Frame *_object, Frame *_scene)
+{
 	img[OBJECT] = _object;
 	img[SCENE] = _scene;
-
-	if (!img[SCENE]->haveKeypoints())
-	{
-		detector->detectAndCompute(img[SCENE]->gray, Mat(), img[SCENE]->keypoints,
-								   img[SCENE]->descriptors);
-	}
-	if (!img[OBJECT]->haveKeypoints())
-	{
-		detector->detectAndCompute(img[OBJECT]->gray, Mat(), img[OBJECT]->keypoints,
-								img[OBJECT]->descriptors);
-	}
-
-	if (!img[SCENE]->haveKeypoints())
-	{
-		cout << "No Key points Found. exiting" << endl;
-		return NO_KEYPOINTS;
-	}
 
 	// Match the keypoints using Knn
 	vector<vector<DMatch>> aux_matches;
@@ -141,50 +139,20 @@ int Stitcher::stitch(Frame *_object, Frame *_scene, Size _scene_dims, int _mode)
 			img[SCENE]->grid_points[NEXT].clear();
 		}
 	}
-	Mat R = estimateRigidTransform(object_points, scene_points[PERSPECTIVE], false);
 
-	switch (_mode)
+	Mat R = estimateRigidTransform(object_points, scene_points[PERSPECTIVE], false);
+	if (!R.empty())
 	{
-	case SIMPLE:
-	{
-		if (R.empty())
-		{
-			cout << "Not enought keypoints to calculate transformation matrix. Exiting..." << endl;
-			cleanNeighborsData();
-			return NO_HOMOGRAPHY;
-		}
 		R.copyTo(img[OBJECT]->E(Rect(0, 0, 3, 2)));
 		removeScale(img[OBJECT]->E);
-		img[OBJECT]->setHReference(img[OBJECT]->E, PERSPECTIVE);
-		break;
 	}
-	case FULL:
-	{
-		Mat H = findHomography(object_points, scene_points[PERSPECTIVE], CV_RANSAC);
+
+	Mat H = findHomography(object_points, scene_points[PERSPECTIVE], CV_RANSAC);
+	if (!H.empty())
 		H.at<double>(2, 2) = 1;
-		if (H.empty())// || R.empty())
-		{
-			cout << "Not enought keypoints to calculate transformation matrix. Exiting..." << endl;
-			return NO_HOMOGRAPHY;
-		}
-		//R.copyTo(img[OBJECT]->E(Rect(0, 0, 3, 2)));
-		//removeScale(img[OBJECT]->E);
-		//img[OBJECT]->setHReference(img[OBJECT]->E, EUCLIDEAN);
-		img[OBJECT]->setHReference(H, PERSPECTIVE);
+	img[OBJECT]->H = H;
 
-		if (!img[OBJECT]->isGoodFrame())
-		{
-			cout << "Frame too distorted. Creating new Sub-Mosaic..." << endl;
-			cleanNeighborsData();
-			return BAD_DISTORTION;
-		}
-		break;
-	}
-	}
-	
-	updateNeighbors();
-
-	return OK;
+	cleanNeighborsData();
 }
 
 void Stitcher::cleanNeighborsData()

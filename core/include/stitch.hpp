@@ -36,14 +36,6 @@ enum Matcher
     USE_FLANN
 };
 
-enum StitchStatus
-{
-    OK,
-    BAD_DISTORTION,
-    NO_KEYPOINTS,
-    NO_HOMOGRAPHY
-};
-
 class Stitcher
 {
   public:
@@ -80,7 +72,12 @@ class Stitcher
      * @return true If the stitch was sucessfull
      * @return false If the stitch wasn't sucessfull
      */
-    int stitch(Frame *_object, Frame *_scene, Size _scene_dims, int _mode = SIMPLE);
+    void stitch(Frame *_object, Frame *_scene);
+    /**
+     * @brief 
+     * @param _frames 
+     */
+    void detectFeatures(vector<Frame *> _frames);
 
   private:
     // ---------- Atributes

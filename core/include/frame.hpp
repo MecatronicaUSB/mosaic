@@ -87,6 +87,11 @@ class Frame
 		 */
 		void setHReference(Mat _H, int _ref = PERSPECTIVE);
 		/**
+		 * @brief 
+		 * @return float 
+		 */
+		float calcDistortion();
+		/**
 		 * @brief Check if the frame is too much distorted
 		 * @detail The distortion is besed on follow criteria:
 		 * - Ratio of semi-diagonals distance. \n
