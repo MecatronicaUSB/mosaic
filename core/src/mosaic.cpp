@@ -66,16 +66,18 @@ bool Mosaic::addFrame(Mat _object)
 	{
 		sub_mosaics[n_subs]->avg_H = new_frame->H.clone();
 		sub_mosaics[n_subs]->avg_E = new_frame->E.clone();
-		sub_mosaics[n_subs]->correct();
+		// sub_mosaics[n_subs]->correct();
 		float overlap;
-		Hierarchy first, second;
+		Hierarchy aux_1, aux_2;
 		if (n_subs > 0)
 		{
 			float overlap = getOverlap(sub_mosaics[n_subs-1], sub_mosaics[n_subs]);
-			first.overlap = overlap;
-			first.mosaic = sub_mosaics[n_subs];
-			second.overlap = overlap;
-			second.mosaic = sub_mosaics[n_subs-1];
+			aux_1.overlap = overlap;
+			aux_1.mosaic = sub_mosaics[n_subs-1];
+			aux_2.overlap = overlap;
+			aux_2.mosaic = sub_mosaics[n_subs];
+			sub_mosaics[n_subs]->neighbors.push_back(aux_1);
+			sub_mosaics[n_subs-1]->neighbors.push_back(aux_2);
 		}
 
 		sub_mosaics.push_back(new SubMosaic());
@@ -84,11 +86,11 @@ bool Mosaic::addFrame(Mat _object)
 		new_frame->resetFrame();
 		sub_mosaics[n_subs]->addFrame(new_frame);
 
-		// if (n_subs > 1)
-		// {
-		// 	compute();
-		// 	return false;
-		// }
+		if (n_subs > 10)
+		{
+			compute();
+			return false;
+		}
 
 		return true;
 	}
@@ -124,14 +126,24 @@ void Mosaic::compute()
 {
 	vector<SubMosaic *> ransac_mosaics(2);
 
-
-
-	ransac_mosaics[0] = sub_mosaics[0];
+	float best_overlap = 0;
 	
-	for (int i = 0; i < sub_mosaics.size(); i++)
+	// for (int i = 0; i < sub_mosaics.size(); i++)
+	while(sub_mosaics.size()>2)
 	{
-		ransac_mosaics[1] = sub_mosaics[i+1];
-
+		// best_overlap = -1;
+		// for (SubMosaic *sub_mosaic : sub_mosaics)
+		// {
+		// 	for (Hierarchy neighbor: sub_mosaic->neighbors)
+		// 		if (neighbor.overlap > best_overlap)
+		// 		{
+		// 			best_overlap = neighbor.overlap;
+		// 			ransac_mosaics[0] = sub_mosaic;
+		// 			ransac_mosaics[1] = neighbor.mosaic;
+		// 		}
+		// }
+		ransac_mosaics[0] = sub_mosaics[0];
+		ransac_mosaics[1] = sub_mosaics[1];
 		getReferencedMosaics(ransac_mosaics);
 
 		// ransac_mosaics[0]->correct();
@@ -161,15 +173,24 @@ void Mosaic::compute()
 		imwrite("/home/victor/dataset/output/ransac-00.jpg", ransac_mosaics[0]->final_scene);
 		waitKey(0);
 
-		// sub_mosaics.erase(sub_mosaics.begin());
-		// sub_mosaics.erase(sub_mosaics.begin());
+		// for (int i = 0; i < sub_mosaics.size(); i++)
+		// 	if (sub_mosaics[i] = ransac_mosaics[1])
+		// 		sub_mosaics.erase(sub_mosaics.begin()+i);
+
+		// for (int i = 0; i < ransac_mosaics[0]->neighbors.size(); i++)
+		// 	if (ransac_mosaics[0]->neighbors[i].mosaic = ransac_mosaics[1])
+		// 		ransac_mosaics[0]->neighbors.erase(ransac_mosaics[0]->neighbors.begin()+i);
+
+		// delete ransac_mosaics[1];
+
+		sub_mosaics.erase(sub_mosaics.begin());
+		sub_mosaics.erase(sub_mosaics.begin());
 	}
 }
 
 // See description in header file
 void Mosaic::getReferencedMosaics(vector<SubMosaic *> &_sub_mosaics)
 {
-
 	Mat ref_H = _sub_mosaics[0]->avg_H.clone();
 	Mat ref_E = _sub_mosaics[0]->avg_E.clone();
 
@@ -262,34 +283,27 @@ void Mosaic::alignMosaics(vector<SubMosaic *> &_sub_mosaics)
 	offset[LEFT] = max(centroid_0.x - centroid_1.x, 0.f);
 	_sub_mosaics[1]->updateOffset(offset);
 	
-	// Mat points[2];
+	Mat points[2];
 
-	// for (int i = 0; i < _sub_mosaics.size(); i++)
-	// {
-	// 	points[i] = Mat(_sub_mosaics[i]->frames[0]->grid_points[NEXT]);
-	// 	for (int j = 1; j < _sub_mosaics[i]->frames.size(); j++)
-	// 	{
-	// 		vconcat(points[i], Mat(_sub_mosaics[i]->frames[j]->grid_points[PREV]), points[i]);
-	// 	}
-	// }
+	for (int i = 0; i < _sub_mosaics.size(); i++)
+	{
+		points[i] = Mat(_sub_mosaics[i]->frames[0]->grid_points[NEXT]);
+		for (int j = 1; j < _sub_mosaics[i]->frames.size(); j++)
+		{
+			vconcat(points[i], Mat(_sub_mosaics[i]->frames[j]->grid_points[PREV]), points[i]);
+		}
+	}
 
-	// Mat T = estimateRigidTransform(points[0], points[1], false);
-	// double sx = sign(T.at<double>(0, 0)) * sqrt(pow(T.at<double>(0, 0), 2) + pow(T.at<double>(0, 1), 2));
-	// double sy = sign(T.at<double>(1, 1)) * sqrt(pow(T.at<double>(1, 0), 2) + pow(T.at<double>(1, 1), 2));
+	Mat R = estimateRigidTransform(points[1], points[0], false);
+	Mat M = Mat::eye(3, 3, CV_64F);
+	R.copyTo(M(Rect(0, 0, 3, 2)));
+	removeScale(M);
 
-	// Mat M = Mat::eye(3, 3, CV_64F);
-	// M.at<double>(0, 0) = T.at<double>(0, 0) / sx;
-	// M.at<double>(0, 1) = T.at<double>(0, 1) / sx;
-	// M.at<double>(1, 0) = T.at<double>(1, 0) / sy;
-	// M.at<double>(1, 1) = T.at<double>(1, 1) / sy;
-	// // M.at<double>(2, 0) = T.at<double>(2, 0);
-	// // M.at<double>(2, 1) = T.at<double>(2, 1);
-
-	// for (Frame *frame : _sub_mosaics[0]->frames)
-	// {
-	// 	frame->setHReference(M);
-	// }
-	// _sub_mosaics[0]->avg_H = M * _sub_mosaics[0]->avg_H;
+	for (Frame *frame : _sub_mosaics[1]->frames)
+	{
+		frame->setHReference(M);
+	}
+	_sub_mosaics[1]->avg_H = M * _sub_mosaics[0]->avg_H;
 
 }
 

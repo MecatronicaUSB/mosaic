@@ -83,8 +83,11 @@ int Stitcher::stitch(Frame *_object, Frame *_scene, Size _scene_dims, int _mode)
 		detector->detectAndCompute(img[SCENE]->gray, Mat(), img[SCENE]->keypoints,
 								   img[SCENE]->descriptors);
 	}
-	detector->detectAndCompute(img[OBJECT]->gray, Mat(), img[OBJECT]->keypoints,
-							   img[OBJECT]->descriptors);
+	if (!img[OBJECT]->haveKeypoints())
+	{
+		detector->detectAndCompute(img[OBJECT]->gray, Mat(), img[OBJECT]->keypoints,
+								img[OBJECT]->descriptors);
+	}
 
 	if (!img[SCENE]->haveKeypoints())
 	{
@@ -159,14 +162,14 @@ int Stitcher::stitch(Frame *_object, Frame *_scene, Size _scene_dims, int _mode)
 	{
 		Mat H = findHomography(object_points, scene_points[PERSPECTIVE], CV_RANSAC);
 		H.at<double>(2, 2) = 1;
-		if (H.empty() || R.empty())
+		if (H.empty())// || R.empty())
 		{
 			cout << "Not enought keypoints to calculate transformation matrix. Exiting..." << endl;
 			return NO_HOMOGRAPHY;
 		}
-		R.copyTo(img[OBJECT]->E(Rect(0, 0, 3, 2)));
-		removeScale(img[OBJECT]->E);
-		img[OBJECT]->setHReference(img[OBJECT]->E, EUCLIDEAN);
+		//R.copyTo(img[OBJECT]->E(Rect(0, 0, 3, 2)));
+		//removeScale(img[OBJECT]->E);
+		//img[OBJECT]->setHReference(img[OBJECT]->E, EUCLIDEAN);
 		img[OBJECT]->setHReference(H, PERSPECTIVE);
 
 		if (!img[OBJECT]->isGoodFrame())
