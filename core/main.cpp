@@ -111,8 +111,8 @@ int main( int argc, char** argv ) {
     // if (output) {
     //     mosaic.print();
     // }
-
-    t = ((double) getTickCount() - t) / getTickFrequency();        
+    mosaic.print();
+    t = ((double)getTickCount() - t) / getTickFrequency();
     cout << endl << "\tExecution time:\t" << green << t << reset <<" s" <<endl;
 
     return 0;

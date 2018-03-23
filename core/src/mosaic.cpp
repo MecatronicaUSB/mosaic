@@ -21,58 +21,63 @@ Mosaic::Mosaic(bool _pre)
 	n_subs = 0;
 	n_mosaics = 0;
 	tot_frames = 0;
-	blender = new Blender();
 }
 
 void Mosaic::feed(Mat _img)
 {
-	frames.push_back(new Frame(_img.clone(), apply_pre));
+	Frame *new_frame = new Frame(_img.clone(), apply_pre);
+	if (stitcher->detectFeatures(new_frame))
+		frames.push_back(new_frame);
 	cout << flush << "\rTotal images: " << frames.size();
 }
 
 // See description in header file
 void Mosaic::compute(int _mode)
 {
-
-	stitcher->detectFeatures(frames);
-
 	int last_frame;
 	float distortion, best_distortion;
-
+	vector<Point2f> best_grid_points;
 	sub_mosaics.push_back(new SubMosaic());
 	sub_mosaics[0]->addFrame(frames[0]);
 	for (int i = 0; i<frames.size()-1; i++)
 	{
-		last_frame = i+1;
+		last_frame = i;
 		best_distortion=100;
 		distortion=0;
-		while (last_frame < frames.size())
+		while (last_frame < i+3 && last_frame < frames.size()-1)
 		{
-			stitcher->stitch(frames[last_frame], frames[i]);
-			if (!frames[last_frame]->H.empty())
+			last_frame++;
+			Mat H = stitcher->stitch(frames[last_frame], frames[i]);
+			if (!H.empty())
 			{
-				frames[last_frame]->setHReference(frames[last_frame]->H, PERSPECTIVE);
-				distortion = frames[last_frame]->calcDistortion();
+				frames[last_frame]->setHReference(H, PERSPECTIVE);
+				distortion = frames[last_frame]->frameDistortion(PERSPECTIVE);
 				if (distortion < best_distortion)
 				{
 					best_distortion = distortion;
+					best_grid_points = frames[i]->grid_points[NEXT];
 					if (last_frame > i + 1)
 					{
 						delete frames[i + 1];
-						frames.erase(frames.begin() + i + 1);	
+						frames.erase(frames.begin() + i + 1);
+						last_frame--;
 					}
 				}
-				last_frame++;
+				else
+					frames[last_frame]->resetFrame();
+				
+				frames[i]->grid_points[NEXT].clear();				
 			}
 			else
 				break;
 		}
-		if (last_frame == i+1)
+		if (last_frame == i+1 || i == frames.size()-2)
 		{
-			sub_mosaics.push_back(new SubMosaic());
-			n_subs++;
-			frames[i+1]->resetFrame();
-			sub_mosaics[n_subs]->addFrame(frames[i+1]);
+			//sub_mosaics.push_back(new SubMosaic());
+			//n_subs++;
+			//sub_mosaics[n_subs]->addFrame(frames[i+1]);
+			delete frames[i + 1];
+			frames.erase(frames.begin() + i + 1);
 			vector<SubMosaic *> aux_mosaic;
 			for (SubMosaic *sub_mosaic : sub_mosaics)
 			{
@@ -84,15 +89,28 @@ void Mosaic::compute(int _mode)
 		}
 		else
 		{
-			for (int j=last_frame; j>i+1; j--)
+			frames[i]->grid_points[NEXT] = best_grid_points;
+			best_grid_points.clear();
+			if (frames[i + 1]->isGoodFrame())
 			{
-				frames[j]->resetFrame();
+				sub_mosaics[n_subs]->addFrame(frames[i + 1]);
 			}
-			sub_mosaics[n_subs]->addFrame(frames[i+1]);
-			sub_mosaics[n_subs]->avg_H.release();
-			sub_mosaics[n_subs]->avg_H = frames[i+1]->H.clone();
+			else
+			{
+				sub_mosaics[n_subs]->avg_H.release();
+				sub_mosaics[n_subs]->avg_H = frames[i+1]->H.clone();
+				sub_mosaics.push_back(new SubMosaic());
+				n_subs++;
+				frames[i+1]->resetFrame();
+				sub_mosaics[n_subs]->addFrame(frames[i+1]);
+			}
 		}
 	}
+	blender->blendSubMosaic(final_mosaics[0][0]);
+	//imwrite("/home/victor/dataset/output/final-000"+to_string(n++)+".jpg", sub_mosaic->final_scene);
+	resize(final_mosaics[0][0]->final_scene, final_mosaics[0][0]->final_scene, Size(1066, 800));
+	imshow("Blend-Ransac-Final", final_mosaics[0][0]->final_scene);
+	waitKey(0);
 
 	float overlap;
 	for (vector<SubMosaic *> final_mosaic : final_mosaics)

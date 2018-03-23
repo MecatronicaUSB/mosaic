@@ -37,7 +37,7 @@ void Blender::blendSubMosaic(SubMosaic *_sub_mosaic)
 		bound_rect.push_back(frame->bound_rect);
 		corners.push_back(Point(frame->bound_rect.x, frame->bound_rect.y));
 	}
-  
+
 	if (graph_cut)
 	{
 		GraphCutSeamFinder *seam_finder = new GraphCutSeamFinder(GraphCutSeamFinderBase::COST_COLOR_GRAD);
@@ -88,7 +88,6 @@ void Blender::blendSubMosaic(SubMosaic *_sub_mosaic)
 UMat Blender::getWarpImg(Frame *_frame)
 {
 	Mat warp_img;
-	UMat warp_uimg;
 
 	Mat aux_T = Mat::eye(3, 3, CV_64F);
 	aux_T.at<double>(0, 2) = -_frame->bound_rect.x;
@@ -97,9 +96,42 @@ UMat Blender::getWarpImg(Frame *_frame)
 	warpPerspective(_frame->color, warp_img, aux_T * _frame->H, Size(_frame->bound_rect.width, _frame->bound_rect.height));
 
 	warp_img.convertTo(warp_img, CV_32F);
-	warp_uimg = warp_img.getUMat(ACCESS_RW);
+	UMat warp_uimg = warp_img.getUMat(ACCESS_RW);
 
 	return warp_uimg;
+}
+
+UMat Blender::getMask(Frame *_frame)
+{
+	vector<Point2f> aux_points = _frame->bound_points[PERSPECTIVE];
+
+	for (Point2f &point : aux_points)
+	{
+		point.x -= _frame->bound_rect.x;
+		point.y -= _frame->bound_rect.y;
+	}
+
+	for (int i = 0; i < aux_points.size() - 1; i++)
+	{
+		// point[4] correspond to center point
+		aux_points[i].x += 5 * (aux_points[4].x - aux_points[i].x) / 100;
+		aux_points[i].y += 5 * (aux_points[4].y - aux_points[i].y) / 100;
+	}
+
+	Point mask_points[4] = {
+		aux_points[0],
+		aux_points[1],
+		aux_points[2],
+		aux_points[3],
+	};
+
+	Mat mask(_frame->bound_rect.height, _frame->bound_rect.width, CV_8U, Scalar(0));
+	fillConvexPoly(mask, mask_points, 4, Scalar(255));
+
+	//mask.convertTo(mask, CV_32F);
+	UMat umask = mask.getUMat(ACCESS_RW);
+
+	return umask;
 }
 
 void Blender::correctColor(SubMosaic *_sub_mosaic)
@@ -138,39 +170,6 @@ void Blender::correctColor(SubMosaic *_sub_mosaic)
 		// imshow("test 1", warp_imgs[i+1]);
 		// waitKey(0);
 	}
-}
-
-UMat Blender::getMask(Frame *_frame)
-{
-	vector<Point2f> aux_points = _frame->bound_points[PERSPECTIVE];
-
-	for (Point2f &point : aux_points)
-	{
-		point.x -= _frame->bound_rect.x;
-		point.y -= _frame->bound_rect.y;
-	}
-
-	for (int i = 0; i < aux_points.size() - 1; i++)
-	{
-		// point[4] correspond to center point
-		aux_points[i].x += 5 * (aux_points[4].x - aux_points[i].x) / 100;
-		aux_points[i].y += 5 * (aux_points[4].y - aux_points[i].y) / 100;
-	}
-
-	Point mask_points[4] = {
-		aux_points[0],
-		aux_points[1],
-		aux_points[2],
-		aux_points[3],
-	};
-
-	Mat mask(_frame->bound_rect.height, _frame->bound_rect.width, CV_8U, Scalar(0));
-	fillConvexPoly(mask, mask_points, 4, Scalar(255));
-
-	//mask.convertTo(mask, CV_32F);
-	UMat umask = mask.getUMat(ACCESS_RW);
-
-	return umask;
 }
 
 vector<Mat> Blender::getOverlapMasks(int _object, int _scene)

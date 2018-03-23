@@ -127,7 +127,7 @@ float SubMosaic::calcDistortion()
 	float tot_error = 0;
 
 	for (Frame *frame : frames)
-		tot_error = max(tot_error, frame->calcDistortion());
+		tot_error = max(tot_error, frame->frameDistortion(RANSAC));
 	
 	return tot_error;
 }

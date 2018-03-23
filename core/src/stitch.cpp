@@ -71,24 +71,24 @@ Stitcher::Stitcher(bool _grid, int _detector, int _matcher, int _mode)
 	}
 }
 
-void Stitcher::detectFeatures(vector<Frame *> _frames)
+bool Stitcher::detectFeatures(Frame * _frame)
 {
-	for (int i = 0; i < _frames.size(); i++)
+	detector->detectAndCompute(_frame->gray, Mat(),
+								_frame->keypoints,
+								_frame->descriptors);
+
+	if (!_frame->haveKeypoints())
 	{
-		detector->detectAndCompute(_frames[i]->gray, Mat(),
-									_frames[i]->keypoints,
-									_frames[i]->descriptors);
-		if (!_frames[i]->haveKeypoints())
-		{
-			delete _frames[i];
-			_frames.erase(_frames.begin() + i);
-		}
-		_frames[i]->gray.release();
+		delete _frame;
+		return false;
 	}
+
+	_frame->gray.release();
+	return true;
 }
 
 // See description in header file
-void Stitcher::stitch(Frame *_object, Frame *_scene)
+Mat Stitcher::stitch(Frame *_object, Frame *_scene)
 {
 	img[OBJECT] = _object;
 	img[SCENE] = _scene;
@@ -110,33 +110,25 @@ void Stitcher::stitch(Frame *_object, Frame *_scene)
 	bool good_thresh = true;
 	while (good_thresh)
 	{
-
 		// Discard outliers based on distance between descriptor's vectors
-		good_matches.clear();
 		getGoodMatches(thresh);
 
 		// Apply grid detector if flag is activated
 		if (use_grid)
-		{
 			gridDetector();
-		}
+		
 		// Convert the keypoints into a vector containing the correspond X,Y position in image
 		positionFromKeypoints();
 
 		if (object_points.rows > 4 && scene_points[PERSPECTIVE].rows > 4)
-		{
 			good_thresh = false;
-		}
 		else
 		{
 			thresh += 0.1;
-			for (int i = 0; i < img[SCENE]->neighbors.size(); i++)
-			{
-				good_matches.pop_back();
-			}
+			good_matches.clear();
 			neighbors_kp.clear();
-			img[OBJECT]->grid_points[PREV].clear();
-			img[SCENE]->grid_points[NEXT].clear();
+			img[OBJECT]->good_points[PREV].clear();
+			img[SCENE]->good_points[NEXT].clear();
 		}
 	}
 
@@ -146,36 +138,23 @@ void Stitcher::stitch(Frame *_object, Frame *_scene)
 		R.copyTo(img[OBJECT]->E(Rect(0, 0, 3, 2)));
 		removeScale(img[OBJECT]->E);
 	}
+	else
+		img[OBJECT]->E = R;
 
 	Mat H = findHomography(object_points, scene_points[PERSPECTIVE], CV_RANSAC);
+	// img[OBJECT]->H = H;
 	if (!H.empty())
 		H.at<double>(2, 2) = 1;
-	img[OBJECT]->H = H;
 
 	cleanNeighborsData();
+	return H;
 }
 
 void Stitcher::cleanNeighborsData()
 {
-	for (int i = 0; i < img[SCENE]->neighbors.size(); i++)
-	{
-		good_matches.pop_back();
-	}
+	good_matches.clear();
 	neighbors_kp.clear();
 	matches.clear();
-}
-
-void Stitcher::updateNeighbors()
-{
-	img[OBJECT]->neighbors.push_back(img[SCENE]);
-	for (Frame *neighbor: img[SCENE]->neighbors)
-	{
-		if (img[OBJECT]->checkCollision(neighbor))
-		{
-			img[OBJECT]->neighbors.push_back(neighbor);
-		}
-	}
-	cleanNeighborsData();
 }
 
 // See description in header file
@@ -258,6 +237,8 @@ void Stitcher::gridDetector()
 void Stitcher::positionFromKeypoints()
 {
 
+	img[OBJECT]->grid_points[PREV].clear();
+	img[SCENE]->grid_points[NEXT].clear();
 	for (DMatch good : good_matches[0])
 	{
 		//-- Get the keypoints from the good matches
@@ -269,7 +250,6 @@ void Stitcher::positionFromKeypoints()
 
 	for (int i = 0; i < img[SCENE]->neighbors.size(); i++)
 	{
-
 		for (DMatch good : good_matches[i + 1])
 		{
 			img[OBJECT]->grid_points[PREV].push_back(img[OBJECT]->keypoints[good.queryIdx].pt);

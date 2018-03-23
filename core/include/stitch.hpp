@@ -72,12 +72,12 @@ class Stitcher
      * @return true If the stitch was sucessfull
      * @return false If the stitch wasn't sucessfull
      */
-    void stitch(Frame *_object, Frame *_scene);
+    Mat stitch(Frame *_object, Frame *_scene);
     /**
      * @brief 
      * @param _frames 
      */
-    void detectFeatures(vector<Frame *> _frames);
+    bool detectFeatures(Frame * _frame);
 
   private:
     // ---------- Atributes

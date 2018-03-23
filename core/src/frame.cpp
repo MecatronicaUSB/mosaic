@@ -17,7 +17,6 @@ namespace m2d //!< mosaic 2d namespace
 // See description in header file
 Frame::Frame(Mat _img, bool _pre, int _width, int _height)
 {
-
 	bound_points = vector<vector<Point2f>>(3);
 	grid_points = vector<vector<Point2f>>(2);
 	good_points = vector<vector<Point2f>>(2);
@@ -108,11 +107,14 @@ void Frame::resetFrame()
 	bound_points[EUCLIDEAN] = bound_points[PERSPECTIVE]; 
 
 	grid_points[NEXT].clear();
+	grid_points[PREV].clear();
+	good_points[PREV].clear();
+	good_points[PREV].clear();
 
 	neighbors.clear();
 }
 
-float Frame::calcDistortion()
+float Frame::frameDistortion(int _ref)
 {
 	Point2f line[4][2];
 	Point2f v1, v2;
@@ -121,12 +123,11 @@ float Frame::calcDistortion()
 	float ratio_dims = (float)TARGET_HEIGHT / (float)TARGET_WIDTH;
 	float o_sides_error = 0, c_sides_error = 0, angle_error = 0;
 	float area_error = 0, min_ratio = 0;
-	float tot_error = 0;
 
 	for (int i = 0; i < 4; i++)
 	{
-		line[i][0] = bound_points[RANSAC][i];
-		line[i][1] = bound_points[RANSAC][i < 3 ? i + 1 : 0];
+		line[i][0] = bound_points[_ref][i];
+		line[i][1] = bound_points[_ref][i < 3 ? i + 1 : 0];
 
 		side[i] = getDistance(line[i][0], line[i][1]);
 	}
@@ -147,10 +148,10 @@ float Frame::calcDistortion()
 	c_sides_error = 1 - min(min_ratio / ratio_dims, ratio_dims / min_ratio);
 
 	vector<Point2f> aux_points = {
-		bound_points[RANSAC][0],
-		bound_points[RANSAC][1],
-		bound_points[RANSAC][2],
-		bound_points[RANSAC][3]
+		bound_points[_ref][0],
+		bound_points[_ref][1],
+		bound_points[_ref][2],
+		bound_points[_ref][3]
 	};
 
 	area_error = 1 - min(contourArea(aux_points) / frame_dims,
@@ -158,7 +159,7 @@ float Frame::calcDistortion()
 
 	angle_error = pow(max(cosine[0], max(cosine[1], max(cosine[2], cosine[3]))), 5);
 
-	tot_error = o_sides_error + c_sides_error + area_error + angle_error;
+	return o_sides_error + c_sides_error + area_error + angle_error;
 }
 
 // See description in header file
@@ -166,6 +167,7 @@ bool Frame::isGoodFrame()
 {
 	float deformation, area, keypoints_area;
 	float semi_diag[4], ratio[2];
+	float diagonal_error=0, area_error=0;
 
 	for (int i = 0; i < 4; i++)
 	{
@@ -176,21 +178,30 @@ bool Frame::isGoodFrame()
 	// ratio beween semi diagonals
 	ratio[0] = max(semi_diag[0] / semi_diag[2], semi_diag[2] / semi_diag[0]);
 	ratio[1] = max(semi_diag[1] / semi_diag[3], semi_diag[3] / semi_diag[1]);
+	diagonal_error = max(ratio[0], ratio[1]);
 
 	// Area of distorted images
-	area = contourArea(bound_points[PERSPECTIVE]);
+	vector<Point2f> aux_points = {
+		bound_points[PERSPECTIVE][0],
+		bound_points[PERSPECTIVE][1],
+		bound_points[PERSPECTIVE][2],
+		bound_points[PERSPECTIVE][3]
+	};
+	area = contourArea(aux_points);
+
+	area_error = max(area/(color.cols*color.rows), (color.cols*color.rows)/area);
 
 	// enclosing area with good keypoints
-	keypoints_area = boundAreaKeypoints();
+	// keypoints_area = boundAreaKeypoints();
 
-	// 3 initial threshold value, must be ajusted in future tests
-	if (area > 1.5 * color.cols * color.rows)
+	// 1.1 initial threshold value, must be ajusted in future tests
+	if (area_error > 1.5)
 		return false;
-	// 4 initial threshold value, must be ajusted in future tests
-	if (ratio[0] > 1.6 || ratio[1] > 1.6)
+	// 1.1 initial threshold value, must be ajusted in future tests
+	if (diagonal_error > 1.5)
 		return false;
-	if (keypoints_area < 0.2 * color.cols * color.rows)
-		return false;
+	// if (keypoints_area < 0.2 * color.cols * color.rows)
+	// 	return false;
 
 	return true;
 }
@@ -261,8 +272,18 @@ bool Frame::checkCollision(Frame *_object)
 	return true;
 }
 
+void Frame::updateNeighbors(Frame *_scene)
+{
+	checkCollision(_scene);
+		neighbors.push_back(_scene);
+
+	for (Frame *neighbor: _scene->neighbors)
+		if (checkCollision(neighbor))
+			neighbors.push_back(neighbor);
+}
+
 bool Frame::haveKeypoints()
 {
-	return keypoints.size() > 0 ? true : false;
+	return keypoints.size() >= 4 ? true : false;
 }
 }

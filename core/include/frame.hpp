@@ -90,7 +90,7 @@ class Frame
 		 * @brief 
 		 * @return float 
 		 */
-		float calcDistortion();
+		float frameDistortion(int _ref = PERSPECTIVE);
 		/**
 		 * @brief Check if the frame is too much distorted
 		 * @detail The distortion is besed on follow criteria:
@@ -114,6 +114,10 @@ class Frame
 		 * @brief 
 		 */
 		void updateBoundRect();
+		/**
+		 * @brief 
+		 */
+		void updateNeighbors(Frame *_scene);
 		/**
 		 * @brief 
 		 * @param _object 
