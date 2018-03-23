@@ -100,6 +100,12 @@ void Mosaic::compute(int _mode)
 	}
 	if (sub_mosaics.size() > 1 || sub_mosaics[n_subs]->n_frames > 1)
 	{
+			blender->blendSubMosaic(sub_mosaics[0]);
+			imwrite("/home/victor/dataset/output/final-000"+to_string(0)+".jpg", sub_mosaics[0]->final_scene);
+			resize(sub_mosaics[0]->final_scene, sub_mosaics[0]->final_scene, Size(1066, 800));
+			imshow("Blend-Ransac-Final", sub_mosaics[0]->final_scene);
+			waitKey(0);
+
 		final_mosaics.push_back(sub_mosaics);
 		n_mosaics++;
 		sub_mosaics.clear();
@@ -108,16 +114,16 @@ void Mosaic::compute(int _mode)
 	float overlap;
 	for (vector<SubMosaic *> final_mosaic : final_mosaics)
 	{
-		for (SubMosaic *sub_mosaic : final_mosaic)
+		for (int i=0; i<final_mosaic.size()-1;i++)
 		{
 			Hierarchy aux_1, aux_2;
-			overlap = getOverlap(sub_mosaics[n_subs-1], sub_mosaics[n_subs]);
+			overlap = getOverlap(final_mosaic[i+1], final_mosaic[i]);
 			aux_1.overlap = overlap;
-			aux_1.mosaic = sub_mosaics[n_subs-1];
+			aux_1.mosaic = final_mosaic[i+1];
 			aux_2.overlap = overlap;
-			aux_2.mosaic = sub_mosaics[n_subs];
-			sub_mosaics[n_subs]->neighbors.push_back(aux_1);
-			sub_mosaics[n_subs-1]->neighbors.push_back(aux_2);
+			aux_2.mosaic = final_mosaic[i];
+			final_mosaic[i]->neighbors.push_back(aux_1);
+			final_mosaic[i+1]->neighbors.push_back(aux_2);
 		}
 	}
 	merge();
@@ -132,11 +138,12 @@ void Mosaic::merge()
 	
 	for (vector<SubMosaic *> final_mosaic : final_mosaics)
 	{
-		while(final_mosaic.size() > 2)
+		while(final_mosaic.size() > 1)
 		{
 			best_overlap = -1;
 			for (SubMosaic *sub_mosaic : final_mosaic)
 			{
+				if (!sub_mosaic->corrected)
 				for (Hierarchy neighbor: sub_mosaic->neighbors)
 					if (neighbor.overlap > best_overlap)
 					{
@@ -145,8 +152,26 @@ void Mosaic::merge()
 						ransac_mosaics[1] = neighbor.mosaic;
 					}
 			}
-			ransac_mosaics[0] = sub_mosaics[0];
-			ransac_mosaics[1] = sub_mosaics[1];
+			for (int i=0; i<ransac_mosaics[0]->neighbors.size(); i++)
+			{
+				if (ransac_mosaics[1] == ransac_mosaics[0]->neighbors[i].mosaic)
+				{
+					ransac_mosaics[0]->neighbors.erase(ransac_mosaics[0]->neighbors.begin()+i);
+					for (int j=0; j<ransac_mosaics[1]->neighbors.size(); j++)
+						if (ransac_mosaics[1]->neighbors[j].mosaic != ransac_mosaics[0])
+						{
+							ransac_mosaics[0]->neighbors.push_back(ransac_mosaics[1]->neighbors[j]);
+							for (int k=0; k<ransac_mosaics[1]->neighbors[j].mosaic->neighbors.size(); k++)
+								if (ransac_mosaics[1]->neighbors[j].mosaic->neighbors[k].mosaic == ransac_mosaics[1])
+									ransac_mosaics[1]->neighbors[j].mosaic->neighbors[k].mosaic = ransac_mosaics[0];
+						}
+				}
+			}		
+			for (int i=0; i<final_mosaic.size(); i++)
+			{
+				if (ransac_mosaics[1] == final_mosaic[i])
+					final_mosaic.erase(final_mosaic.begin() + i);
+			}
 			getReferencedMosaics(ransac_mosaics);
 			alignMosaics(ransac_mosaics);
 			Mat best_H = getBestModel(ransac_mosaics, 4000);
@@ -154,20 +179,12 @@ void Mosaic::merge()
 			for (Frame *frame : ransac_mosaics[0]->frames)
 				frame->setHReference(best_H);
 			ransac_mosaics[0]->avg_H = best_H * ransac_mosaics[0]->avg_H;
-
-			for (int i=0; i<ransac_mosaics[0]->neighbors.size(); i++)
-				if (ransac_mosaics[1] == ransac_mosaics[0]->neighbors[i].mosaic)
-				{
-					ransac_mosaics[0]->neighbors.erase(ransac_mosaics[0]->neighbors.begin()+i);
-					for (int j=0; j<ransac_mosaics[1]->neighbors.size(); j++)
-						if (ransac_mosaics[1]->neighbors[j].mosaic != ransac_mosaics[0])
-							ransac_mosaics[0]->neighbors.push_back(ransac_mosaics[1]->neighbors[j]);
-				}
-			
-			for (int i=0; i<final_mosaic.size(); i++)
-				if (ransac_mosaics[1] == final_mosaic[i])
-					final_mosaic.erase(final_mosaic.begin() + i);
-
+			ransac_mosaics[0]->corrected = true;
+			blender->blendSubMosaic(ransac_mosaics[0]);
+			//imwrite("/home/victor/dataset/output/final-000"+to_string(n++)+".jpg", ransac_mosaics[0]->final_scene);
+			resize(ransac_mosaics[0]->final_scene, ransac_mosaics[0]->final_scene, Size(1066, 800));
+			imshow("Blend-Ransac-Final", ransac_mosaics[0]->final_scene);
+			waitKey(0);
 			delete ransac_mosaics[1];
 		}
 	}
@@ -288,13 +305,30 @@ void Mosaic::alignMosaics(vector<SubMosaic *> &_sub_mosaics)
 	{
 		frame->setHReference(M);
 	}
-	_sub_mosaics[1]->avg_H = M * _sub_mosaics[0]->avg_H;
+	_sub_mosaics[1]->avg_H = M * _sub_mosaics[1]->avg_H;
 
 }
 
 float Mosaic::getOverlap(SubMosaic *_object, SubMosaic *_scene)
 {
+	vector<Point2f> object_points = {
+		_object->frames[0]->bound_points[PERSPECTIVE][0],
+		_object->frames[0]->bound_points[PERSPECTIVE][1],
+		_object->frames[0]->bound_points[PERSPECTIVE][2],
+		_object->frames[0]->bound_points[PERSPECTIVE][3],
+	};
+	perspectiveTransform(object_points, object_points, _scene->avg_H);
+	Rect2f object_bound_rect = boundingRectFloat(object_points);
 
+	float width = min(_scene->last_frame->bound_rect.x + _scene->last_frame->bound_rect.x,
+				  object_bound_rect.x + object_bound_rect.width) - 
+				  max(_scene->last_frame->bound_rect.x, object_bound_rect.x);
+
+	float height = min(_scene->last_frame->bound_rect.y + _scene->last_frame->bound_rect.y,
+				   object_bound_rect.y + object_bound_rect.height) - 
+				   max(_scene->last_frame->bound_rect.y, object_bound_rect.y);
+
+	return 100;
 }
 
 // See description in header file

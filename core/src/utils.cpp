@@ -49,6 +49,34 @@ void removeScale(Mat &_H)
 	_H.at<double>(1, 1) = _H.at<double>(1, 1) / sy;
 }
 
+Rect2f boundingRectFloat(vector<Point2f> _points)
+{
+	float top = _points[0].y;
+	float bottom = _points[0].y;
+	float left = _points[0].x;
+	float right = _points[0].x;;
+
+	for (Point2f point : _points)
+	{
+		if (point.x < left)
+			left = point.x;
+		if (point.y < top)
+			top = point.y;
+		if (point.x > right)
+			right = point.x;
+		if (point.y > bottom)
+			bottom = point.y;
+	}
+
+	Rect2f bound_rect;
+	bound_rect.x = left;
+	bound_rect.y = top;
+	bound_rect.width = right - left;
+	bound_rect.height = bottom - top;
+
+	return bound_rect;
+}
+
 int sign(double _num1)
 {
 	return _num1 > 0 ? 1 : -1;

@@ -130,19 +130,19 @@ Mat Stitcher::stitch(Frame *_object, Frame *_scene)
 		}
 	}
 
-	Mat R = estimateRigidTransform(object_points, scene_points[PERSPECTIVE], false);
-	if (!R.empty())
-	{
-		R.copyTo(img[OBJECT]->E(Rect(0, 0, 3, 2)));
-		removeScale(img[OBJECT]->E);
-	}
-	else
-		img[OBJECT]->E = R;
-
 	Mat H = findHomography(object_points, scene_points[PERSPECTIVE], CV_RANSAC);
 	// img[OBJECT]->H = H;
 	if (!H.empty())
 		H.at<double>(2, 2) = 1;
+
+	Mat R = estimateRigidTransform(object_points, scene_points[PERSPECTIVE], false);
+	Mat E = Mat::eye(3, 3, CV_64F);
+	if (!R.empty())
+	{
+		R.copyTo(E(Rect(0, 0, 3, 2)));
+		removeScale(E);
+		correctHomography(H, E);
+	}
 
 	cleanNeighborsData();
 	return H;
@@ -153,6 +153,31 @@ void Stitcher::cleanNeighborsData()
 	good_matches.clear();
 	neighbors_kp.clear();
 	matches.clear();
+}
+
+void Stitcher::correctHomography(Mat &_H, Mat _E)
+{
+	vector<Point2f> h_points = {
+		img[OBJECT]->bound_points[PERSPECTIVE][0],
+		img[OBJECT]->bound_points[PERSPECTIVE][1],
+		img[OBJECT]->bound_points[PERSPECTIVE][2],
+		img[OBJECT]->bound_points[PERSPECTIVE][3]
+	};
+	vector<Point2f> e_points = h_points;
+
+	perspectiveTransform(h_points, h_points, _H);
+	perspectiveTransform(e_points, e_points, _E);
+
+	vector<Point2f> mid_points = {
+		getMidPoint(getMidPoint(h_points[0], e_points[0]), h_points[0]),
+		getMidPoint(getMidPoint(h_points[1], e_points[1]), h_points[1]),
+		getMidPoint(getMidPoint(h_points[2], e_points[2]), h_points[2]),
+		getMidPoint(getMidPoint(h_points[3], e_points[3]), h_points[3])
+	};
+
+	Mat correct_H = getPerspectiveTransform(h_points, mid_points);
+	_H = correct_H * _H;
+	
 }
 
 // See description in header file

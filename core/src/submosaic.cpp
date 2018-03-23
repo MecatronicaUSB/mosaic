@@ -17,6 +17,7 @@ namespace m2d //!< mosaic 2d namespace
 SubMosaic::SubMosaic()
 {
 	n_frames = 0;
+	corrected = false;
 	scene_size = Size2f(TARGET_WIDTH, TARGET_HEIGHT);
 	avg_H = Mat::eye(3, 3, CV_64F);
 	avg_E = Mat::eye(3, 3, CV_64F);
@@ -51,6 +52,8 @@ SubMosaic *SubMosaic::clone()
 // See description in header file
 void SubMosaic::addFrame(Frame *_frame)
 {
+	if (n_frames > 0)
+		_frame->updateNeighbors(last_frame);
 	frames.push_back(_frame);
 	last_frame = _frame;
 	n_frames++;
@@ -218,25 +221,6 @@ Point2f SubMosaic::getCentroid()
 	    }
 	}
 	centroid /= n_points;
-
-	// float top = TARGET_HEIGHT, bottom = 0, left = TARGET_WIDTH, right = 0;
-	// for (Frame *frame : frames)
-	// {
-	// 	for (Point2f point : frame->bound_points[PERSPECTIVE])
-	// 	{
-	// 		if (point.x < left)
-	// 			left = point.x;
-	// 		if (point.y < top)
-	// 			top = point.y;
-	// 		if (point.x > right)
-	// 			right = point.x;
-	// 		if (point.y > bottom)
-	// 			bottom = point.y;
-	// 	}
-	// }
-
-	// centroid.x = (right + left) / 2;
-	// centroid.y = (bottom + top) / 2;
 
 	return centroid;
 }

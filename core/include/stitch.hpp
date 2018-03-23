@@ -93,6 +93,12 @@ class Stitcher
      */
     void getGoodMatches(float _thresh = 0.8);
     /**
+     * @brief 
+     * @param _H 
+     * @param _E 
+     */
+    void correctHomography(Mat &_H, Mat _E);
+    /**
      * @brief Select the best keypoint for each cell in the defined grid
      */
     void gridDetector();

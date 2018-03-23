@@ -112,10 +112,6 @@ class Frame
 		/**
 		 * @brief 
 		 */
-		void updateBoundRect();
-		/**
-		 * @brief 
-		 */
 		void updateNeighbors(Frame *_scene);
 		/**
 		 * @brief 

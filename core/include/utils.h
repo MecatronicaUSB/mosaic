@@ -58,6 +58,8 @@ void enhanceImage(Mat &_img, Mat mask = Mat());
 
 void removeScale(Mat &_H);
 
+Rect2f boundingRectFloat(vector<Point2f> _points);
+
 int sign(double _num1);
 }
 

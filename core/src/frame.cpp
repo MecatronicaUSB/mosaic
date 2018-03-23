@@ -225,47 +225,25 @@ void Frame::setHReference(Mat _H, int _ref)
 		if (grid_points[NEXT].size())
 			perspectiveTransform(grid_points[NEXT], grid_points[NEXT], _H);
 
-		updateBoundRect();
+		// updateBoundRect();
+		bound_rect = boundingRectFloat(bound_points[PERSPECTIVE]);
 		H = _H * H;
 	}
-
 }
 
-void Frame::updateBoundRect()
-{
-	float top = TARGET_HEIGHT, bottom = 0, left = TARGET_WIDTH, right = 0;
-
-	for (Point2f point : bound_points[PERSPECTIVE])
-	{
-		if (point.x < left)
-			left = point.x;
-		if (point.y < top)
-			top = point.y;
-		if (point.x > right)
-			right = point.x;
-		if (point.y > bottom)
-			bottom = point.y;
-	}
-
-	bound_rect.x = left;
-	bound_rect.y = top;
-	bound_rect.width = right - left;
-	bound_rect.height = bottom - top;
-}
-
-bool Frame::checkCollision(Frame *_object)
+bool Frame::checkCollision(Frame *_scene)
 {
 
-	if (_object->bound_rect.x > bound_rect.x + bound_rect.width)
+	if (_scene->bound_rect.x > bound_rect.x + bound_rect.width)
 		return false;
     
-    if (_object->bound_rect.x + _object->bound_rect.width < bound_rect.x)
+    if (_scene->bound_rect.x + _scene->bound_rect.width < bound_rect.x)
 		return false;
 
-	if (_object->bound_rect.y > bound_rect.y + bound_rect.height)
+	if (_scene->bound_rect.y > bound_rect.y + bound_rect.height)
 		return false;
 
-    if (_object->bound_rect.y + _object->bound_rect.height > bound_rect.y)
+    if (_scene->bound_rect.y + _scene->bound_rect.height < bound_rect.y)
         return false;
 
 	return true;
@@ -273,7 +251,7 @@ bool Frame::checkCollision(Frame *_object)
 
 void Frame::updateNeighbors(Frame *_scene)
 {
-	checkCollision(_scene);
+	if (checkCollision(_scene));
 		neighbors.push_back(_scene);
 
 	for (Frame *neighbor: _scene->neighbors)
