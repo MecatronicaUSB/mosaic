@@ -75,7 +75,6 @@ Frame *Frame::clone()
 	// CARE: must pass apply_pre instead of true
 	Frame *new_frame = new Frame(color, true);
 
-	new_frame->frame_error = frame_error;
 	new_frame->descriptors = descriptors.clone();
 	//new_frame->gray = gray.clone();
 	new_frame->H = H.clone();
@@ -107,9 +106,9 @@ void Frame::resetFrame()
 	bound_points[EUCLIDEAN] = bound_points[PERSPECTIVE]; 
 
 	grid_points[NEXT].clear();
-	grid_points[PREV].clear();
-	good_points[PREV].clear();
-	good_points[PREV].clear();
+	//grid_points[PREV].clear();
+	good_points[NEXT].clear();
+	//good_points[PREV].clear();
 
 	neighbors.clear();
 }

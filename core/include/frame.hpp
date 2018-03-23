@@ -46,7 +46,6 @@ class Frame
 {
   	public:
 		// ---------- Atributes
-		float frame_error;
 		Mat descriptors;
 		Mat color;                             //!< OpenCV Matrix containing the original image
 		Mat gray;                              //!< OpenCV Matrix containing a gray scale version of image

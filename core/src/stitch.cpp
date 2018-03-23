@@ -127,8 +127,6 @@ Mat Stitcher::stitch(Frame *_object, Frame *_scene)
 			thresh += 0.1;
 			good_matches.clear();
 			neighbors_kp.clear();
-			img[OBJECT]->good_points[PREV].clear();
-			img[SCENE]->good_points[NEXT].clear();
 		}
 	}
 
@@ -177,6 +175,8 @@ void Stitcher::getGoodMatches(float _thresh)
 		aux_matches.clear();
 	}
 
+	img[SCENE]->good_points[NEXT].clear();
+	img[OBJECT]->good_points[PREV].clear();
 	for (DMatch good : good_matches[0])
 	{
 		//-- Get the keypoints from the good matches

@@ -24,7 +24,6 @@ class Mosaic
     int n_subs;
     int n_mosaics;
     vector<Frame *> frames;
-    vector<Frame *> buffer;
     vector<SubMosaic *> sub_mosaics;
     vector<vector<SubMosaic *> > final_mosaics;
     bool apply_pre; //!< flag to apply or not SCB preprocessing algorithm
