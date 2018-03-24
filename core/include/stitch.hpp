@@ -77,7 +77,7 @@ class Stitcher
      * @brief 
      * @param _frames 
      */
-    bool detectFeatures(Frame * _frame);
+    void detectFeatures(vector<Frame *> &_frames);
 
   private:
     // ---------- Atributes

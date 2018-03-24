@@ -26,18 +26,19 @@ Mosaic::Mosaic(bool _pre)
 void Mosaic::feed(Mat _img)
 {
 	Frame *new_frame = new Frame(_img.clone(), apply_pre);
-	if (stitcher->detectFeatures(new_frame))
-		frames.push_back(new_frame);
-	cout << flush << "\rTotal images: " << frames.size();
+	frames.push_back(new_frame);
+	cout << flush << "\rTotal images:\t\t[" <<green<< frames.size()<<reset<<"]";
 }
 
 // See description in header file
 void Mosaic::compute(int _mode)
 {
 	int best_frame, k;
-	Mat H;
 	float distortion, best_distortion;
 	vector<Point2f> best_grid_points;
+	Mat H;
+
+	stitcher->detectFeatures(frames);
 	sub_mosaics.push_back(new SubMosaic());
 	sub_mosaics[0]->addFrame(frames[0]);
 	for (int i = 0; i<frames.size()-1; i++)
@@ -97,15 +98,11 @@ void Mosaic::compute(int _mode)
 				sub_mosaics[n_subs]->addFrame(frames[i+1]);
 			}
 		}
+		cout<<flush<<"\rBuilding sub-mosaics:\t[" <<green<<(i+1)/frames.size()<<reset<<" %]";
 	}
+	cout<<endl;
 	if (sub_mosaics.size() > 1 || sub_mosaics[n_subs]->n_frames > 1)
 	{
-			blender->blendSubMosaic(sub_mosaics[0]);
-			imwrite("/home/victor/dataset/output/final-000"+to_string(0)+".jpg", sub_mosaics[0]->final_scene);
-			resize(sub_mosaics[0]->final_scene, sub_mosaics[0]->final_scene, Size(1066, 800));
-			imshow("Blend-Ransac-Final", sub_mosaics[0]->final_scene);
-			waitKey(0);
-
 		final_mosaics.push_back(sub_mosaics);
 		n_mosaics++;
 		sub_mosaics.clear();
@@ -132,10 +129,10 @@ void Mosaic::compute(int _mode)
 // See description in header file
 void Mosaic::merge()
 {
-	vector<SubMosaic *> ransac_mosaics(2);
-
 	float best_overlap = 0;
-	
+	vector<SubMosaic *> ransac_mosaics(2);
+	int n=0;
+	cout<<flush<<"\rMerging sub-mosaics:\t[" <<green<<n/frames.size()<<reset<<" %]";
 	for (vector<SubMosaic *> final_mosaic : final_mosaics)
 	{
 		while(final_mosaic.size() > 1)
@@ -143,7 +140,6 @@ void Mosaic::merge()
 			best_overlap = -1;
 			for (SubMosaic *sub_mosaic : final_mosaic)
 			{
-				if (!sub_mosaic->corrected)
 				for (Hierarchy neighbor: sub_mosaic->neighbors)
 					if (neighbor.overlap > best_overlap)
 					{
@@ -179,22 +175,29 @@ void Mosaic::merge()
 			for (Frame *frame : ransac_mosaics[0]->frames)
 				frame->setHReference(best_H);
 			ransac_mosaics[0]->avg_H = best_H * ransac_mosaics[0]->avg_H;
-			ransac_mosaics[0]->corrected = true;
-			blender->blendSubMosaic(ransac_mosaics[0]);
-			//imwrite("/home/victor/dataset/output/final-000"+to_string(n++)+".jpg", ransac_mosaics[0]->final_scene);
-			resize(ransac_mosaics[0]->final_scene, ransac_mosaics[0]->final_scene, Size(1066, 800));
-			imshow("Blend-Ransac-Final", ransac_mosaics[0]->final_scene);
-			waitKey(0);
+
 			delete ransac_mosaics[1];
 		}
+		cout<<flush<<"\rMerging sub-mosaics:\t["<<green<<++n/final_mosaics.size()<<reset<<" %]";
 	}
+	cout<<endl;
 }
 
 // See description in header file
 void Mosaic::getReferencedMosaics(vector<SubMosaic *> &_sub_mosaics)
 {
+	Mat key_H = _sub_mosaics[1]->frames[0]->H.clone();
+	Mat key_E = _sub_mosaics[1]->frames[0]->E.clone();
 	Mat ref_H = _sub_mosaics[0]->avg_H.clone();
 	Mat ref_E = _sub_mosaics[0]->avg_E.clone();
+
+	for (Frame *frame : _sub_mosaics[1]->frames)
+	{
+		frame->setHReference(key_H.inv(), PERSPECTIVE);
+		frame->setHReference(key_E.inv(), EUCLIDEAN);
+	}
+	_sub_mosaics[1]->avg_H = key_H.inv() * _sub_mosaics[1]->avg_H;
+	_sub_mosaics[1]->avg_E = key_E.inv() * _sub_mosaics[1]->avg_E;
 
 	_sub_mosaics[1]->referenceToZero();
 	Mat new_ref_H = ref_H * _sub_mosaics[1]->avg_H.clone();
@@ -213,11 +216,13 @@ void Mosaic::getReferencedMosaics(vector<SubMosaic *> &_sub_mosaics)
 	for (Frame *frame : _sub_mosaics[1]->frames)
 	{
 		frame->setHReference(ref_H.inv(), PERSPECTIVE);
+		frame->setHReference(key_H, PERSPECTIVE);
 		frame->setHReference(ref_E.inv(), EUCLIDEAN);
+		frame->setHReference(key_E, EUCLIDEAN);		
 	}
-
 	_sub_mosaics[0]->avg_H = new_ref_H.clone();
 	_sub_mosaics[0]->avg_E = new_ref_E.clone();
+
 }
 
 // See description in header file
@@ -335,12 +340,12 @@ float Mosaic::getOverlap(SubMosaic *_object, SubMosaic *_scene)
 void Mosaic::print()
 {
 	int n=0;
-	for (SubMosaic *sub_mosaic: sub_mosaics)
+	for (vector<SubMosaic *> final_mosaic: final_mosaics)
 	{
-		blender->blendSubMosaic(sub_mosaic);
-		imwrite("/home/victor/dataset/output/final-000"+to_string(n++)+".jpg", sub_mosaic->final_scene);
-		resize(sub_mosaic->final_scene, sub_mosaic->final_scene, Size(1066, 800));
-		imshow("Blend-Ransac-Final", sub_mosaic->final_scene);
+		blender->blendSubMosaic(final_mosaic[0]);
+		imwrite("/home/victor/dataset/output/final-000"+to_string(n++)+".jpg", final_mosaic[0]->final_scene);
+		resize(final_mosaic[0]->final_scene, final_mosaic[0]->final_scene, Size(1066, 800));
+		imshow("Blend-Ransac-Final", final_mosaic[0]->final_scene);
 		waitKey(0);
 	}
 }

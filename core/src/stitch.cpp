@@ -71,20 +71,23 @@ Stitcher::Stitcher(bool _grid, int _detector, int _matcher, int _mode)
 	}
 }
 
-bool Stitcher::detectFeatures(Frame * _frame)
+void Stitcher::detectFeatures(vector<Frame *> &_frames)
 {
-	detector->detectAndCompute(_frame->gray, Mat(),
-								_frame->keypoints,
-								_frame->descriptors);
-
-	if (!_frame->haveKeypoints())
+	int i=0;
+	cout<<endl;
+	for (Frame *frame : _frames)
 	{
-		delete _frame;
-		return false;
+		detector->detectAndCompute(frame->gray, Mat(), frame->keypoints, frame->descriptors);
+		frame->gray.release();
+		if (!frame->haveKeypoints())
+		{
+			delete frame;
+			_frames.erase(_frames.begin() + i);
+		}
+		cout << flush << "\rDetecting Features:\t[" <<green<<++i/_frames.size()<<reset<<" %]";
 	}
+	cout<<endl;
 
-	_frame->gray.release();
-	return true;
 }
 
 // See description in header file

@@ -13,12 +13,6 @@
 /// User namespaces
 using namespace std;
 
-const string green("\033[1;32m");
-const string yellow("\033[1;33m");
-const string cyan("\033[1;36m");
-const string red("\033[1;31m");
-const string reset("\033[0m");
-
 /*
  * @function main
  * @brief Main function
@@ -108,12 +102,13 @@ int main( int argc, char** argv ) {
         mosaic.feed(img);
     }
     mosaic.compute( mosaic_mode ? args::get(mosaic_mode) : 1 );
-    // if (output) {
-    //     mosaic.print();
-    // }
-    mosaic.print();
+    
+    if (output) {
+        mosaic.print();
+    }
+    
     t = ((double)getTickCount() - t) / getTickFrequency();
-    cout << endl << "\tExecution time:\t" << green << t << reset <<" s" <<endl;
+    cout << endl << "  Execution time:\t" << green << t << reset <<" s" <<endl;
 
     return 0;
 }

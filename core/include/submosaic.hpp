@@ -30,7 +30,6 @@ class SubMosaic
 {
   public:
     // ---------- Atributes
-    bool corrected;
     int n_frames;    //!< Number of frames in sub-mosaic
     Mat final_scene; //!< Image containing all blended images (the sub-mosaic)
     Mat avg_H;       //!< Average Homography matrix (Matrix that reduces the dostortion error)

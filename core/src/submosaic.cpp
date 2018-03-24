@@ -17,7 +17,6 @@ namespace m2d //!< mosaic 2d namespace
 SubMosaic::SubMosaic()
 {
 	n_frames = 0;
-	corrected = false;
 	scene_size = Size2f(TARGET_WIDTH, TARGET_HEIGHT);
 	avg_H = Mat::eye(3, 3, CV_64F);
 	avg_E = Mat::eye(3, 3, CV_64F);
