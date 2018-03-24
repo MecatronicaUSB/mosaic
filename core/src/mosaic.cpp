@@ -98,7 +98,7 @@ void Mosaic::compute(int _mode)
 				sub_mosaics[n_subs]->addFrame(frames[i+1]);
 			}
 		}
-		cout<<flush<<"\rBuilding sub-mosaics:\t[" <<green<<(i+1)/frames.size()<<reset<<" %]";
+		cout<<flush<<"\rBuilding sub-mosaics:\t[" <<green<<((i+2)*100)/frames.size()<<reset<<"%]";
 	}
 	cout<<endl;
 	if (sub_mosaics.size() > 1 || sub_mosaics[n_subs]->n_frames > 1)
@@ -132,7 +132,7 @@ void Mosaic::merge()
 	float best_overlap = 0;
 	vector<SubMosaic *> ransac_mosaics(2);
 	int n=0;
-	cout<<flush<<"\rMerging sub-mosaics:\t[" <<green<<n/frames.size()<<reset<<" %]";
+	cout<<flush<<"\rMerging sub-mosaics:\t[" <<green<<n/frames.size()<<reset<<"%]";
 	for (vector<SubMosaic *> final_mosaic : final_mosaics)
 	{
 		while(final_mosaic.size() > 1)
@@ -169,7 +169,7 @@ void Mosaic::merge()
 					final_mosaic.erase(final_mosaic.begin() + i);
 			}
 			getReferencedMosaics(ransac_mosaics);
-			alignMosaics(ransac_mosaics);
+			//alignMosaics(ransac_mosaics);
 			Mat best_H = getBestModel(ransac_mosaics, 4000);
 
 			for (Frame *frame : ransac_mosaics[0]->frames)
@@ -178,7 +178,7 @@ void Mosaic::merge()
 
 			delete ransac_mosaics[1];
 		}
-		cout<<flush<<"\rMerging sub-mosaics:\t["<<green<<++n/final_mosaics.size()<<reset<<" %]";
+		cout<<flush<<"\rMerging sub-mosaics:\t["<<green<<((++n)*100)/final_mosaics.size()<<reset<<"%]";
 	}
 	cout<<endl;
 }
@@ -306,11 +306,11 @@ void Mosaic::alignMosaics(vector<SubMosaic *> &_sub_mosaics)
 	R.copyTo(M(Rect(0, 0, 3, 2)));
 	removeScale(M);
 
-	for (Frame *frame : _sub_mosaics[1]->frames)
+	for (Frame *frame : _sub_mosaics[0]->frames)
 	{
 		frame->setHReference(M);
 	}
-	_sub_mosaics[1]->avg_H = M * _sub_mosaics[1]->avg_H;
+	_sub_mosaics[0]->avg_H = M * _sub_mosaics[1]->avg_H;
 
 }
 
