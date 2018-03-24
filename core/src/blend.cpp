@@ -163,12 +163,6 @@ void Blender::correctColor(SubMosaic *_sub_mosaic)
 		}
 		merge(channels, lab_img);
 		cvtColor(lab_img, warp_imgs[i+1], CV_Lab2BGR);
-
-		// imshow("test 0", warp_imgs[i]);
-		// imshow("mask 0", over_masks[0]);
-		// imshow("mask 1", over_masks[1]);
-		// imshow("test 1", warp_imgs[i+1]);
-		// waitKey(0);
 	}
 }
 

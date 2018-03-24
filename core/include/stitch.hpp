@@ -72,7 +72,7 @@ class Stitcher
      * @return true If the stitch was sucessfull
      * @return false If the stitch wasn't sucessfull
      */
-    Mat stitch(Frame *_object, Frame *_scene);
+    vector<Mat> stitch(Frame *_object, Frame *_scene);
     /**
      * @brief 
      * @param _frames 
@@ -85,8 +85,9 @@ class Stitcher
     Ptr<DescriptorMatcher> matcher;           //!< Pointer to OpenCV feature Matcher
     vector<Mat> descriptors = vector<Mat>(2); //!< Array of OpenCV Matrix conaining feature descriptors
     vector<vector<Point2f>> neighbors_kp;
-    vector<Mat> scene_points = vector<Mat>(2);
-    Mat object_points;
+    vector<Point2f> euclidean_points;
+    vector<Point2f> scene_points;
+    vector<Point2f> object_points;
     // ---------- Methods
     /**
      * @brief Discard outliers from initial matches vector

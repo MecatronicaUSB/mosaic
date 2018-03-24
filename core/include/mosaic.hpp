@@ -73,7 +73,13 @@ class Mosaic
      * @return float 
      */
     float getOverlap(SubMosaic *_object, SubMosaic *_scene);
-    // temporal function
-    void print();
+    /**
+     * @brief 
+     */
+    void save(string _dir);
+    /**
+     * @brief 
+     */
+    void show();
 };
 }

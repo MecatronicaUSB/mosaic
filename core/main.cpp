@@ -21,7 +21,7 @@ int main( int argc, char** argv ) {
 
     double t;
     cv::Mat img;
-    string directory;
+    string input_directory, output_directory;
     vector<string> file_names;
 
     parser.helpParams.proglineOptions = "[DIRECTORY] [--matcher] [--detector] {OPTIONAL}";
@@ -44,37 +44,40 @@ int main( int argc, char** argv ) {
         return 1;
     }
 
-    directory = args::get(input_dir);
-    file_names = read_filenames(directory);
+    input_directory = args::get(input_dir);
+    output_directory = args::get(output_dir);
 
-    // Veobose section -----
+    //-- VERBOSE SECTION --//
     cout << endl << "2D mosaic generation"<<endl;
     cout << "Author: Victor Garcia"<<endl<<endl;
-    cout << "Built with OpenCV\t" <<yellow<< CV_VERSION << reset << endl;
-    cout << "  Directory:\t\t"<<cyan<< directory<<reset << endl;
-    // Feature Extractor
-    cout << "  Feature extractor:\t" << cyan;
-    detector_surf ? cout << "SURF" :
-    detector_sift ? cout << "SIFT" :
-    detector_akaze ? cout << "A-KAZE" : cout << "KAZE\t(Default)";
-    cout << reset << endl;
-    // Feature Matcher
-    cout << "  Feature Matcher:\t" << cyan;
-    matcher_brutef ? cout << "BRUTE FORCE" : cout << "FLANN\t(Default)";
-    cout << reset << endl;
-    // # bands for multiband blender
-    cout << "  Nº bands (blender):\t" << cyan;
-    blender_bands ? cout << args::get(blender_bands) : cout << 5;
-    cout << reset << endl;
-    // Mosaic mode
+    cout << "  Built with OpenCV\t" <<cyan<< CV_VERSION << reset << endl;
+    cout << "  Input directory:\t"<<cyan<< input_directory<<reset << endl;
+    cout << "  Output directory:\t"<<cyan<< output_directory<<reset << endl;
+    //-- Feature Extractor
+    detector_surf ?
+    cout<<"  Feature extractor:\t"<<cyan<< "SURF"<<reset<<endl:
+    detector_sift ?
+    cout<<"  Feature extractor:\t"<<cyan<< "SIFT"<<reset<<endl:
+    detector_akaze ?
+    cout<<"  Feature extractor:\t"<<cyan<< "A-KAZE"<<reset<<endl:
+    cout<<"  Feature extractor:\t"<<cyan<< "KAZE"<<reset<<endl;
+    //-- Feature Matcher
+    matcher_brutef ?
+    cout<<"  Feature Matcher:\t"<<cyan<<"BRUTE FORCE"<< reset << endl:
+    cout<<"  Feature Matcher:\t"<<cyan<<"FLANN\t(Default)"<< reset << endl;
+    //-- # bands for multiband blender
+    blender_bands ?
+    cout<<"  Nº bands (blender):\t"<<cyan<< args::get(blender_bands)<<reset<<endl :
+    cout<<"  Nº bands (blender):\t"<<cyan<<3<< reset << endl;
+    //-- Mosaic mode
     cout << "  Mosaic Mode:\t\t" << cyan;
-    mosaic_mode ? cout << "Full" : cout << "Simple";
+    mosaic_mode ? cout<<cyan<<"Full" : cout <<cyan<<"Simple";
     cout << reset << endl;
-    // Seam finder
+    //-- Seam finder
     cout << "  Seam finder:\t\t" << cyan;
-    mosaic_mode ? cout << "Graph cut" : cout << "Simple";
+    cut_line ? cout <<cyan<< "Graph cut" : cout <<cyan<< "Simple";
     cout << reset << endl;
-    // Optional commands
+    //-- Optional commands
     cout << boolalpha;
     cout << "  Apply preprocessing:\t"<<cyan<< apply_pre <<reset << endl;
     cout << "  Use grid detection:\t"<<cyan<< use_grid <<reset << endl<<endl;
@@ -93,6 +96,7 @@ int main( int argc, char** argv ) {
 
     t = (double) getTickCount();
 
+    file_names = read_filenames(input_directory);
     for (int i=0; i<file_names.size(); i++) {
         img = imread(file_names[i], IMREAD_COLOR);
         if (!img.data) {
@@ -102,13 +106,14 @@ int main( int argc, char** argv ) {
         mosaic.feed(img);
     }
     mosaic.compute( mosaic_mode ? args::get(mosaic_mode) : 1 );
-    
-    if (output) {
-        mosaic.print();
-    }
+    mosaic.save(output_directory);
     
     t = ((double)getTickCount() - t) / getTickFrequency();
     cout << endl << "  Execution time:\t" << green << t << reset <<" s" <<endl;
+
+    if (output) {
+        mosaic.show();
+    }
 
     return 0;
 }

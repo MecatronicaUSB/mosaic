@@ -36,7 +36,7 @@ void Mosaic::compute(int _mode)
 	int best_frame, k;
 	float distortion, best_distortion;
 	vector<Point2f> best_grid_points;
-	Mat H;
+	vector<Mat> transform(2);
 
 	stitcher->detectFeatures(frames);
 	sub_mosaics.push_back(new SubMosaic());
@@ -48,10 +48,11 @@ void Mosaic::compute(int _mode)
 		best_frame = i+2;
 		for (k =i+1; k < frames.size() && k < i+3; k++)
 		{
-			H = stitcher->stitch(frames[k], frames[i]);
-			if (!H.empty())
+			transform = stitcher->stitch(frames[k], frames[i]);
+			if (!transform[PERSPECTIVE].empty() && !transform[EUCLIDEAN].empty())
 			{
-				frames[k]->setHReference(H, PERSPECTIVE);
+				frames[k]->setHReference(transform[EUCLIDEAN], EUCLIDEAN);
+				frames[k]->setHReference(transform[PERSPECTIVE], PERSPECTIVE);
 				distortion = frames[k]->frameDistortion(PERSPECTIVE);
 				if (distortion < best_distortion)
 				{
@@ -92,6 +93,9 @@ void Mosaic::compute(int _mode)
 			{
 				sub_mosaics[n_subs]->avg_H.release();
 				sub_mosaics[n_subs]->avg_H = frames[i+1]->H.clone();
+				sub_mosaics[n_subs]->avg_E.release();
+				sub_mosaics[n_subs]->avg_E = frames[i+1]->E.clone();
+				
 				sub_mosaics.push_back(new SubMosaic());
 				n_subs++;
 				frames[i+1]->resetFrame();
@@ -169,7 +173,7 @@ void Mosaic::merge()
 					final_mosaic.erase(final_mosaic.begin() + i);
 			}
 			getReferencedMosaics(ransac_mosaics);
-			//alignMosaics(ransac_mosaics);
+			alignMosaics(ransac_mosaics);
 			Mat best_H = getBestModel(ransac_mosaics, 4000);
 
 			for (Frame *frame : ransac_mosaics[0]->frames)
@@ -179,6 +183,7 @@ void Mosaic::merge()
 			delete ransac_mosaics[1];
 		}
 		cout<<flush<<"\rMerging sub-mosaics:\t["<<green<<((++n)*100)/final_mosaics.size()<<reset<<"%]";
+		final_mosaic[0]->correct();
 	}
 	cout<<endl;
 }
@@ -301,17 +306,18 @@ void Mosaic::alignMosaics(vector<SubMosaic *> &_sub_mosaics)
 		}
 	}
 
-	Mat R = estimateRigidTransform(points[1], points[0], false);
-	Mat M = Mat::eye(3, 3, CV_64F);
-	R.copyTo(M(Rect(0, 0, 3, 2)));
-	removeScale(M);
-
-	for (Frame *frame : _sub_mosaics[0]->frames)
+	Mat R = estimateRigidTransform(points[0], points[1], false);
+	if (!R.empty())
 	{
-		frame->setHReference(M);
+		Mat M = Mat::eye(3, 3, CV_64F);
+		R(Rect(0, 0, 2, 2)).copyTo(M(Rect(0, 0, 2, 2)));
+		removeScale(M);
+		for (Frame *frame : _sub_mosaics[1]->frames)
+		{
+			frame->setHReference(M);
+		}
+		_sub_mosaics[1]->avg_H = M * _sub_mosaics[1]->avg_H;
 	}
-	_sub_mosaics[0]->avg_H = M * _sub_mosaics[1]->avg_H;
-
 }
 
 float Mosaic::getOverlap(SubMosaic *_object, SubMosaic *_scene)
@@ -337,16 +343,31 @@ float Mosaic::getOverlap(SubMosaic *_object, SubMosaic *_scene)
 }
 
 // See description in header file
-void Mosaic::print()
+void Mosaic::save(string _dir)
 {
 	int n=0;
 	for (vector<SubMosaic *> final_mosaic: final_mosaics)
 	{
 		blender->blendSubMosaic(final_mosaic[0]);
-		imwrite("/home/victor/dataset/output/final-000"+to_string(n++)+".jpg", final_mosaic[0]->final_scene);
-		resize(final_mosaic[0]->final_scene, final_mosaic[0]->final_scene, Size(1066, 800));
+		imwrite(_dir+"-000.jpg", final_mosaic[0]->final_scene);
+	}
+}
+
+void Mosaic::show()
+{
+	int n=0;
+	int height=800;
+	float resize_factor;
+	for (vector<SubMosaic *> final_mosaic: final_mosaics)
+	{
+		resize_factor = (float)height / final_mosaic[0]->final_scene.rows;
+		resize(final_mosaic[0]->final_scene, final_mosaic[0]->final_scene,
+				Size(round(final_mosaic[0]->final_scene.cols * resize_factor),
+				round(final_mosaic[0]->final_scene.rows * resize_factor)));
+
 		imshow("Blend-Ransac-Final", final_mosaic[0]->final_scene);
 		waitKey(0);
 	}
 }
+
 }

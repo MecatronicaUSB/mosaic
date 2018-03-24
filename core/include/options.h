@@ -23,7 +23,8 @@ args::Flag detector_akaze(feature, "AKAZE", "Use SURF --A-Kaze Features--", {"ak
 args::Flag detector_kaze(feature, "KAZE", "Use KAZE --Kaze Features-- (default)", {"kaze"});
 
 args::Group group_data(parser, "Select input data:", args::Group::Validators::AtLeastOne);
-args::Positional<std::string> input_dir(group_data, "directory", "Directory to load the frames.");
+args::Positional<std::string> input_dir(group_data, "directory input", "Directory to load the frames.");
+args::Positional<std::string> output_dir(group_data, "directory output", "Directory to save the final mosaics.");
 
 args::Group group_optional(parser, "(Optional)", args::Group::Validators::DontCare);
 args::Flag output(group_optional, "image-name", "Show final blended images", {'o'});

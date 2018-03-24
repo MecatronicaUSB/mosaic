@@ -21,10 +21,14 @@ Frame::Frame(Mat _img, bool _pre, int _width, int _height)
 	grid_points = vector<vector<Point2f>>(2);
 	good_points = vector<vector<Point2f>>(2);
 
-	const float cx = 639.5, cy = 359.5;
-	const float fx = 1101, fy = 1101;
+	// const float cx = 639.5, cy = 359.5;
+	// const float fx = 1101, fy = 1101;
+	// const float k1 = -0.359, k2 = 0.279, k3 = -0.16;
+	// const float p1 = 0, p2 = 0;
 
-	const float k1 = -0.359, k2 = 0.279, k3 = -0.16;
+	const float cx = 687.23531391, cy = 501.08026641;
+	const float fx = 1736.49233331, fy = 1733.74525406;
+	const float k1 = 0.15808590, k2 = 0.76137626, k3 = 0.00569993;
 	const float p1 = 0, p2 = 0;
 
 	Mat camera_matrix = (Mat1d(3, 3) << fx, 0, cx, 0, fy, cy, 0, 0, 1);
@@ -33,7 +37,7 @@ Frame::Frame(Mat _img, bool _pre, int _width, int _height)
 	if (_img.size().width != _width || _img.size().height != _height)
 		resize(_img, _img, Size(_width, _height));
 
-	undistort(_img, color, camera_matrix, distortion_coeff);
+	undistort(_img, color, camera_matrix, Mat());
 
 	cvtColor(color, gray, CV_BGR2GRAY);
 	if (_pre)
@@ -193,10 +197,10 @@ bool Frame::isGoodFrame()
 	// enclosing area with good keypoints
 	// keypoints_area = boundAreaKeypoints();
 
-	// 1.1 initial threshold value, must be ajusted in future tests
+	// 1.5 initial threshold value, must be ajusted in future tests
 	if (area_error > 1.5)
 		return false;
-	// 1.1 initial threshold value, must be ajusted in future tests
+	// 1.5 initial threshold value, must be ajusted in future tests
 	if (diagonal_error > 1.5)
 		return false;
 	// if (keypoints_area < 0.2 * color.cols * color.rows)
@@ -229,6 +233,8 @@ void Frame::setHReference(Mat _H, int _ref)
 		bound_rect = boundingRectFloat(bound_points[PERSPECTIVE]);
 		H = _H * H;
 	}
+	else
+		E = _H * E;
 }
 
 bool Frame::checkCollision(Frame *_scene)
