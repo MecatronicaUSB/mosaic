@@ -141,12 +141,12 @@ void Mosaic::merge(int _mode)
 	vector<SubMosaic *> ransac_mosaics(2);
 	int n=0;
 	cout<<flush<<"\rMerging sub-mosaics:\t[" <<green<<n/frames.size()<<reset<<"%]";
-	for (vector<SubMosaic *> final_mosaic : final_mosaics)
+	for (int n=0; n<final_mosaics.size(); n++)
 	{
-		while(final_mosaic.size() > 1)
+		while(final_mosaics[n].size() > 1)
 		{
 			best_overlap = -1;
-			for (SubMosaic *sub_mosaic : final_mosaic)
+			for (SubMosaic *sub_mosaic : final_mosaics[n])
 			{
 				for (Hierarchy neighbor: sub_mosaic->neighbors)
 					if (neighbor.overlap > best_overlap)
@@ -162,6 +162,7 @@ void Mosaic::merge(int _mode)
 				{
 					ransac_mosaics[0]->neighbors.erase(ransac_mosaics[0]->neighbors.begin()+i);
 					for (int j=0; j<ransac_mosaics[1]->neighbors.size(); j++)
+					{
 						if (ransac_mosaics[1]->neighbors[j].mosaic != ransac_mosaics[0])
 						{
 							ransac_mosaics[0]->neighbors.push_back(ransac_mosaics[1]->neighbors[j]);
@@ -169,13 +170,13 @@ void Mosaic::merge(int _mode)
 								if (ransac_mosaics[1]->neighbors[j].mosaic->neighbors[k].mosaic == ransac_mosaics[1])
 									ransac_mosaics[1]->neighbors[j].mosaic->neighbors[k].mosaic = ransac_mosaics[0];
 						}
+					}
 				}
-			}		
-			for (int i=0; i<final_mosaic.size(); i++)
-			{
-				if (ransac_mosaics[1] == final_mosaic[i])
-					final_mosaic.erase(final_mosaic.begin() + i);
 			}
+			for (int i=0; i<final_mosaics[n].size(); i++)
+				if (ransac_mosaics[1] == final_mosaics[n][i])
+					final_mosaics[n].erase(final_mosaics[n].begin() + i);
+				
 			getReferencedMosaics(ransac_mosaics);
 			alignMosaics(ransac_mosaics);
 
@@ -184,12 +185,13 @@ void Mosaic::merge(int _mode)
 			for (Frame *frame : ransac_mosaics[0]->frames)
 				frame->setHReference(best_H);
 			ransac_mosaics[0]->avg_H = best_H * ransac_mosaics[0]->avg_H;
-
+			blender->blendSubMosaic(ransac_mosaics[0]);
 			delete ransac_mosaics[1];
 		}
-		cout<<flush<<"\rMerging sub-mosaics:\t["<<green<<((++n)*100)/final_mosaics.size()<<reset<<"%]";
 		if (_mode == FULL)
-			final_mosaic[0]->correct();
+			//final_mosaics[n][0]->correct();
+		n++;
+		cout<<flush<<"\rMerging sub-mosaics:\t["<<green<<((n)*100)/final_mosaics.size()<<reset<<"%]";
 	}
 	cout<<endl;
 }

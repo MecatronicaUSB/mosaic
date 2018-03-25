@@ -48,7 +48,7 @@
             "request": "launch",
             "program": "${workspaceRoot}/core/mosaic",
             "args": ["/home/victor/dataset/frames/ScottReef","/home/victor/dataset/output/launch-test",
-                     "--grid", "--pre", "-o", "-f", "-m", "0"],
+                     "--grid", "--pre", "-o", "-f", "-m", "1"],
             "stopAtEntry": false,
             "cwd": "${workspaceRoot}",
             "environment": [],

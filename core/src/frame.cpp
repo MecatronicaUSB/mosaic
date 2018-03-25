@@ -26,10 +26,15 @@ Frame::Frame(Mat _img, bool _pre, int _width, int _height)
 	// const float k1 = -0.359, k2 = 0.279, k3 = -0.16;
 	// const float p1 = 0, p2 = 0;
 
-	const float cx = 687.23531391, cy = 501.08026641;
-	const float fx = 1736.49233331, fy = 1733.74525406;
-	const float k1 = 0.15808590, k2 = 0.76137626, k3 = 0.00569993;
-	const float p1 = 0, p2 = 0;
+	// const float cx = 687.23531391, cy = 501.08026641;
+	// const float fx = 1736.49233331, fy = 1733.74525406;
+	// const float k1 = 0.15808590, k2 = 0.76137626, k3 = 0.00569993;
+	// const float p1 = 0.00569993, p2 = -0.00067913;
+
+	const float cx = 682.48926624, cy = 510.35526868;
+	const float fx = 1738.62666794, fy = 1736.66673076;
+	const float k1 = 0.17427338, k2 = 0.66559118, k3 = 0.99996769;
+	const float p1 = 0.00355058, p2 = -0.00255854;
 
 	Mat camera_matrix = (Mat1d(3, 3) << fx, 0, cx, 0, fy, cy, 0, 0, 1);
 	Mat distortion_coeff = (Mat1d(1, 5) << k1, k2, p1, p2, k3);
@@ -37,14 +42,17 @@ Frame::Frame(Mat _img, bool _pre, int _width, int _height)
 	if (_img.size().width != _width || _img.size().height != _height)
 		resize(_img, _img, Size(_width, _height));
 
+	//imshow("distort", _img);
 	undistort(_img, color, camera_matrix, Mat());
+	//imshow("un-distort", color);
+	//waitKey(0);
 
 	cvtColor(color, gray, CV_BGR2GRAY);
 	if (_pre)
 	{
 		imgChannelStretch(gray, gray, 1, 99, Mat());
 	}
-
+	//enhanceImage(color);
 	bound_rect = Rect2f(0, 0, (float)_width, (float)_height);
 	// corner points
 	bound_points[PERSPECTIVE].push_back(Point2f(0, 0));
