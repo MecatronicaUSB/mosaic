@@ -15,6 +15,11 @@ using namespace cv;
 namespace m2d
 {
 
+enum seamFinder {
+    SIMPLE_CUT,
+    GRAPH_CUT
+};
+
 struct _BlendPoint
 {
     int index;
@@ -47,7 +52,7 @@ class Blender
     /**
          * @brief 
          */
-    Blender(int _bands = 5, int _cut_line = 0): bands(_bands), graph_cut(_cut_line){};
+    Blender(int _bands = 5, int _cut_line = SIMPLE): bands(_bands), graph_cut(_cut_line){};
     /**
          * @brief 
          * @param _sub_mosaic 

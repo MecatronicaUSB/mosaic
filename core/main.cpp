@@ -71,7 +71,7 @@ int main( int argc, char** argv ) {
     cout<<"  Nº bands (blender):\t"<<cyan<<3<< reset << endl;
     //-- Mosaic mode
     cout << "  Mosaic Mode:\t\t" << cyan;
-    mosaic_mode ? cout<<cyan<<"Full" : cout <<cyan<<"Simple";
+    args::get(mosaic_mode) ? cout<<cyan<<"Full" : cout <<cyan<<"Simple";
     cout << reset << endl;
     //-- Seam finder
     cout << "  Seam finder:\t\t" << cyan;

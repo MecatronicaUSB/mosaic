@@ -51,8 +51,12 @@ void Mosaic::compute(int _mode)
 			transform = stitcher->stitch(frames[k], frames[i]);
 			if (!transform[PERSPECTIVE].empty() && !transform[EUCLIDEAN].empty())
 			{
-				frames[k]->setHReference(transform[EUCLIDEAN], EUCLIDEAN);
-				frames[k]->setHReference(transform[PERSPECTIVE], PERSPECTIVE);
+				if (_mode == SIMPLE)
+					frames[k]->setHReference(transform[EUCLIDEAN], PERSPECTIVE);
+				else
+					frames[k]->setHReference(transform[PERSPECTIVE], PERSPECTIVE);
+				
+				frames[k]->setHReference(transform[EUCLIDEAN], EUCLIDEAN);	
 				distortion = frames[k]->frameDistortion(PERSPECTIVE);
 				if (distortion < best_distortion)
 				{
@@ -127,11 +131,11 @@ void Mosaic::compute(int _mode)
 			final_mosaic[i+1]->neighbors.push_back(aux_2);
 		}
 	}
-	merge();
+	merge(_mode);
 }
 
 // See description in header file
-void Mosaic::merge()
+void Mosaic::merge(int _mode)
 {
 	float best_overlap = 0;
 	vector<SubMosaic *> ransac_mosaics(2);
@@ -174,6 +178,7 @@ void Mosaic::merge()
 			}
 			getReferencedMosaics(ransac_mosaics);
 			alignMosaics(ransac_mosaics);
+
 			Mat best_H = getBestModel(ransac_mosaics, 4000);
 
 			for (Frame *frame : ransac_mosaics[0]->frames)
@@ -183,7 +188,8 @@ void Mosaic::merge()
 			delete ransac_mosaics[1];
 		}
 		cout<<flush<<"\rMerging sub-mosaics:\t["<<green<<((++n)*100)/final_mosaics.size()<<reset<<"%]";
-		final_mosaic[0]->correct();
+		if (_mode == FULL)
+			final_mosaic[0]->correct();
 	}
 	cout<<endl;
 }

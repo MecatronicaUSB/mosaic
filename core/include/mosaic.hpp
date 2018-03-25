@@ -41,12 +41,12 @@ class Mosaic
     /**
      * @brief 
      */
-    void compute(int _mode);
+    void compute(int _mode = FULL);
     /**
          * @brief 
          * @param n_inter 
          */
-    void merge();
+    void merge(int _mode = FULL);
     /**
          * @brief 
          * @param _first 

@@ -23,6 +23,21 @@ typedef struct
     float overlap;     //!< Overlap area between this sub-mosaic and pointed one
 } Hierarchy;
 
+struct _CornerPoint
+{
+    int index;
+    float distance;
+    Point2f point;
+
+    _CornerPoint(Point2f _point, int _idx) : point(_point), index(_idx){};
+    bool operator<(const _CornerPoint &point) const
+    {
+        return (distance < point.distance);
+    }
+};
+
+typedef _CornerPoint CornerPoint;
+
 /**
  * @brief 
  */
@@ -98,6 +113,8 @@ class SubMosaic
      * @return vector<vector<Point2f> > 
      */
     vector<vector<Point2f> > getCornerPoints();
+
+    vector<vector<Point2f> > getCornerPoints2();
     /**
          * @brief Calculate the Homography matrix that reduce the distortion error in the sub-mosaic
          * (Not yet implemented)

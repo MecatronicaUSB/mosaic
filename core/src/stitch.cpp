@@ -145,7 +145,7 @@ vector<Mat> Stitcher::stitch(Frame *_object, Frame *_scene)
 		removeScale(E);
 		correctHomography(H, E);
 	}
-	// cout << endl<< Mat(euclidean_points);
+	
 	R = estimateRigidTransform(Mat(object_points), Mat(euclidean_points), false);
 	if (!R.empty())
 	{

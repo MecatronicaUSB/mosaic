@@ -67,7 +67,6 @@ void SubMosaic::referenceToZero()
 
 void SubMosaic::computeOffset()
 {
-
 	float top = TARGET_HEIGHT, bottom = 0, left = TARGET_WIDTH, right = 0;
 	for (Frame *frame : frames)
 	{
@@ -95,7 +94,6 @@ void SubMosaic::computeOffset()
 
 void SubMosaic::updateOffset(vector<float> _total_offset)
 {
-
 	if (!_total_offset[TOP] && !_total_offset[LEFT])
 		return;
 
@@ -137,7 +135,7 @@ float SubMosaic::calcDistortion()
 // See description in header file
 void SubMosaic::correct()
 {
-	vector<vector<Point2f> > corner_points = getCornerPoints();
+	vector<vector<Point2f> > corner_points = getCornerPoints2();
 	Mat correct_H = getPerspectiveTransform(corner_points[PERSPECTIVE], corner_points[EUCLIDEAN]);
 
 	for (Frame *frame : frames)
@@ -145,6 +143,44 @@ void SubMosaic::correct()
 	
 	avg_H = correct_H * avg_H;
 	avg_E = correct_H * avg_E;
+}
+
+vector<vector<Point2f> > SubMosaic::getCornerPoints2()
+{
+	vector<Frame *> corner_frames;
+	corner_frames.push_back(frames[0]);
+	corner_frames.push_back(frames[n_frames-1]);
+
+	vector<vector<CornerPoint>> corner_points(2);
+
+	for (int i=0; i<corner_frames.size(); i++)
+	{
+		for (int j=0; j<4; j++)
+		{
+			corner_points[i].push_back(CornerPoint(corner_frames[i]->bound_points[EUCLIDEAN][j], j));
+			corner_points[i][j].distance = getDistance(corner_points[i][j].point,
+													   corner_frames[!i]->bound_points[EUCLIDEAN][4]);
+		}
+		sort(corner_points[i].begin(), corner_points[i].end());
+	}
+
+	vector<vector<Point2f> > border_points(2);
+
+	vector<Point2f> euclidean_points;
+	euclidean_points.push_back(corner_points[0][2].point);
+	euclidean_points.push_back(corner_points[0][3].point);
+	euclidean_points.push_back(corner_points[1][2].point);
+	euclidean_points.push_back(corner_points[1][3].point);
+	vector<Point2f> perspective_points;
+	perspective_points.push_back(corner_frames[0]->bound_points[PERSPECTIVE][corner_points[0][2].index]);
+	perspective_points.push_back(corner_frames[0]->bound_points[PERSPECTIVE][corner_points[0][3].index]);
+	perspective_points.push_back(corner_frames[1]->bound_points[PERSPECTIVE][corner_points[1][2].index]);
+	perspective_points.push_back(corner_frames[1]->bound_points[PERSPECTIVE][corner_points[1][3].index]);
+
+	border_points[EUCLIDEAN]= euclidean_points;
+	border_points[PERSPECTIVE]= perspective_points;
+
+	return border_points;
 }
 
 vector<vector<Point2f> > SubMosaic::getCornerPoints()
