@@ -41,7 +41,7 @@ Stitcher::Stitcher(bool _grid, int _detector, int _matcher)
 	}
 	case USE_SURF:
 	{
-		detector = SURF::create();
+		detector = SURF::create(400);
 		break;
 	}
 	default:
