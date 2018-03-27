@@ -15,78 +15,82 @@ using namespace cv;
 namespace m2d
 {
 
-enum seamFinder {
-    SIMPLE_CUT,
-    GRAPH_CUT
-};
-
-struct _BlendPoint
+/// Struct to clacify match points by distance, usefull to determine local stitch area
+typedef struct _BlendPoint
 {
-    int index;
-    float distance;
-    Point2f prev;
-    Point2f next;
+    int index;          //!< index of image corresponding Point
+    float distance;     //!< distence between same point in diferent images
+    Point2f prev;       //!< Point in previous image
+    Point2f next;       //!< Point in next image
 
+    // Initialize parameters when object is created
     _BlendPoint(int _index, Point2f _prev, Point2f _next) : index(_index),
                                                             prev(_prev),
                                                             next(_next),
                                                             distance(getDistance(_prev, _next)){};
-
+    // overload of "<" operator to sort the points by distance
     bool operator<(const _BlendPoint &pt) const
     {
         return (distance < pt.distance);
     }
-};
+} BlendPoint;
 
-typedef _BlendPoint BlendPoint;
-
+// Class used to blend one sub mosaic
 class Blender
 {
   public:
-    int bands;
-    int graph_cut;
-    vector<UMat> warp_imgs;
-    vector<UMat> masks;
-    vector<UMat> full_masks;
-    vector<Rect2f> bound_rect;
+    int bands;                      //!< number of bands for multiband blender
+    bool graph_cut;                 //!< boolean to use or nor graph-cut algorithm
+    bool scb;                       //!< boolean to use or not simple color balance in final image
+    vector<UMat> warp_imgs;         //!< Vector to stor all warped images
+    vector<UMat> masks;             //!< Vector to store correspond warped masks (to be croped by seam finder algorithm)
+    vector<UMat> full_masks;        //!< Vector to store completely filled masks
+    vector<Rect2f> bound_rect;      //!< Vector to store the minimum bounding rect of each image
     /**
-         * @brief 
-         */
-    Blender(int _bands = 5, int _cut_line = SIMPLE): bands(_bands), graph_cut(_cut_line){};
+     * @brief Blender constuctor
+     */
+    Blender(int _bands = 5, bool _cut_line = false, int _scb = false): bands(_bands),
+                                                                       graph_cut(_cut_line),
+                                                                       scb(_scb){};
     /**
-         * @brief 
-         * @param _sub_mosaic 
-         */
+     * @brief Main function to blend on sub mosaic
+     * @param _sub_mosaic Sub Mosaic to be blended
+     */
     void blendSubMosaic(SubMosaic *_sub_mosaic);
     /**
-         * @brief 
-         * @param _points 
-         */
+     * @brief Get the filled mask of input frame, using the bounding points
+     * @param _frame Input Frame pointer
+     * @return UMat OpenCV Matrix (OpenCL) containing the resulting mask
+     */
     UMat getMask(Frame *_frame);
     /**
-     * @brief 
-     * @param _sub_mosaic 
+     * @brief Get the warped image by the correspond transformation matrix
+     * @return Mat OpenCV Matrix (OpenCL) containing the warp image (with top left corner in 0,0)
      */
-    void correctColor(SubMosaic *_sub_mosaic);
+    UMat getWarpImg(Frame *_frame);
     /**
-     * @brief 
-     */
-    void cropMask(int _object_index, int _scene_index);
-    /**
-     * @brief 
-     * @param _object 
-     * @param _scene 
-     * @return vector<Mat> 
+     * @brief Get the intersection mask between two frames
+     * @param _object Index of object mask in global masks vector
+     * @param _scene Index of scene mask in global masks vector
+     * @return vector<Mat> Intersection mask referenced to each frame
+     * @detail The first element will have the intersection mask between two frames
+     * in the location if first image, and viceversa.
      */
     vector<Mat> getOverlapMasks(int _object, int _scene);
     /**
-         * @brief 
-         */
-    vector<Point2f> findLocalStitch(Frame *_object, Frame *_scene);
+     * @brief Correct color on sub mosaic using Reinhard's method
+     * @param _sub_mosaic Input Sub Mosaic pointer
+     */
+    void correctColor(SubMosaic *_sub_mosaic);
     /**
-         * @brief 
-         * @return Mat 
-         */
-    UMat getWarpImg(Frame *_frame);
+     * @brief (Currently unused) Crop the scene mask with the object one 
+     * @param _object_index Index of object mask in global masks vector
+     * @param _scene_index Index of scene mask in global masks vector
+     */
+    void cropMask(int _object_index, int _scene_index);
+    /**
+     * @brief (Currently unused) find the area where the matches are below a threshold value
+     */
+    vector<Point2f> findLocalStitch(Frame *_object, Frame *_scene);
 };
 }

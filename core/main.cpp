@@ -71,28 +71,28 @@ int main( int argc, char** argv ) {
     cout<<"  Nº bands (blender):\t"<<cyan<<3<< reset << endl;
     //-- Mosaic mode
     cout << "  Mosaic Mode:\t\t" << cyan;
-    args::get(mosaic_mode) ? cout<<cyan<<"Full" : cout <<cyan<<"Simple";
+    euclidean_mode ? cout<<cyan<<"Euclidean" : cout <<cyan<<"Full";
     cout << reset << endl;
     //-- Seam finder
     cout << "  Seam finder:\t\t" << cyan;
-    cut_line ? cout <<cyan<< "Graph cut" : cout <<cyan<< "Simple";
+    graph_cut ? cout <<cyan<< "Graph cut" : cout <<cyan<< "Simple";
     cout << reset << endl;
     //-- Optional commands
     cout << boolalpha;
-    cout << "  Apply preprocessing:\t"<<cyan<< apply_pre <<reset << endl;
     cout << "  Use grid detection:\t"<<cyan<< use_grid <<reset << endl<<endl;
+    cout << "  Apply SCB:\t\t"<<cyan<< final_scb <<reset << endl;
 
-    m2d::Mosaic mosaic(apply_pre);
+    m2d::Mosaic mosaic(true);
     mosaic.stitcher = new m2d::Stitcher(
         use_grid,                                                   
         detector_surf  ? m2d::USE_SURF  :
         detector_sift  ? m2d::USE_SIFT  :
         detector_akaze ? m2d::USE_AKAZE : m2d::USE_KAZE,
-        matcher_flann  ? m2d::USE_FLANN : m2d::USE_BRUTE_FORCE,
-        mosaic_mode ? args::get(mosaic_mode) : 0
+        matcher_flann  ? m2d::USE_FLANN : m2d::USE_BRUTE_FORCE
     );
     mosaic.blender = new m2d::Blender(blender_bands ? args::get(blender_bands) : 0,
-                                      cut_line ? args::get(cut_line) : 0);
+                                      graph_cut,
+                                      final_scb);
 
     t = (double) getTickCount();
 
@@ -105,7 +105,7 @@ int main( int argc, char** argv ) {
         }
         mosaic.feed(img);
     }
-    mosaic.compute( mosaic_mode ? args::get(mosaic_mode) : 1 );
+    mosaic.compute( euclidean_mode);
     mosaic.save(output_directory);
     
     t = ((double)getTickCount() - t) / getTickFrequency();

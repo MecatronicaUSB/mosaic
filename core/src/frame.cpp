@@ -21,38 +21,20 @@ Frame::Frame(Mat _img, bool _pre, int _width, int _height)
 	grid_points = vector<vector<Point2f>>(2);
 	good_points = vector<vector<Point2f>>(2);
 
-	// const float cx = 639.5, cy = 359.5;
-	// const float fx = 1101, fy = 1101;
-	// const float k1 = -0.359, k2 = 0.279, k3 = -0.16;
-	// const float p1 = 0, p2 = 0;
-
-	// const float cx = 687.23531391, cy = 501.08026641;
-	// const float fx = 1736.49233331, fy = 1733.74525406;
-	// const float k1 = 0.15808590, k2 = 0.76137626, k3 = 0.00569993;
-	// const float p1 = 0.00569993, p2 = -0.00067913;
-
-	const float cx = 682.48926624, cy = 510.35526868;
-	const float fx = 1738.62666794, fy = 1736.66673076;
-	const float k1 = 0.17427338, k2 = 0.66559118, k3 = 0.99996769;
-	const float p1 = 0.00355058, p2 = -0.00255854;
-
 	Mat camera_matrix = (Mat1d(3, 3) << fx, 0, cx, 0, fy, cy, 0, 0, 1);
 	Mat distortion_coeff = (Mat1d(1, 5) << k1, k2, p1, p2, k3);
 
 	if (_img.size().width != _width || _img.size().height != _height)
 		resize(_img, _img, Size(_width, _height));
 
-	//imshow("distort", _img);
 	undistort(_img, color, camera_matrix, Mat());
-	//imshow("un-distort", color);
-	//waitKey(0);
 
 	cvtColor(color, gray, CV_BGR2GRAY);
 	if (_pre)
 	{
 		imgChannelStretch(gray, gray, 1, 99, Mat());
 	}
-	//enhanceImage(color);
+	
 	bound_rect = Rect2f(0, 0, (float)_width, (float)_height);
 	// corner points
 	bound_points[PERSPECTIVE].push_back(Point2f(0, 0));
@@ -80,6 +62,7 @@ Frame::~Frame()
 	bound_points.clear();
 	keypoints.clear();
 	neighbors.clear();
+	good_neighbors.clear();
 }
 
 Frame *Frame::clone()
@@ -97,6 +80,7 @@ Frame *Frame::clone()
 	new_frame->good_points = good_points;	
 	new_frame->keypoints = keypoints;
 	new_frame->neighbors = neighbors;
+	new_frame->good_neighbors = good_neighbors;
 
 	return new_frame;
 }
@@ -123,6 +107,26 @@ void Frame::resetFrame()
 	//good_points[PREV].clear();
 
 	neighbors.clear();
+	good_neighbors.clear();
+}
+
+Mat Frame::getResetTransform(int _ref)
+{
+	vector<Point2f> curr_points = {
+		bound_points[_ref][0],
+		bound_points[_ref][1],
+		bound_points[_ref][2],
+		bound_points[_ref][3]
+	};
+
+	vector<Point2f> org_points = {
+		Point2f(0, 0),
+		Point2f(TARGET_WIDTH, 0),
+		Point2f(TARGET_WIDTH, TARGET_HEIGHT),
+		Point2f(0, TARGET_HEIGHT),
+	};
+
+	return getPerspectiveTransform(curr_points, org_points);
 }
 
 float Frame::frameDistortion(int _ref)
@@ -191,13 +195,13 @@ bool Frame::isGoodFrame()
 	ratio[1] = max(semi_diag[1] / semi_diag[3], semi_diag[3] / semi_diag[1]);
 	diagonal_error = max(ratio[0], ratio[1]);
 
-	// Area of distorted images
 	vector<Point2f> aux_points = {
 		bound_points[PERSPECTIVE][0],
 		bound_points[PERSPECTIVE][1],
 		bound_points[PERSPECTIVE][2],
 		bound_points[PERSPECTIVE][3]
 	};
+	// Area of distorted image
 	area = contourArea(aux_points);
 
 	area_error = max(area/(color.cols*color.rows), (color.cols*color.rows)/area);
@@ -206,10 +210,10 @@ bool Frame::isGoodFrame()
 	// keypoints_area = boundAreaKeypoints();
 
 	// 1.5 initial threshold value, must be ajusted in future tests
-	if (area_error > 1.5)
+	if (area_error > 1.3)
 		return false;
 	// 1.5 initial threshold value, must be ajusted in future tests
-	if (diagonal_error > 1.5)
+	if (diagonal_error > 1.3)
 		return false;
 	// if (keypoints_area < 0.2 * color.cols * color.rows)
 	// 	return false;

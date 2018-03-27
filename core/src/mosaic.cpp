@@ -14,15 +14,6 @@ using namespace cv;
 namespace m2d //!< mosaic 2d namespace
 {
 
-// See description in header file
-Mosaic::Mosaic(bool _pre)
-{
-	apply_pre = _pre;
-	n_subs = 0;
-	n_mosaics = 0;
-	tot_frames = 0;
-}
-
 void Mosaic::feed(Mat _img)
 {
 	Frame *new_frame = new Frame(_img.clone(), apply_pre);
@@ -31,7 +22,7 @@ void Mosaic::feed(Mat _img)
 }
 
 // See description in header file
-void Mosaic::compute(int _mode)
+void Mosaic::compute(bool _euclidean_mode)
 {
 	int best_frame, k;
 	float distortion, best_distortion;
@@ -51,7 +42,7 @@ void Mosaic::compute(int _mode)
 			transform = stitcher->stitch(frames[k], frames[i]);
 			if (!transform[PERSPECTIVE].empty() && !transform[EUCLIDEAN].empty())
 			{
-				if (_mode == SIMPLE)
+				if (_euclidean_mode)
 					frames[k]->setHReference(transform[EUCLIDEAN], PERSPECTIVE);
 				else
 					frames[k]->setHReference(transform[PERSPECTIVE], PERSPECTIVE);
@@ -77,7 +68,6 @@ void Mosaic::compute(int _mode)
 		if (best_distortion == 100)
 		{
 			final_mosaics.push_back(sub_mosaics);
-			n_mosaics++;
 			sub_mosaics.clear();
 			n_subs = 0;
 			if (i < frames.size()-2)
@@ -95,10 +85,10 @@ void Mosaic::compute(int _mode)
 			}
 			else
 			{
-				sub_mosaics[n_subs]->avg_H.release();
-				sub_mosaics[n_subs]->avg_H = frames[i+1]->H.clone();
-				sub_mosaics[n_subs]->avg_E.release();
-				sub_mosaics[n_subs]->avg_E = frames[i+1]->E.clone();
+				sub_mosaics[n_subs]->next_H.release();
+				sub_mosaics[n_subs]->next_H = frames[i+1]->H.clone();
+				sub_mosaics[n_subs]->next_E.release();
+				sub_mosaics[n_subs]->next_E = frames[i+1]->E.clone();
 				
 				sub_mosaics.push_back(new SubMosaic());
 				n_subs++;
@@ -112,109 +102,107 @@ void Mosaic::compute(int _mode)
 	if (sub_mosaics.size() > 1 || sub_mosaics[n_subs]->n_frames > 1)
 	{
 		final_mosaics.push_back(sub_mosaics);
-		n_mosaics++;
 		sub_mosaics.clear();
 	}
 
-	float overlap;
-	for (vector<SubMosaic *> final_mosaic : final_mosaics)
-	{
-		for (int i=0; i<final_mosaic.size()-1;i++)
-		{
-			Hierarchy aux_1, aux_2;
-			overlap = getOverlap(final_mosaic[i+1], final_mosaic[i]);
-			aux_1.overlap = overlap;
-			aux_1.mosaic = final_mosaic[i+1];
-			aux_2.overlap = overlap;
-			aux_2.mosaic = final_mosaic[i];
-			final_mosaic[i]->neighbors.push_back(aux_1);
-			final_mosaic[i+1]->neighbors.push_back(aux_2);
-		}
-	}
-	merge(_mode);
+	for (vector<SubMosaic *> &final_mosaic : final_mosaics)
+		updateOverlap(final_mosaic);
+	
+	merge(_euclidean_mode);
 }
 
 // See description in header file
-void Mosaic::merge(int _mode)
+void Mosaic::merge(bool _euclidean_mode)
 {
 	float best_overlap = 0;
 	vector<SubMosaic *> ransac_mosaics(2);
-	int n=0;
-	cout<<flush<<"\rMerging sub-mosaics:\t[" <<green<<n/frames.size()<<reset<<"%]";
+	cout<<flush<<"\rMerging sub-mosaics:\t[" <<green<<0<<reset<<"%]";
 	for (int n=0; n<final_mosaics.size(); n++)
 	{
 		while(final_mosaics[n].size() > 1)
 		{
-			best_overlap = -1;
-			for (SubMosaic *sub_mosaic : final_mosaics[n])
-			{
-				for (Hierarchy neighbor: sub_mosaic->neighbors)
-					if (neighbor.overlap > best_overlap)
-					{
-						best_overlap = neighbor.overlap;
-						ransac_mosaics[0] = sub_mosaic;
-						ransac_mosaics[1] = neighbor.mosaic;
-					}
-			}
-			for (int i=0; i<ransac_mosaics[0]->neighbors.size(); i++)
-			{
-				if (ransac_mosaics[1] == ransac_mosaics[0]->neighbors[i].mosaic)
-				{
-					ransac_mosaics[0]->neighbors.erase(ransac_mosaics[0]->neighbors.begin()+i);
-					for (int j=0; j<ransac_mosaics[1]->neighbors.size(); j++)
-					{
-						if (ransac_mosaics[1]->neighbors[j].mosaic != ransac_mosaics[0])
-						{
-							ransac_mosaics[0]->neighbors.push_back(ransac_mosaics[1]->neighbors[j]);
-							for (int k=0; k<ransac_mosaics[1]->neighbors[j].mosaic->neighbors.size(); k++)
-								if (ransac_mosaics[1]->neighbors[j].mosaic->neighbors[k].mosaic == ransac_mosaics[1])
-									ransac_mosaics[1]->neighbors[j].mosaic->neighbors[k].mosaic = ransac_mosaics[0];
-						}
-					}
-				}
-			}
+			ransac_mosaics = getBestOverlap(final_mosaics[n]);
+
+			removeNeighbor(ransac_mosaics);
+
 			for (int i=0; i<final_mosaics[n].size(); i++)
 				if (ransac_mosaics[1] == final_mosaics[n][i])
 					final_mosaics[n].erase(final_mosaics[n].begin() + i);
-				
-			getReferencedMosaics(ransac_mosaics);
-			alignMosaics(ransac_mosaics);
 
+			referenceMosaics(ransac_mosaics);
+			alignMosaics(ransac_mosaics);
 			Mat best_H = getBestModel(ransac_mosaics, 4000);
 
 			for (Frame *frame : ransac_mosaics[0]->frames)
 				frame->setHReference(best_H);
-			ransac_mosaics[0]->avg_H = best_H * ransac_mosaics[0]->avg_H;
-			blender->blendSubMosaic(ransac_mosaics[0]);
+			ransac_mosaics[0]->next_H = best_H * ransac_mosaics[0]->next_H;
+
 			delete ransac_mosaics[1];
+
+			updateOverlap(final_mosaics[n]);
 		}
-		if (_mode == FULL)
-			//final_mosaics[n][0]->correct();
-		n++;
-		cout<<flush<<"\rMerging sub-mosaics:\t["<<green<<((n)*100)/final_mosaics.size()<<reset<<"%]";
+		cout<<flush<<"\rMerging sub-mosaics:\t["<<green<<((n+1)*100)/final_mosaics.size()<<reset<<"%]";
+		if (!_euclidean_mode)
+			final_mosaics[n][0]->correct();
 	}
 	cout<<endl;
 }
 
-// See description in header file
-void Mosaic::getReferencedMosaics(vector<SubMosaic *> &_sub_mosaics)
+vector<SubMosaic *> Mosaic::getBestOverlap(vector<SubMosaic *> _sub_mosaics)
 {
-	Mat key_H = _sub_mosaics[1]->frames[0]->H.clone();
-	Mat key_E = _sub_mosaics[1]->frames[0]->E.clone();
-	Mat ref_H = _sub_mosaics[0]->avg_H.clone();
-	Mat ref_E = _sub_mosaics[0]->avg_E.clone();
+	best_overlap = 0;
+	vector<SubMosaic *> ransac_mosaics(2);
+	for (SubMosaic *sub_mosaic : _sub_mosaic)
+	{
+		for (Hierarchy neighbor: sub_mosaic->neighbors)
+		{
+			if (neighbor.overlap > best_overlap)
+			{
+				best_overlap = neighbor.overlap;
+				ransac_mosaics[0] = sub_mosaic;
+				ransac_mosaics[1] = neighbor.mosaic;
+			}
+		}
+	}
+	return ransac_mosaics;
+}
+
+void Mosaic::removeNeighbor(vector<SubMosaic *> &_sub_mosaics){
+	for (int i=0; i<_sub_mosaics[0]->neighbors.size(); i++)
+	{
+		if (_sub_mosaics[1] == _sub_mosaics[0]->neighbors[i].mosaic)
+		{
+			_sub_mosaics[0]->neighbors.erase(_sub_mosaics[0]->neighbors.begin()+i);
+			for (int j=0; j<_sub_mosaics[1]->neighbors.size(); j++)
+			{
+				if (_sub_mosaics[1]->neighbors[j].mosaic != _sub_mosaics[0])
+				{
+					_sub_mosaics[0]->neighbors.push_back(_sub_mosaics[1]->neighbors[j]);
+					for (int k=0; k<_sub_mosaics[1]->neighbors[j].mosaic->neighbors.size(); k++)
+						if (_sub_mosaics[1]->neighbors[j].mosaic->neighbors[k].mosaic == _sub_mosaics[1])
+							_sub_mosaics[1]->neighbors[j].mosaic->neighbors[k].mosaic = _sub_mosaics[0];
+				}
+			}
+		}
+	}
+}
+
+// See description in header file
+void Mosaic::referenceMosaics(vector<SubMosaic *> &_sub_mosaics)
+{
+	Mat key_H = _sub_mosaics[1]->frames[0]->getResetTransform(PERSPECTIVE);
+	Mat key_E = _sub_mosaics[1]->frames[0]->getResetTransform(EUCLIDEAN);
 
 	for (Frame *frame : _sub_mosaics[1]->frames)
 	{
-		frame->setHReference(key_H.inv(), PERSPECTIVE);
-		frame->setHReference(key_E.inv(), EUCLIDEAN);
+		frame->setHReference(key_H, PERSPECTIVE);
+		frame->setHReference(key_E, EUCLIDEAN);
 	}
-	_sub_mosaics[1]->avg_H = key_H.inv() * _sub_mosaics[1]->avg_H;
-	_sub_mosaics[1]->avg_E = key_E.inv() * _sub_mosaics[1]->avg_E;
-
-	_sub_mosaics[1]->referenceToZero();
-	Mat new_ref_H = ref_H * _sub_mosaics[1]->avg_H.clone();
-	Mat new_ref_E = ref_E * _sub_mosaics[1]->avg_E.clone();
+	_sub_mosaics[1]->next_H = key_H * _sub_mosaics[1]->next_H;
+	_sub_mosaics[1]->next_E = key_E * _sub_mosaics[1]->next_E;
+	
+	Mat ref_H = _sub_mosaics[0]->next_H.clone();
+	Mat ref_E = _sub_mosaics[0]->next_E.clone();
 
 	for (Frame *frame : _sub_mosaics[1]->frames)
 	{
@@ -222,24 +210,64 @@ void Mosaic::getReferencedMosaics(vector<SubMosaic *> &_sub_mosaics)
 		frame->setHReference(ref_E, EUCLIDEAN);
 		_sub_mosaics[0]->addFrame(frame);
 	}
-	new_ref_H = ref_H * new_ref_H;
-	new_ref_E = ref_E * new_ref_E;
+	_sub_mosaics[0]->next_H = ref_H * _sub_mosaics[1]->next_H;
+	_sub_mosaics[0]->next_E = ref_E * _sub_mosaics[1]->next_E;
 
 	_sub_mosaics[1] = _sub_mosaics[0]->clone();
+
 	for (Frame *frame : _sub_mosaics[1]->frames)
 	{
 		frame->setHReference(ref_H.inv(), PERSPECTIVE);
-		frame->setHReference(key_H, PERSPECTIVE);
+		frame->setHReference(key_H.inv(), PERSPECTIVE);
 		frame->setHReference(ref_E.inv(), EUCLIDEAN);
-		frame->setHReference(key_E, EUCLIDEAN);		
+		frame->setHReference(key_E.inv(), EUCLIDEAN);
 	}
-	_sub_mosaics[0]->avg_H = new_ref_H.clone();
-	_sub_mosaics[0]->avg_E = new_ref_E.clone();
-
 }
 
 // See description in header file
-Mat Mosaic::getBestModel(vector<SubMosaic *> &_ransac_mosaics, int _niter)
+void Mosaic::alignMosaics(vector<SubMosaic *> &_sub_mosaics)
+{
+	Mat points[2];
+
+	for (int i = 0; i < _sub_mosaics.size(); i++)
+	{
+		points[i] = Mat(_sub_mosaics[i]->frames[0]->grid_points[NEXT]);
+		for (int j = 1; j < _sub_mosaics[i]->frames.size(); j++)
+		{
+			vconcat(points[i], Mat(_sub_mosaics[i]->frames[j]->grid_points[PREV]), points[i]);
+		}
+	}
+
+	Mat R = estimateRigidTransform(points[1], points[0], false);
+	if (!R.empty())
+	{
+		Mat M = Mat::eye(3, 3, CV_64F);
+		R(Rect(0, 0, 2, 2)).copyTo(M(Rect(0, 0, 2, 2)));
+		removeScale(M);
+
+		for (Frame *frame : _sub_mosaics[1]->frames)
+		{
+			frame->setHReference(M, PERSPECTIVE);
+		}
+		_sub_mosaics[1]->next_H = M * _sub_mosaics[1]->next_H;
+	}
+
+	Point2f centroid_0 = _sub_mosaics[0]->getCentroid();
+	Point2f centroid_1 = _sub_mosaics[1]->getCentroid();
+
+	vector<float> offset(4);
+
+	offset[TOP] = max(centroid_1.y - centroid_0.y, 0.f);
+	offset[LEFT] = max(centroid_1.x - centroid_0.x, 0.f);
+	_sub_mosaics[0]->updateOffset(offset);
+
+	offset[TOP] = max(centroid_0.y - centroid_1.y, 0.f);
+	offset[LEFT] = max(centroid_0.x - centroid_1.x, 0.f);
+	_sub_mosaics[1]->updateOffset(offset);
+}
+
+// See description in header file
+Mat Mosaic::getBestModel(vector<SubMosaic *> _ransac_mosaics, int _niter)
 {
 	int rnd_frame, rnd_point;
 	Mat temp_H, best_H;
@@ -274,80 +302,57 @@ Mat Mosaic::getBestModel(vector<SubMosaic *> &_ransac_mosaics, int _niter)
 								 frame->bound_points[RANSAC], temp_H * frame->H);
 		}
 
-		temp_distortion = _ransac_mosaics[0]->calcDistortion();
+		temp_distortion = _ransac_mosaics[0]->calcDistortion(RANSAC);
 
 		if (temp_distortion < distortion)
 		{
 			distortion = temp_distortion;
-			best_H = temp_H;
+			best_H.release();
+			best_H = temp_H.clone();
 		}
 	}
-
-	//delete _ransac_mosaics[0];
 
 	return best_H;
 }
-// See description in header file
-void Mosaic::alignMosaics(vector<SubMosaic *> &_sub_mosaics)
+
+void Mosaic::updateOverlap(vector<SubMosaic *> &_sub_mosaic)
 {
-	Point2f centroid_0 = _sub_mosaics[0]->getCentroid();
-	Point2f centroid_1 = _sub_mosaics[1]->getCentroid();
-
-	vector<float> offset(4);
-
-	offset[TOP] = max(centroid_1.y - centroid_0.y, 0.f);
-	offset[LEFT] = max(centroid_1.x - centroid_0.x, 0.f);
-	_sub_mosaics[0]->updateOffset(offset);
-
-	offset[TOP] = max(centroid_0.y - centroid_1.y, 0.f);
-	offset[LEFT] = max(centroid_0.x - centroid_1.x, 0.f);
-	_sub_mosaics[1]->updateOffset(offset);
-	
-	Mat points[2];
-
-	for (int i = 0; i < _sub_mosaics.size(); i++)
+	float overlap;
+	for (int i=0; i<_sub_mosaic.size()-1;i++)
 	{
-		points[i] = Mat(_sub_mosaics[i]->frames[0]->grid_points[NEXT]);
-		for (int j = 1; j < _sub_mosaics[i]->frames.size(); j++)
-		{
-			vconcat(points[i], Mat(_sub_mosaics[i]->frames[j]->grid_points[PREV]), points[i]);
-		}
-	}
-
-	Mat R = estimateRigidTransform(points[0], points[1], false);
-	if (!R.empty())
-	{
-		Mat M = Mat::eye(3, 3, CV_64F);
-		R(Rect(0, 0, 2, 2)).copyTo(M(Rect(0, 0, 2, 2)));
-		removeScale(M);
-		for (Frame *frame : _sub_mosaics[1]->frames)
-		{
-			frame->setHReference(M);
-		}
-		_sub_mosaics[1]->avg_H = M * _sub_mosaics[1]->avg_H;
+		Hierarchy aux_1, aux_2;
+		overlap = getOverlap(_sub_mosaic[i+1], _sub_mosaic[i]);
+		aux_1.overlap = overlap;
+		aux_1.mosaic = _sub_mosaic[i+1];
+		aux_2.overlap = overlap;
+		aux_2.mosaic = _sub_mosaic[i];
+		_sub_mosaic[i]->neighbors.push_back(aux_1);
+		_sub_mosaic[i+1]->neighbors.push_back(aux_2);
 	}
 }
 
 float Mosaic::getOverlap(SubMosaic *_object, SubMosaic *_scene)
 {
-	vector<Point2f> object_points = {
-		_object->frames[0]->bound_points[PERSPECTIVE][0],
-		_object->frames[0]->bound_points[PERSPECTIVE][1],
-		_object->frames[0]->bound_points[PERSPECTIVE][2],
-		_object->frames[0]->bound_points[PERSPECTIVE][3],
-	};
-	perspectiveTransform(object_points, object_points, _scene->avg_H);
+	vector<Point2f> object_points;
+
+	perspectiveTransform(_object->frames[0]->bound_points[PERSPECTIVE], object_points, _scene->next_H);
 	Rect2f object_bound_rect = boundingRectFloat(object_points);
 
-	float width = min(_scene->last_frame->bound_rect.x + _scene->last_frame->bound_rect.x,
+	float width = min(_scene->last_frame->bound_rect.x + _scene->last_frame->bound_rect.width,
 				  object_bound_rect.x + object_bound_rect.width) - 
 				  max(_scene->last_frame->bound_rect.x, object_bound_rect.x);
 
-	float height = min(_scene->last_frame->bound_rect.y + _scene->last_frame->bound_rect.y,
+	float height = min(_scene->last_frame->bound_rect.y + _scene->last_frame->bound_rect.height,
 				   object_bound_rect.y + object_bound_rect.height) - 
 				   max(_scene->last_frame->bound_rect.y, object_bound_rect.y);
 
-	return 100;
+	float overlap_area = width * height;
+	float object_area = object_bound_rect.width * object_bound_rect.height;
+	float scene_area = _scene->last_frame->bound_rect.width * _scene->last_frame->bound_rect.height;
+	
+	float overlap_norm = overlap_area / (object_area + scene_area - overlap_area);
+
+	return overlap_norm;
 }
 
 // See description in header file
@@ -358,6 +363,8 @@ void Mosaic::save(string _dir)
 	{
 		blender->blendSubMosaic(final_mosaic[0]);
 		imwrite(_dir+"-000.jpg", final_mosaic[0]->final_scene);
+		Mat map = final_mosaic[0]->buildMap(CIRCLE);
+		imwrite(_dir+"-MAP.jpg", map);
 	}
 }
 

@@ -17,32 +17,34 @@ float getDistance(Point2f _pt1, Point2f _pt2)
 	return sqrt(pow((_pt1.x - _pt2.x), 2) + pow((_pt1.y - _pt2.y), 2));
 }
 
+// See description in header file
 Point2f getMidPoint(Point2f _pt1, Point2f _pt2)
 {
 	return Point2f((_pt2.x + _pt1.x) / 2, (_pt2.y + _pt1.y) / 2);
 }
 
+// See description in header file
 void enhanceImage(Mat &_img, Mat mask)
 {
 	vector<Mat> channels;
-
+	// split image in three channels, stretch each histograms, and merge them again
 	split(_img, channels);
 	imgChannelStretch(channels[0], channels[0], 1, 99, mask);
 	imgChannelStretch(channels[1], channels[1], 1, 99, mask);
 	imgChannelStretch(channels[2], channels[2], 1, 99, mask);
 	merge(channels, _img);
-
 }
 
+// See description in header file
 void removeScale(Mat &_H)
 {
+	// must be a euclidean transformation
 	assert(_H.rows == 3 && _H.cols == 3);
 	assert(_H.at<double>(2, 0) == 0 && _H.at<double>(2, 1) == 0);
-	// sign(_H.at<double>(0, 0)) * 
-	// sign(_H.at<double>(1, 1)) *
+	// extract the scale factor from rotation matrix 
 	double sx = sqrt(pow(_H.at<double>(0, 0), 2) + pow(_H.at<double>(0, 1), 2));
 	double sy = sqrt(pow(_H.at<double>(1, 0), 2) + pow(_H.at<double>(1, 1), 2));
-
+	// divide the scale only in the rotation matrix
 	_H.at<double>(0, 0) = _H.at<double>(0, 0) / sx;
 	_H.at<double>(0, 1) = _H.at<double>(0, 1) / sx;
 	_H.at<double>(1, 0) = _H.at<double>(1, 0) / sy;
@@ -55,7 +57,7 @@ Rect2f boundingRectFloat(vector<Point2f> _points)
 	float bottom = _points[0].y;
 	float left = _points[0].x;
 	float right = _points[0].x;;
-
+	// get bounding points
 	for (Point2f point : _points)
 	{
 		if (point.x < left)
@@ -67,7 +69,7 @@ Rect2f boundingRectFloat(vector<Point2f> _points)
 		if (point.y > bottom)
 			bottom = point.y;
 	}
-
+	// update bounding box from boundng points
 	Rect2f bound_rect;
 	bound_rect.x = left;
 	bound_rect.y = top;
@@ -87,7 +89,6 @@ int sign(double _num1)
 void getHistogram(cv::Mat img, int *histogram, Mat mask)
 {
 	int i = 0, j = 0;
-	//    std::cout << "gH: Initializing histogram vector" << endl;
 	// Initializing the histogram. TODO: Check if there is a faster way
 	for (i = 0; i < 256; i++)
 	{

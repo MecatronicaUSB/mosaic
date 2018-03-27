@@ -41,14 +41,18 @@ const string reset("\033[0m");
 namespace m2d
 {
 
-enum MosaicMode
-{
-  SIMPLE,
-  FULL
-};
-
+// default dimensions of each image
 const int TARGET_WIDTH = 640;
 const int TARGET_HEIGHT = 480;
+
+// number of cells to use in grid detector
+const int CELLS_DIV = 10;
+
+// intrinsec camera parameters
+const float cx = 682.48926624, cy = 510.35526868;
+const float fx = 1738.62666794, fy = 1736.66673076;
+const float k1 = 0.17427338, k2 = 0.66559118, k3 = 0.99996769;
+const float p1 = 0.00355058, p2 = -0.00255854;
 
 /**
  * @brief Calculate the euclidean distance between two given vector in 2D

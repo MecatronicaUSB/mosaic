@@ -15,28 +15,37 @@ using namespace cv;
 namespace m2d //!< mosaic 2d namespace
 {
 
+/// options to print the resulting map
+enum MapType
+{
+    RECTANGLE,
+    CIRCLE
+};
+
 class SubMosaic;
 
-typedef struct
-{                      //!< Struct to relate two SubMosaics
-    SubMosaic *mosaic; //!< Pointer to SubMosaic
-    float overlap;     //!< Overlap area between this sub-mosaic and pointed one
+/// Struct to link two SubMosaics
+typedef struct _Hierarchy   
+{                           
+    SubMosaic *mosaic;      //!< Pointer to SubMosaic
+    float overlap;          //!< Overlap area between this sub-mosaic and pointed one
 } Hierarchy;
 
-struct _CornerPoint
+/// Struct to find the points for global euclidean correction
+typedef struct _CornerPoint
 {
-    int index;
-    float distance;
-    Point2f point;
+    int index;              //!< index of point (0 top-left, 1 top-right, 2 bottom-right, 3 bottom-left)
+    float distance;         //!< distance of point and Point at center of opposite frame
+    Point2f point;          //!< OpenCV float Point coordinate
 
+    /// Object contructor
     _CornerPoint(Point2f _point, int _idx) : point(_point), index(_idx){};
+    // overload of "<" operator to sort the points by distance
     bool operator<(const _CornerPoint &point) const
     {
         return (distance < point.distance);
     }
-};
-
-typedef _CornerPoint CornerPoint;
+} CornerPoint;
 
 /**
  * @brief 
@@ -45,86 +54,78 @@ class SubMosaic
 {
   public:
     // ---------- Atributes
-    int n_frames;    //!< Number of frames in sub-mosaic
-    Mat final_scene; //!< Image containing all blended images (the sub-mosaic)
-    Mat avg_H;       //!< Average Homography matrix (Matrix that reduces the dostortion error)
-    Mat avg_E;       //!< Average Homography matrix (Matrix that reduces the dostortion error)
-    Frame *last_frame;
-    Size2f scene_size;
-    vector<Frame *> frames;      //!< Vector containing all the frames (Pointers) in sub-mosaic
-    vector<Hierarchy> neighbors; //!< Vector with all the neighbors SubMosaics (spatially close)
+    int n_frames;                   //!< Number of frames in sub-mosaic
+    Mat final_scene;                //!< Image containing all blended images (the sub-mosaic)
+    Mat next_H;                     //!< Perspective transformation to place a new frame to last position
+    Mat next_E;                     //!< Euclidean transformation to place a new frame to last position
+    Frame *last_frame;              //!< Pointer to last frame
+    Size2f scene_size;              //!< Size of mosaic image
+    vector<Frame *> frames;         //!< Vector containing all the frames (Pointers) in sub-mosaic
+    vector<Hierarchy> neighbors;    //!< Vector with all the neighbors SubMosaics (spatially close)
     // ---------- Methods
     /**
-         * @brief Default constructor
-         */
+     * @brief Default constructor
+     */
     SubMosaic();
     /**
-         * @brief 
-         */
+     * @brief Default destructor
+     */
     ~SubMosaic();
     /**
-         * @brief 
-         * @return SubMosaic 
-         */
+     * @brief Clone all the data
+     * @return SubMosaic New sub mosaic with the same data
+     */
     SubMosaic *clone();
     /**
-         * @brief Using the Stitcher class, add the object image to the current sub-mosaic
-         * @param _object OpenCV Matrix containig the BGR image to add in the sub-mosaic
-         * @return true If the stitch was sucesussfull
-         * @return false If the stitch wasn't sucesussfull
-         */
+     * @brief Add new frame object to sub mosaic and update sub mosaic information
+     * @param _frame new frame to be added
+     */
     void addFrame(Frame *_frame);
     /**
-         * @brief 
-         * @param _object 
-         * @param _scene 
-         * @return float 
-         */
-    float calcKeypointsError(Frame *_first, Frame *_second);
+     * @brief Calculate the error based on distance of each keypoint match
+     * @param _object first frame
+     * @param _scene second frame
+     * @return float resulting error
+     */
+    float calcKeypointsError(Frame *_object, Frame *_scene);
     /**
-         * @brief 
-         * @return float 
-         */
-    float calcDistortion();
+     * @brief Calculate the geometric distortion of sub mosaic
+     * @return float resulting distortion
+     */
+    float calcDistortion(int _ref = RANSAC);
     /**
-         * @brief 
-         */
+     * @brief Translate the sub mosaic to positives coordinates (top-left corner at 0,0)
+     */
     void computeOffset();
     /**
-         * @brief 
-         */
+     * @brief translate the first frame to default position (top-left corner at 0,0)
+     */
     void referenceToZero();
     /**
-         * @brief 
-         * @return Point2f 
-         */
+     * @brief Get the centroid point, based on keypoints position
+     * @return Point2f resulting centroid Point
+     */
     Point2f getCentroid();
     /**
-         * @brief 
-         * @param _frames 
-         */
+     * @brief Translate the sub mosaic based on input data
+     * @param _offset Top and left offset
+     */
     void updateOffset(vector<float> _offset);
     /**
-         * @brief 
-         */
+     * @brief Apply global euclidean correction based on position of first and last frame
+     */
     void correct();
     /**
-     * @brief 
-     * @return vector<vector<Point2f> > 
+     * @brief Get the corner points of sub mosic (first and last frame)
+     * @return vector<vector<Point2f> > border points of euclidean and perspective transformation
      */
     vector<vector<Point2f> > getCornerPoints();
-
-    vector<vector<Point2f> > getCornerPoints2();
     /**
-         * @brief Calculate the Homography matrix that reduce the distortion error in the sub-mosaic
-         * (Not yet implemented)
-         */
-    void calcAverageH();
-    /**
-         * @brief 
-         * @return true 
-         * @return false 
-         */
-    bool isEmpty();
+     * @brief Build the trajectory map of sub mosaic
+     * @param type type of map, border lines or circle points and neighbor links
+     * @param _color color of objects in map
+     * @return Mat resulting map
+     */
+    Mat buildMap(int type = RECTANGLE, Scalar _color = Scalar(255, 0, 0));
 };
 }

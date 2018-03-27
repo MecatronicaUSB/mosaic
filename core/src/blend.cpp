@@ -22,11 +22,11 @@ void Blender::blendSubMosaic(SubMosaic *_sub_mosaic)
 	_sub_mosaic->final_scene = Mat(_sub_mosaic->scene_size, CV_8UC3, Scalar(0, 0, 0));
 
 	MultiBandBlender multiband(false, bands);
-	if (bands > 0)
+	if (bands > 0 && graph_cut)
 		multiband.prepare(Rect(Point(0, 0), _sub_mosaic->scene_size));
 		
 	vector<Frame *> frames = _sub_mosaic->frames;
-	// correctColor(_sub_mosaic);
+
 	int k = 0;
 	vector<Point> corners;
 	for (Frame *frame : frames)
@@ -52,7 +52,7 @@ void Blender::blendSubMosaic(SubMosaic *_sub_mosaic)
 	for (int i = 0; i < frames.size(); i++)
 	{
 		warp_imgs[i].copyTo(aux_img);
-		if (bands > 0)
+		if (bands > 0 && graph_cut)
 		{
 			multiband.feed(aux_img, masks[i], Point((int)bound_rect[i].x, (int)bound_rect[i].y));
 		}
@@ -71,8 +71,7 @@ void Blender::blendSubMosaic(SubMosaic *_sub_mosaic)
 		}
 	}
 
-	// enhanceImage(_sub_mosaic->final_scene, final_mask);
-	if (bands > 0)
+	if (bands > 0 && graph_cut)
 	{
 		Mat result_16s, result_mask;
 		multiband.blend(result_16s, result_mask);
@@ -93,8 +92,10 @@ UMat Blender::getWarpImg(Frame *_frame)
 	aux_T.at<double>(0, 2) = -_frame->bound_rect.x;
 	aux_T.at<double>(1, 2) = -_frame->bound_rect.y;
 
+	if (scb)
+		enhanceImage(_frame->color);
+		
 	warpPerspective(_frame->color, warp_img, aux_T * _frame->H, Size(_frame->bound_rect.width, _frame->bound_rect.height));
-
 	warp_img.convertTo(warp_img, CV_32F);
 	UMat warp_uimg = warp_img.getUMat(ACCESS_RW);
 
