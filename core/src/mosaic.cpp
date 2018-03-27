@@ -131,11 +131,10 @@ void Mosaic::compute(bool _euclidean_mode)
 	for (vector<SubMosaic *> &final_mosaic : final_mosaics)
 		updateOverlap(final_mosaic);
 	// merge sub mosaics
-	merge(_euclidean_mode);
 }
 
 // See description in header file
-void Mosaic::merge(bool _euclidean_mode)
+void Mosaic::merge(bool _euclidean_correction)
 {
 	float best_overlap = 0;
 	vector<SubMosaic *> ransac_mosaics(2);
@@ -173,7 +172,7 @@ void Mosaic::merge(bool _euclidean_mode)
 		}
 		cout<<"\rMerging sub-mosaics:\t["<<green<<((n+1)*100)/final_mosaics.size()<<reset<<"%]"<<flush;
 		// apply global euclidean correction
-		if (!_euclidean_mode)
+		if (_euclidean_correction)
 			final_mosaics[n][0]->correct();
 	}
 	cout << endl;

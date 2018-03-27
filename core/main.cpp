@@ -69,7 +69,7 @@ int main( int argc, char** argv ) {
     cout<<"  Nº bands (blender):\t"<<cyan<<0<< reset << endl;
     //-- Mosaic mode
     cout << "  Mosaic Mode:\t\t" << cyan;
-    euclidean_mode ? cout<<cyan<<"Euclidean" : cout <<cyan<<"Full";
+    euclidean_mode ? cout<<cyan<<"Euclidean" : cout <<cyan<<"Perspective";
     cout << reset << endl;
     //-- Seam finder
     cout << "  Seam finder:\t\t" << cyan;
@@ -78,6 +78,7 @@ int main( int argc, char** argv ) {
     //-- Optional commands
     cout << boolalpha;
     cout << "  Use grid detection:\t"<<cyan<< use_grid <<reset << endl;
+    cout << "  Eclidean correction:\t"<<cyan<< euclidean_correction <<reset << endl;
     cout << "  Apply SCB:\t\t"<<cyan<< final_scb <<reset << endl<< endl;
 
     m2d::Mosaic mosaic(true);
@@ -103,7 +104,8 @@ int main( int argc, char** argv ) {
         }
         mosaic.feed(img);
     }
-    mosaic.compute( euclidean_mode);
+    mosaic.compute(euclidean_mode);
+    mosaic.merge(euclidean_correction);
     mosaic.save(output_directory);
     
     t = ((double)getTickCount() - t) / getTickFrequency();

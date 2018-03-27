@@ -75,7 +75,12 @@ void SubMosaic::referenceToZero()
 // See description in header file
 void SubMosaic::computeOffset()
 {
-	float top = TARGET_HEIGHT, bottom = 0, left = TARGET_WIDTH, right = 0;
+	float top, bottom, left, right;
+	// initial values
+	top = frames[0]->bound_points[PERSPECTIVE][0].y;
+	bottom = frames[0]->bound_points[PERSPECTIVE][0].y;
+	left = frames[0]->bound_points[PERSPECTIVE][0].x;
+	right = frames[0]->bound_points[PERSPECTIVE][0].x;
 	// find the border coordinated of sub mosaic
 	for (Frame *frame : frames)
 	{
