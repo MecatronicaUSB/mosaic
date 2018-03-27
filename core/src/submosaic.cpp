@@ -226,8 +226,22 @@ Mat SubMosaic::buildMap(int _type, Scalar _color)
 {
 	// positioning sub mosaic in a positive location
 	this->computeOffset();
-	// declare map image
-	Mat map = Mat(scene_size, CV_8UC3, Scalar(255, 255, 255));
+	int width, height, point_size = 5;
+	float factor;
+	// compute resize factor
+	if (scene_size.height < scene_size.width)
+	{
+		width = 1024;
+		factor = (float)width / scene_size.width;
+		height = scene_size.height * factor;		
+	}
+	else
+	{
+		height = 1024;
+		factor = (float)height / scene_size.height;
+		width = scene_size.width * factor;
+	}
+	Mat scene_map = Mat(Size(width, height), CV_8UC3, Scalar(255, 255, 255));
 	// check type of map
 	if (_type == RECTANGLE)
 	{
@@ -237,16 +251,16 @@ Mat SubMosaic::buildMap(int _type, Scalar _color)
 		for (Frame *frame : frames)
 		{
 			aux_points[0] = Point(frame->bound_points[PERSPECTIVE][0].x, 
-								  frame->bound_points[PERSPECTIVE][0].y);
+								  frame->bound_points[PERSPECTIVE][0].y) * factor;
 			aux_points[1] = Point(frame->bound_points[PERSPECTIVE][1].x, 
-								  frame->bound_points[PERSPECTIVE][1].y);
+								  frame->bound_points[PERSPECTIVE][1].y) * factor;
 			aux_points[2] = Point(frame->bound_points[PERSPECTIVE][2].x, 
-								  frame->bound_points[PERSPECTIVE][2].y);
+								  frame->bound_points[PERSPECTIVE][2].y) * factor;
 			aux_points[3] = Point(frame->bound_points[PERSPECTIVE][3].x, 
-								  frame->bound_points[PERSPECTIVE][3].y);
+								  frame->bound_points[PERSPECTIVE][3].y) * factor;
 			map_points.push_back(aux_points);
 		}
-		polylines(map, map_points, true, _color, 1);
+		polylines(scene_map, map_points, true, _color, 1);
 	}
 	else
 	{
@@ -257,40 +271,53 @@ Mat SubMosaic::buildMap(int _type, Scalar _color)
 		for (Frame *frame : frames)
 		{
 			center_point = Point(frame->bound_points[PERSPECTIVE][4].x,
-								 frame->bound_points[PERSPECTIVE][4].y);
+								 frame->bound_points[PERSPECTIVE][4].y) * factor;
 			for (Frame *neighbor : frame->neighbors)
 			{
 				neighbor_point = Point(neighbor->bound_points[PERSPECTIVE][4].x,
-								 	   neighbor->bound_points[PERSPECTIVE][4].y);
-				line(map, center_point, neighbor_point, Scalar(190, 190, 190), 1);
+								 	   neighbor->bound_points[PERSPECTIVE][4].y) * factor;
+				line(scene_map, center_point, neighbor_point, Scalar(190, 190, 190), 1);
 			}
 		}
 		// second print the colored links (good neighbors)		
 		for (Frame *frame : frames)
 		{
 			center_point = Point(frame->bound_points[PERSPECTIVE][4].x,
-								 frame->bound_points[PERSPECTIVE][4].y);
+								 frame->bound_points[PERSPECTIVE][4].y) * factor;
 			for (Frame *neighbor : frame->good_neighbors)
 			{
 				neighbor_point = Point(neighbor->bound_points[PERSPECTIVE][4].x,
-								 	   neighbor->bound_points[PERSPECTIVE][4].y);
-				line(map, center_point, neighbor_point, line_color, 1);
+								 	   neighbor->bound_points[PERSPECTIVE][4].y) * factor;
+				line(scene_map, center_point, neighbor_point, line_color, 1);
 			}
 		}
 		// third print a circle at the center of each frame
 		for (Frame *frame : frames)
 		{
 			center_point = Point(frame->bound_points[PERSPECTIVE][4].x,
-								 frame->bound_points[PERSPECTIVE][4].y);
-			circle(map, center_point, 8, _color, -1);
+								 frame->bound_points[PERSPECTIVE][4].y) * factor;
+			circle(scene_map, center_point, point_size, _color, -1);
 		}
 	}
-	return map;
+	// y-axis labels
+	rectangle(scene_map, Point(60, 40), Point(width-30, height-50), cvScalar(0, 0, 0), 1);
+	putText(scene_map, to_string(0), Point(5, 50), FONT_HERSHEY_PLAIN, 1, cvScalar(0, 0, 0), 1);
+	putText(scene_map, to_string((int)(height/factor)/4), Point(5, (height-50) / 4), FONT_HERSHEY_PLAIN, 1, cvScalar(0, 0, 0), 1);
+	putText(scene_map, to_string((int)(height/factor)/2), Point(5, (height-50) / 2), FONT_HERSHEY_PLAIN, 1, cvScalar(0, 0, 0), 1);
+	putText(scene_map, to_string((int)(height/factor)*3/4), Point(5, (height-50) * 3 / 4), FONT_HERSHEY_PLAIN, 1, cvScalar(0, 0, 0), 1);
+	putText(scene_map, to_string((int)(height/factor)), Point(5, height-50), FONT_HERSHEY_PLAIN, 1, cvScalar(0, 0, 0), 1);
+	// x-axis labels
+	putText(scene_map, to_string(0), Point(60, height-30), FONT_HERSHEY_PLAIN, 1, cvScalar(0, 0, 0), 1);
+	putText(scene_map, to_string((int)(width/factor)/4), Point((width-120)/4+60, height-30), FONT_HERSHEY_PLAIN, 1, cvScalar(0, 0, 0), 1);
+	putText(scene_map, to_string((int)(width/factor)/2), Point((width-120)/2+60, height-30), FONT_HERSHEY_PLAIN, 1, cvScalar(0, 0, 0), 1);
+	putText(scene_map, to_string((int)(width/factor)*3/4), Point((width-120)*3/4+60, height-30), FONT_HERSHEY_PLAIN, 1, cvScalar(0, 0, 0), 1);
+	putText(scene_map, to_string((int)(width/factor)), Point(width-60, height-30), FONT_HERSHEY_PLAIN, 1, cvScalar(0, 0, 0), 1);
+	putText(scene_map, "Units in pixels", Point((int)(width/2)-70, 20), FONT_HERSHEY_PLAIN, 1, cvScalar(0, 0, 0), 1);
+	return scene_map;
 }
 
-
 // See description in header file
-void saveHomographyData(Mat _h, vector<KeyPoint> keypoints[2], std::vector<DMatch> matches)
+void saveHomographyData(Mat _h, vector<KeyPoint> keypoints[2], vector<DMatch> matches)
 {
 	ofstream file;
 	file.open("homography-data.txt");

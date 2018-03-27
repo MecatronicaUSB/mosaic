@@ -58,7 +58,7 @@ int main( int argc, char** argv ) {
     cout<<"  Feature extractor:\t"<<cyan<< "SIFT"<<reset<<endl:
     detector_akaze ?
     cout<<"  Feature extractor:\t"<<cyan<< "A-KAZE"<<reset<<endl:
-    cout<<"  Feature extractor:\t"<<cyan<< "KAZE"<<reset<<endl;
+    cout<<"  Feature extractor:\t"<<cyan<< "KAZE\t(Default)"<<reset<<endl;
     //-- Feature Matcher
     matcher_brutef ?
     cout<<"  Feature Matcher:\t"<<cyan<<"BRUTE FORCE"<< reset << endl:

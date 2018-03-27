@@ -90,7 +90,7 @@ void Stitcher::detectFeatures(vector<Frame *> &_frames)
 			_frames.erase(_frames.begin() + i);
 		}
 		// update status
-		cout << flush << "\rDetecting Features:\t[" <<green<<((++i)*100)/_frames.size()<<reset<<"%]";
+		cout<<"\rDetecting Features:\t["<<green<<((++i)*100)/_frames.size()<<reset<<"%]"<<flush;
 	}
 	cout<<endl;
 

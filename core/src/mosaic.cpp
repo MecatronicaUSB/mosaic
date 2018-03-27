@@ -147,7 +147,7 @@ void Mosaic::merge(bool _euclidean_mode)
 		// loop over sub mosaics of same mosaic
 		while(final_mosaics[n].size() > 1)
 		{
-			// get the sub mosaics with more overlap
+			// get the sub mosaic pair with higher overlap
 			ransac_mosaics = getBestOverlap(final_mosaics[n]);
 			// remove second sub mosaic, and update neighbors
 			// second sub mosaic will be merged and save it in the first one
@@ -247,6 +247,10 @@ void Mosaic::referenceMosaics(vector<SubMosaic *> &_sub_mosaics)
 	// ref_H transform a frame from default position to last position on sub mosaic (as next frame)
 	Mat ref_H = _sub_mosaics[0]->next_H.clone();
 	Mat ref_E = _sub_mosaics[0]->next_E.clone();
+	// update good neighbors (this data was deleted in reset frame)
+	// TODO: create new linker, such as: sub mosaic neighbors
+	_sub_mosaics[0]->last_frame->good_neighbors.push_back(_sub_mosaics[1]->frames[0]);
+	_sub_mosaics[1]->frames[0]->good_neighbors.push_back(_sub_mosaics[0]->last_frame);
 	// add all SM1 frames to SM0, by next_H of SM0
 	for (Frame *frame : _sub_mosaics[1]->frames)
 	{
@@ -370,6 +374,9 @@ Mat Mosaic::getBestModel(vector<SubMosaic *> _ransac_mosaics, int _niter)
 void Mosaic::updateOverlap(vector<SubMosaic *> &_sub_mosaic)
 {
 	float overlap;
+	for (SubMosaic *sub : _sub_mosaic)
+		sub->neighbors.clear();
+	
 	for (int i=0; i<_sub_mosaic.size()-1;i++)
 	{
 		// calculate overlap between each SM pair
@@ -441,8 +448,6 @@ void Mosaic::show()
 				Size(round(final_mosaic[0]->final_scene.cols * resize_factor),
 				round(final_mosaic[0]->final_scene.rows * resize_factor)));
 		imshow("Final Mosaic - "+to_string(n), final_mosaic[0]->final_scene);
-		resize(map[n], map[n], Size(round(map[n].cols * resize_factor),
-									round(map[n].rows * resize_factor)));
 		imshow("Final Map - "+to_string(n), map[n]);
 				
 		waitKey(0);
