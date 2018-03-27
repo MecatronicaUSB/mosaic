@@ -14,6 +14,7 @@ Currently under development as part of undergrad project of Víctor García
 - [License](#license)
 
 ## Modules list
+- [core](https://github.com/MecatronicaUSB/mosaic/tree/master/core) Main project for automated mosaic build.
 - [fcomp](https://github.com/MecatronicaUSB/mosaic/tree/master/modules/fcomp) Feature extractors and matchers comparison (extractors: SIFT, SURF, ORB, KAZE. matchers: Brute force, Flann)
 - [stitch](https://github.com/MecatronicaUSB/mosaic/tree/master/modules/stitch) Image warping and stitching
 
@@ -21,6 +22,13 @@ Each module contains information describing its usage, with (usually) some usefu
 
 ## Directory Layout
 
+    ├──core                # Core module
+     \ ├── src             # source files
+          └── ...
+     \ ├── include         # header files
+          └── ...  
+     \ main.cpp
+     \ ...
     ├── modules
      \ ├── fcomp           # module for festure extractor comparison
           ├── src          # source files
