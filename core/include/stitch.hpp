@@ -39,7 +39,7 @@ enum Matcher
 class Stitcher
 {
   public:
-    // ---------- Atributes
+    // ---------- Attributes
     bool use_grid;                              //!< flag to use or not the grid detection
     int cells_div;                              //!< number (n) of cell divisions in grid detector (if used)
     vector<vector<vector<DMatch>>> matches;     //!< Vector of OpenCV Matches
@@ -49,28 +49,28 @@ class Stitcher
     /**
      * @brief Default Stitcher constructor
      * @param _grid flag to use grid detection (default true)
-     * @param _detector enum value to set the desired feature Detector and descriptor
-     * @param _matcher enum value to set the desired feature matcher
+     * @param _detector enumeration value to set the desired feature Detector and descriptor
+     * @param _matcher enumeration value to set the desired feature matcher
      */
     Stitcher(bool _grid = false, int _detector = USE_KAZE, int _matcher = USE_BRUTE_FORCE);
     /**
      * @brief Calculate the transformation matrix to map _object frame into _scene
      * @param _object frame to be map
-     * @param _scene objetive frame
+     * @param _scene target frame
      * @return vector<Mat> Perspective and euclidean transformations
      */
     vector<Mat> stitch(Frame *_object, Frame *_scene);
     /**
-     * @brief detec and save feature keypoints and descriptors
+     * @brief detect and save feature key points and descriptors
      * @param _frames 
      */
     void detectFeatures(vector<Frame *> &_frames);
 
   private:
-    // ---------- Atributes
+    // ---------- Attributes
     Ptr<Feature2D> detector;                    //!< Pointer to OpenCV feature extractor
     Ptr<DescriptorMatcher> matcher;             //!< Pointer to OpenCV feature Matcher
-    vector<vector<Point2f>> neighbors_kp;       //!< Position of neighbors keypoints
+    vector<vector<Point2f>> neighbors_kp;       //!< Position of neighbors key points
     vector<Point2f> euclidean_points;           //!< points tracked by euclidean transformation
     vector<Point2f> scene_points;               //!< points tracked by perspective transformation
     vector<Point2f> object_points;              //!< points of object frame
@@ -81,11 +81,11 @@ class Stitcher
      */
     void getGoodMatches(float _thresh = 0.8);
     /**
-     * @brief Select the best keypoint for each cell in the defined grid
+     * @brief Select the best key point for each cell in the defined grid
      */
     void gridDetector();
     /**
-     * @brief transform a vector of OpenCV Keypoints to vectors of OpenCV Points
+     * @brief transform a vector of OpenCV Key points to vectors of OpenCV Points
      */
     void positionFromKeypoints();
     /**
@@ -94,7 +94,7 @@ class Stitcher
      */
     void trackKeypoints();
     /**
-     * @brief Correct homography transformation acording to the best euclidean
+     * @brief Correct homography transformation according to the best euclidean
      * @param _H perspective transformation
      * @param _E best euclidean transformation
      */

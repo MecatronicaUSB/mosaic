@@ -15,11 +15,11 @@ using namespace cv;
 namespace m2d
 {
 
-/// Struct to clacify match points by distance, usefull to determine local stitch area
+/// Structure to classify match points by distance, useful to determine local stitch area
 typedef struct _BlendPoint
 {
     int index;          //!< index of image corresponding Point
-    float distance;     //!< distence between same point in diferent images
+    float distance;     //!< distance between same point in different images
     Point2f prev;       //!< Point in previous image
     Point2f next;       //!< Point in next image
 
@@ -39,15 +39,15 @@ typedef struct _BlendPoint
 class Blender
 {
   public:
-    int bands;                      //!< number of bands for multiband blender
+    int bands;                      //!< number of bands for multi-band blender
     bool graph_cut;                 //!< boolean to use or nor graph-cut algorithm
     bool scb;                       //!< boolean to use or not simple color balance in final image
-    vector<UMat> warp_imgs;         //!< Vector to stor all warped images
-    vector<UMat> masks;             //!< Vector to store correspond warped masks (to be croped by seam finder algorithm)
+    vector<UMat> warp_imgs;         //!< Vector to store all warped images
+    vector<UMat> masks;             //!< Vector to store correspond warped masks (to be cropped by seam finder algorithm)
     vector<UMat> full_masks;        //!< Vector to store completely filled masks
-    vector<Rect2f> bound_rect;      //!< Vector to store the minimum bounding rect of each image
+    vector<Rect2f> bound_rect;      //!< Vector to store the minimum bounding rectangle of each image
     /**
-     * @brief Blender constuctor
+     * @brief Blender constructor
      */
     Blender(int _bands = 5, bool _cut_line = false, int _scb = false): bands(_bands),
                                                                        graph_cut(_cut_line),
@@ -74,7 +74,7 @@ class Blender
      * @param _scene Index of scene mask in global masks vector
      * @return vector<Mat> Intersection mask referenced to each frame
      * @detail The first element will have the intersection mask between two frames
-     * in the location if first image, and viceversa.
+     * in the location if first image, and vice versa.
      */
     vector<Mat> getOverlapMasks(int _object, int _scene);
     /**

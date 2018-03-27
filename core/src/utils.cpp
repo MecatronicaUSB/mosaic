@@ -69,7 +69,7 @@ Rect2f boundingRectFloat(vector<Point2f> _points)
 		if (point.y > bottom)
 			bottom = point.y;
 	}
-	// update bounding box from boundng points
+	// update bounding box from bounding points
 	Rect2f bound_rect;
 	bound_rect.x = left;
 	bound_rect.y = top;

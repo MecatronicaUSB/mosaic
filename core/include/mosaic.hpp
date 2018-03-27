@@ -19,12 +19,13 @@ namespace m2d //!< mosaic 2d namespace
 class Mosaic
 {
   public:
-    // ---------- Atributes
+    // ---------- Attributes
     int n_subs;                                   //!< Number of sub mosaics for each mosaic build
+    bool apply_pre;                               //!< flag to apply or not SCB preprocessing algorithm on gray image
+    vector<Mat> map;                              //!< Track map for each mosaic
     vector<Frame *> frames;                       //!< All frames object to build the mosaic
     vector<SubMosaic *> sub_mosaics;              //!< Vector of all sub mosaics that can be merged
     vector<vector<SubMosaic *> > final_mosaics;   //!< Vector of disjoint mosaics
-    bool apply_pre;                               //!< flag to apply or not SCB preprocessing algorithm on gray image
     Stitcher *stitcher;                           //!< Stitcher class pointer
     Blender *blender;                             //!< Blender class pointer
     // ---------- Methods
@@ -55,8 +56,16 @@ class Mosaic
      */
     vector<SubMosaic *> getBestOverlap(vector<SubMosaic *> _sub_mosaics);
     /**
-     * @brief 
-     * @param _sub_mosaics 
+     * @brief update sub mosaics order and neighbors, after sub mosaic merge
+     * @param _sub_mosaics input sub mosaics
+     * @detail If we have:
+     *    submosaic 0         submosaic 1         submosaic 2     \n
+     *  nothing at left       SM0 at left         SM1 at left     \n
+     *   SM1 at right        SM2 at right       nothing at right  \n
+     * [(<-X)--0--(1->)] - [(<-0)--1--(2->)] - [(<-1)--2--(X->)]  \n
+     *                                                            \n
+     * The result will be:                                        \n
+     * [(<-X)--0--(2->)] - [(<-0)--2--(X->)]                      \n
      */
     void removeNeighbor(vector<SubMosaic *> &_sub_mosaics);
     /**
@@ -70,16 +79,16 @@ class Mosaic
      */
     void alignMosaics(vector<SubMosaic *> &_sub_mosaics);
     /**
-     * @brief Get the best transformation matrix, wich reduce the overal geometrical distortion
+     * @brief Get the best transformation matrix, which reduce the overall geometrical distortion
      * @param _ransac_mosaics Two input sub mosaics, previously referenced and aligned
-     * @param _niter number of iterations of ransac algoritm
+     * @param _niter number of iterations of RANSAC algorithm
      * @return Mat Best transformation matrix to reduce distortion (to be applied on first sub mosaic)
      */
     Mat getBestModel(vector<SubMosaic *> _ransac_mosaics, int _niter = 3000);
     /**
      * @brief Get the overlap area between two sub mosaics
      * @param _object input sub mosaic (bust be next to _scene sub mosaic)
-     * @param _scece input sub mosaic
+     * @param _scene input sub mosaic
      * @return float normalized overlap area
      */
     float getOverlap(SubMosaic *_object, SubMosaic *_scene);

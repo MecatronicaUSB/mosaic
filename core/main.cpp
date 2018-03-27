@@ -24,8 +24,6 @@ int main( int argc, char** argv ) {
     string input_directory, output_directory;
     vector<string> file_names;
 
-    parser.helpParams.proglineOptions = "[DIRECTORY] [--matcher] [--detector] {OPTIONAL}";
-    
     try{
         parser.ParseCLI(argc, argv);
     }
@@ -68,7 +66,7 @@ int main( int argc, char** argv ) {
     //-- # bands for multiband blender
     blender_bands ?
     cout<<"  Nº bands (blender):\t"<<cyan<< args::get(blender_bands)<<reset<<endl :
-    cout<<"  Nº bands (blender):\t"<<cyan<<3<< reset << endl;
+    cout<<"  Nº bands (blender):\t"<<cyan<<0<< reset << endl;
     //-- Mosaic mode
     cout << "  Mosaic Mode:\t\t" << cyan;
     euclidean_mode ? cout<<cyan<<"Euclidean" : cout <<cyan<<"Full";
@@ -79,8 +77,8 @@ int main( int argc, char** argv ) {
     cout << reset << endl;
     //-- Optional commands
     cout << boolalpha;
-    cout << "  Use grid detection:\t"<<cyan<< use_grid <<reset << endl<<endl;
-    cout << "  Apply SCB:\t\t"<<cyan<< final_scb <<reset << endl;
+    cout << "  Use grid detection:\t"<<cyan<< use_grid <<reset << endl;
+    cout << "  Apply SCB:\t\t"<<cyan<< final_scb <<reset << endl<< endl;
 
     m2d::Mosaic mosaic(true);
     mosaic.stitcher = new m2d::Stitcher(
@@ -109,7 +107,7 @@ int main( int argc, char** argv ) {
     mosaic.save(output_directory);
     
     t = ((double)getTickCount() - t) / getTickFrequency();
-    cout << endl << "  Execution time:\t" << green << t << reset <<" s" <<endl;
+    cout <<endl<<endl<<"  Execution time:\t" << green << t << reset <<" s" <<endl;
 
     if (output) {
         mosaic.show();

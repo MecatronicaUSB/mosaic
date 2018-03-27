@@ -83,7 +83,7 @@ void Stitcher::detectFeatures(vector<Frame *> &_frames)
 		detector->detectAndCompute(frame->gray, Mat(), frame->keypoints, frame->descriptors);
 		// release gray image since wont be used
 		frame->gray.release();
-		// if not enought keypoitns are detected the frame is deleted
+		// if not enough key poitns are detected the frame is deleted
 		if (!frame->haveKeypoints())
 		{
 			delete frame;
@@ -102,13 +102,13 @@ vector<Mat> Stitcher::stitch(Frame *_object, Frame *_scene)
 	img[OBJECT] = _object;
 	img[SCENE] = _scene;
 
-	// to store matches temporaly
+	// to store matches temporarily
 	vector<vector<DMatch>> aux_matches;
 	// match using desired matcher
 	matcher->knnMatch(img[OBJECT]->descriptors, img[SCENE]->descriptors, aux_matches, 2);
-	// save in global class varialble
+	// save in global class variable
 	matches.push_back(aux_matches);
-	// if scene frame have neighbors, try to match keypoints with them
+	// if scene frame have neighbors, try to match key points with them
 	for (Frame *neighbor : img[SCENE]->neighbors)
 	{
 		aux_matches.clear();
@@ -118,7 +118,7 @@ vector<Mat> Stitcher::stitch(Frame *_object, Frame *_scene)
 	// initial threshold value for matches outliers selection
 	float thresh = 0.8;
 	bool good_thresh = true;
-	// loop until enough keypoints are found (>4)
+	// loop until enough key points are found (>4)
 	while (good_thresh)
 	{
 		// Discard outliers based on euclidean distance between descriptor's vectors
@@ -131,15 +131,15 @@ vector<Mat> Stitcher::stitch(Frame *_object, Frame *_scene)
 		for (int j=1; j<good_matches.size(); j++)
 			if (good_matches[j].size() > 3)
 				img[OBJECT]->good_neighbors.push_back(img[SCENE]->neighbors[j-1]);
-		// Convert the keypoints into a vector containing the correspond X,Y position in image
-		// and track the keypoints of scene frame and it's neighbors by correspond homography
+		// Convert the key points into a vector containing the correspond X,Y position in image
+		// and track the key points of scene frame and it's neighbors by correspond homography
 		positionFromKeypoints();
-		// if enough matches ar found, stop loop
+		// if enough matches are found, stop loop
 		if (object_points.size() > 4 && scene_points.size() > 4)
 			good_thresh = false;
 		else
 		{
-			// else, update threshold (alow less strong matches) and clean used data
+			// else, update threshold (allow less strong matches) and clean used data
 			thresh += 0.1;
 			good_matches.clear();
 			neighbors_kp.clear();
@@ -154,7 +154,7 @@ vector<Mat> Stitcher::stitch(Frame *_object, Frame *_scene)
 	// find best euclidean transformation from object to scene
 	Mat R = estimateRigidTransform(Mat(object_points), Mat(scene_points), false);
 	Mat E = Mat::eye(3, 3, CV_64F);
-	// Since R is 3x2 matrix, we coppy in a 3x3 forcing last row to (0, 0, 1)
+	// Since R is 3x2 matrix, we copy in a 3x3 forcing last row to (0, 0, 1)
 	if (!R.empty())
 	{
 		R.copyTo(E(Rect(0, 0, 3, 2)));
@@ -163,7 +163,7 @@ vector<Mat> Stitcher::stitch(Frame *_object, Frame *_scene)
 		// correct perspective transformation based on best euclidean
 		correctHomography(H, E);
 	}
-	// find best eucldiean transformation from the euclidean model (all frames tracked by euclidean transformation)
+	// find best euclidean transformation from the euclidean model (all frames tracked by euclidean transformation)
 	R = estimateRigidTransform(Mat(object_points), Mat(euclidean_points), false);
 	if (!R.empty())
 	{
@@ -210,8 +210,8 @@ void Stitcher::getGoodMatches(float _thresh)
 
 	img[SCENE]->good_points[NEXT].clear();
 	img[OBJECT]->good_points[PREV].clear();
-	// get the keypoints from the good matches
-	// usefull data to calculate local stitching (better than grid_points)
+	// get the key points from the good matches
+	// useful data to calculate local stitching (better than grid_points)
 	for (DMatch good : good_matches[0])
 	{
 		// store the points in each frame object
@@ -246,7 +246,7 @@ void Stitcher::gridDetector()
 				for (DMatch match : good_matches[k])
 				{
 					// get the (X,Y) points from the good matches
-					// if the keypoint is inside the cell
+					// if the key point is inside the cell
 					if (img[OBJECT]->keypoints[match.queryIdx].pt.x >= stepx * i && img[OBJECT]->keypoints[match.queryIdx].pt.x < stepx * (i + 1) &&
 						img[OBJECT]->keypoints[match.queryIdx].pt.y >= stepy * j && img[OBJECT]->keypoints[match.queryIdx].pt.y < stepy * (j + 1))
 					{
@@ -271,7 +271,7 @@ void Stitcher::gridDetector()
 				grid_matches[index].push_back(best_match);
 		}
 	}
-	// good_matches[k+1] correspond to the mathes of k neighbors of scene frame.
+	// good_matches[k+1] correspond to the matches of k neighbors of scene frame.
 	good_matches = grid_matches;
 }
 
@@ -280,10 +280,10 @@ void Stitcher::positionFromKeypoints()
 {
 	img[OBJECT]->grid_points[PREV].clear();
 	img[SCENE]->grid_points[NEXT].clear();
-	// get the keypoints from the good object-scene matches (after grid detector)
+	// get the key points from the good object-scene matches (after grid detector)
 	for (DMatch good : good_matches[0])
 	{
-		// get the keypoints from the good matches, after grid detector
+		// get the key points from the good matches, after grid detector
 		img[OBJECT]->grid_points[PREV].push_back(img[OBJECT]->keypoints[good.queryIdx].pt);
 		img[SCENE]->grid_points[NEXT].push_back(img[SCENE]->keypoints[good.trainIdx].pt);
 	}
@@ -302,7 +302,7 @@ void Stitcher::positionFromKeypoints()
 		neighbors_kp.push_back(aux_points);
 		aux_points.clear();
 	}
-	// track keypoints by each transformation matrix
+	// track key points by each transformation matrix
 	trackKeypoints();
 	// save data in class variable
 	object_points = img[OBJECT]->grid_points[PREV];
@@ -346,7 +346,7 @@ void Stitcher::trackKeypoints()
 // See description in header file
 void Stitcher::correctHomography(Mat &_H, Mat _E)
 {
-	// corner points fo object frame (default points)
+	// corner points for object frame (default points)
 	vector<Point2f> h_points = {
 		img[OBJECT]->bound_points[PERSPECTIVE][0],
 		img[OBJECT]->bound_points[PERSPECTIVE][1],  
@@ -358,14 +358,14 @@ void Stitcher::correctHomography(Mat &_H, Mat _E)
 	perspectiveTransform(h_points, h_points, _H);
 	// multiply points by euclidean transformation	
 	perspectiveTransform(e_points, e_points, _E);
-	// get the mid points between perspective and auclidean points
+	// get the mid points between perspective and euclidean points
 	vector<Point2f> mid_points = {
 		getMidPoint(getMidPoint(h_points[0], e_points[0]), h_points[0]),
 		getMidPoint(getMidPoint(h_points[1], e_points[1]), h_points[1]),
 		getMidPoint(getMidPoint(h_points[2], e_points[2]), h_points[2]),
 		getMidPoint(getMidPoint(h_points[3], e_points[3]), h_points[3])
 	};
-	// get the perspective trasnformation between perspective points and calculated mid points
+	// get the perspective transformation between perspective points and calculated mid points
 	Mat correct_H = getPerspectiveTransform(h_points, mid_points);
 	// apply correction to original perspective transformation
 	_H = correct_H * _H;

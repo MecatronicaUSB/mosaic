@@ -38,7 +38,7 @@ typedef struct _CornerPoint
     float distance;         //!< distance of point and Point at center of opposite frame
     Point2f point;          //!< OpenCV float Point coordinate
 
-    /// Object contructor
+    /// Object constructor
     _CornerPoint(Point2f _point, int _idx) : point(_point), index(_idx){};
     // overload of "<" operator to sort the points by distance
     bool operator<(const _CornerPoint &point) const
@@ -53,7 +53,7 @@ typedef struct _CornerPoint
 class SubMosaic
 {
   public:
-    // ---------- Atributes
+    // ---------- Attributes
     int n_frames;                   //!< Number of frames in sub-mosaic
     Mat final_scene;                //!< Image containing all blended images (the sub-mosaic)
     Mat next_H;                     //!< Perspective transformation to place a new frame to last position
@@ -82,7 +82,7 @@ class SubMosaic
      */
     void addFrame(Frame *_frame);
     /**
-     * @brief Calculate the error based on distance of each keypoint match
+     * @brief Calculate the error based on distance of each key point match
      * @param _object first frame
      * @param _scene second frame
      * @return float resulting error
@@ -102,7 +102,7 @@ class SubMosaic
      */
     void referenceToZero();
     /**
-     * @brief Get the centroid point, based on keypoints position
+     * @brief Get the centroid point, based on key points position
      * @return Point2f resulting centroid Point
      */
     Point2f getCentroid();
@@ -116,7 +116,7 @@ class SubMosaic
      */
     void correct();
     /**
-     * @brief Get the corner points of sub mosic (first and last frame)
+     * @brief Get the corner points of sub mosaic (first and last frame)
      * @return vector<vector<Point2f> > border points of euclidean and perspective transformation
      */
     vector<vector<Point2f> > getCornerPoints();

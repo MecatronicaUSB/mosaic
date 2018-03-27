@@ -66,7 +66,7 @@ void SubMosaic::addFrame(Frame *_frame)
 // See description in header file
 void SubMosaic::referenceToZero()
 {
-	// calculate the offset by the location of the bounding rect
+	// calculate the offset by the location of the bounding rectangle
 	vector<float> offset = {-frames[0]->bound_rect.y, 0, -frames[0]->bound_rect.x, 0};
 	// translate all sub mosaic
 	updateOffset(offset);
@@ -98,7 +98,7 @@ void SubMosaic::computeOffset()
 	vector<float> offset(4);
 	offset[TOP] = -top;
 	offset[LEFT] = -left;
-	// translate the mosaic based on prevoious offset
+	// translate the mosaic based on previous offset
 	updateOffset(offset);
 }
 
@@ -119,7 +119,7 @@ void SubMosaic::updateOffset(vector<float> _total_offset)
 		frame->setHReference(T, PERSPECTIVE);
 		frame->setHReference(T, EUCLIDEAN);
 	}
-	// update transfomrationt to last frame of mosaic
+	// update transformation to last frame of mosaic
 	next_H = T * next_H;
 	next_E = T * next_E;
 }
@@ -151,14 +151,14 @@ float SubMosaic::calcDistortion(int _ref)
 // See description in header file
 void SubMosaic::correct()
 {
-	// get corner ponints of mosaic, based on first and last frame
+	// get corner points of mosaic, based on first and last frame
 	vector<vector<Point2f> > corner_points = getCornerPoints();
-	// calculate perspective transform from perspective points to eucldiean ones
+	// calculate perspective transform from perspective points to euclidean ones
 	Mat correct_H = getPerspectiveTransform(corner_points[PERSPECTIVE], corner_points[EUCLIDEAN]);
 	// update each frame of mosaic
 	for (Frame *frame : frames)
 		frame->setHReference(correct_H);
-	// update transfomrationt to last frame of mosaic
+	// update transformation to last frame of mosaic
 	next_H = correct_H * next_H;
 	next_E = correct_H * next_E;
 }
@@ -210,7 +210,7 @@ Point2f SubMosaic::getCentroid()
 {
 	Point2f centroid(0, 0);
 	int n_points=0;
-	// loop over all keypoints positon
+	// loop over all key points position
 	for (Frame *frame: frames) {
 	    for (const Point2f point: frame->bound_points[PERSPECTIVE]) {
 	        centroid += point;

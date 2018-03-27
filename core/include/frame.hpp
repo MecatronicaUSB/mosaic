@@ -15,13 +15,13 @@ using namespace cv;
 namespace m2d //!< mosaic 2d namespace
 {
 
-/// termporal frame reference for Frame class
+/// temporal frame reference for Frame class
 enum FrameRef
 {
 	PREV,
 	NEXT
 };
-/// corner ponints refereing to each transformation class
+/// corner points referring to each transformation class
 enum BoundPointsRef
 {
 	PERSPECTIVE,	//!< Points transformed by perspective transformation
@@ -39,35 +39,35 @@ enum WarpOffset
 
 /**
  * @brief All data for each image in a mosaic
- * @detail Contains All data of each image refered to current sub-mosaic or mosaic
+ * @detail Contains All data of each image referred to current sub-mosaic or mosaic
  */
 class Frame
 {
   	public:
-		// ---------- Atributes
+		// ---------- Attributes
 		Mat descriptors;					    //!< Feature descriptors
 		Mat color;                              //!< OpenCV Matrix containing the original image
 		Mat gray;                               //!< OpenCV Matrix containing a gray scale version of image
 		Mat H;                                  //!< Homography matrix based on previous frame
 		Mat E;                                  //!< Euclidean matrix based on previous frame
 		Rect2f bound_rect;                      //!< Minimum bounding rectangle of transformed image
-		vector<vector<Point2f>> bound_points;   //!< Points of the transformmed image (initially at corners)
-		vector<vector<Point2f>> grid_points;	//!< Position (X,Y) of good keypoints after grid detector
-		vector<vector<Point2f>> good_points;	//!< Position (X,Y) of good keypoints (inliers)
-		vector<KeyPoint> keypoints;				//!< Feature OpenCV Keypoint object
+		vector<vector<Point2f>> bound_points;   //!< Points of the transformed image (initially at corners)
+		vector<vector<Point2f>> grid_points;	//!< Position (X,Y) of good key points after grid detector
+		vector<vector<Point2f>> good_points;	//!< Position (X,Y) of good key points (inliers)
+		vector<KeyPoint> keypoints;				//!< Feature OpenCV Key point object
 		vector<Frame *> neighbors;				//!< Vector containing all spatially close Frames (Pointers)
 		vector<Frame *> good_neighbors;			//!< Vector containing frames with almost one good match (Pointers)
 		// ---------- Methods
 		/**
 		 * @brief Default class constructor
 		 * @param _img OpenCV Matrix containing the BGR version of image
-		 * @param _key Flag to assign this frame as reference (usefull for SubMosaic Class)
+		 * @param _key Flag to assign this frame as reference (useful for SubMosaic Class)
 		 * @param _width Width to resize the image (Speed purpose)
 		 * @param _height Height to resize the image (Speed purpose)
 		 */
 		Frame(Mat _img, bool _pre = true, int _width = TARGET_WIDTH, int _height = TARGET_HEIGHT);
 		/**
-		 * @brief Object desctructor
+		 * @brief Object destructor
 		 */
 		~Frame();
 		/**
@@ -88,36 +88,36 @@ class Frame
 		/**
 		 * @brief Change the reference for Homography matrix
 		 * @param _H Input transformation matrix 
-		 * @param _ref Reference to wich data transform (FrameRef enum options)
+		 * @param _ref Reference to which data transform (FrameRef enumeration options)
 		 * @detail Modify all frame data:
 		 * - transformation matrix
 		 * - bounding points
-		 * - keypoints position in image (refering to previous and next frame)
+		 * - keypoints position in image (referring to previous and next frame)
 		 */
 		void setHReference(Mat _H, int _ref = PERSPECTIVE);
 		/**
-		 * @brief Calculate the frame distiortion
+		 * @brief Calculate the frame distortion
 		 * @return float resulting distortion
 		 * @detail Metrics:
-		 * - Ratios of lenht of oposite sides \n
-		 * - Ratios of lenht of consecutive sides \n
+		 * - Ratios of length of opposite sides \n
+		 * - Ratios of length of consecutive sides \n
 		 * - Angles of consecutive sides \n
 		 * - Ratio of resulting and original area \n
 		 */
 		float frameDistortion(int _ref = PERSPECTIVE);
 		/**
 		 * @brief Check if the frame is too much distorted
-		 * @return true if the frame is good enought 
+		 * @return true if the frame is good enough
 		 * @return false otherwise
-		 * @detail The distortion is besed on follow criteria:
+		 * @detail The distortion is based on follow criteria:
 		 * - Ratio of semi-diagonals distance. \n
 		 * - Area. \n
-		 * - Mininum area covered by good keypoints. (currently unused) \n
+		 * - Minimum area covered by good key points. (currently unused) \n
 		 */
 		bool isGoodFrame();
 		/**
-		 * @brief (Currently unused) Calculate the minimun bounding area containing good keypoints 
-		 * @return float Area with good keypoints inside
+		 * @brief (Currently unused) Calculate the minimum bounding area containing good key points 
+		 * @return float Area with good key points inside
 		 */
 		float boundAreaKeypoints();
 		/**
@@ -127,16 +127,16 @@ class Frame
 		 */
 		void updateNeighbors(Frame *_scene);
 		/**
-		 * @brief Check if bounding box of input frame instersect the self bounding rect
+		 * @brief Check if bounding box of input frame intersect the self bounding rectangle
 		 * @param _object Input frame
 		 * @return true if Both frames collide
 		 * @return false otherwise
 		 */
 		bool checkCollision(Frame *_object);
 		/**
-		 * @brief To check if the current frame have enought keypoints
-		 * @return true if have more than 3 keypoints
-		 * @return false if have less than 4 keypoints
+		 * @brief To check if the current frame have enough key points
+		 * @return true if have more than 3 key points
+		 * @return false if have less than 4 key points
 		 */
 		bool haveKeypoints();
 };
