@@ -43,3 +43,31 @@ The above code will build a mosaic using euclidean transformations, the SCB algo
 enhance final mosaic view, SIFT detector and BruteForce matcher are used.
 
 In both cases the resulting mosaic and track map will be saved in the provided outpt path.
+
+# Results
+### Test using:
+- Graph cut seam finder.
+- multiband blender with five bands.
+- Simple color balance (in BGR).
+- 28 images input.
+- Perspective transformations.
+
+<p align="center">
+  <img src="https://github.com/MecatronicaUSB/mosaic/blob/master/core/results/MVI_0234-28imgs-graphcut-5bands-scb.png" width="350"/>
+  <img src="https://github.com/MecatronicaUSB/mosaic/blob/master/core/results/MVI_0234-28imgs-graphcut-5bands-scb-MAP.jpg" width="350"/>
+</p>
+- Lef. Final Mosaic.<br />
+- Right. Final Map.<br />
+
+### Test using:
+- Graph cut seam finder.
+- 11 Images input.
+- Perspective transformations.
+- Correct global distortion by euclidean model.
+
+<p align="center">
+  <img src="https://github.com/MecatronicaUSB/mosaic/blob/master/core/results/ScottReef-SM0-before_correct.png" width="350"/>
+  <img src="https://github.com/MecatronicaUSB/mosaic/blob/master/core/results/ScottReef-SM0-after-correct.png" width="350"/>
+</p>
+- Left. Mosaic before average homography correction.<br />
+- Right. Mosaic after average homography correction.<br />
