@@ -77,13 +77,13 @@ int main( int argc, char** argv ) {
     cout << reset << endl;
     //-- Optional commands
     cout << boolalpha;
-    cout << "  Use grid detection:\t"<<cyan<< use_grid <<reset << endl;
+    // cout << "  Use grid detection:\t"<<cyan<< use_grid <<reset << endl;
     // cout << "  Eclidean correction:\t"<<cyan<< euclidean_correction <<reset << endl;
     cout << "  Apply SCB:\t\t"<<cyan<< final_scb <<reset << endl<< endl;
 
     m2d::Mosaic mosaic(true);
     mosaic.stitcher = new m2d::Stitcher(
-        use_grid,                                                   
+        true, // grid detection                                                   
         detector_surf  ? m2d::USE_SURF  :
         detector_sift  ? m2d::USE_SIFT  :
         detector_akaze ? m2d::USE_AKAZE : m2d::USE_KAZE,
