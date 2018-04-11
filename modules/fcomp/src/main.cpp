@@ -89,6 +89,8 @@ int main( int argc, char** argv ) {
         detector = ORB::create();
     }else if(op_kaze){
         detector = KAZE::create();
+    }else if(op_akaze){
+        detector = AKAZE::create();
     }
     Ptr<DescriptorMatcher> matcher;
     if(op_flann){

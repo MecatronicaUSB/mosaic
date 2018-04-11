@@ -21,6 +21,7 @@ args::Flag op_sift(op_feature, "SIFT", "Use SIFT Extractor and Descriptor", {"si
 args::Flag op_surf(op_feature, "SURF", "Use SURF Extractor and Descriptor", {"surf"});
 args::Flag op_orb(op_feature, "ORB", "Use ORB Extractor and Descriptor", {"orb"});
 args::Flag op_kaze(op_feature, "KAZE", "Use KAZE Extractor and Descriptor", {"kaze"});
+args::Flag op_akaze(op_feature, "A-KAZE", "Use A-KAZE Extractor and Descriptor", {"akaze"});
 
 args::Group op_matcher(sub_p, "Select the Feature Matcher:", args::Group::Validators::AtLeastOne);
 args::Flag op_brutef(op_matcher, "Brute Force", "Brute force matcher (default)", {'b'});
