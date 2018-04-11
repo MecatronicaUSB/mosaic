@@ -82,6 +82,7 @@ void Mosaic::compute(bool _euclidean_mode)
 		// and start a new mosaic. (Separate mosaics)
 		if (best_distortion == 100)
 		{
+			break;
 			// save all sub mosaics to be merged together
 			if (sub_mosaics.size() > 0)
 				final_mosaics.push_back(sub_mosaics);
