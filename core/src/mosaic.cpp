@@ -83,9 +83,10 @@ void Mosaic::compute(bool _euclidean_mode)
 		if (best_distortion == 100)
 		{
 			// save all sub mosaics to be merged together
-			if (sub_mosaics[n_subs].size() > 0)
+			if (sub_mosaics.size() > 0)
 				final_mosaics.push_back(sub_mosaics);
 			sub_mosaics.clear();
+			sub_mosaics.push_back(new SubMosaic());
 			n_subs = 0;
 			// if remains enough frames, continue. else break loop
 			if (i < frames.size()-2)
