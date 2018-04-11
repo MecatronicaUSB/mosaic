@@ -428,10 +428,11 @@ void Mosaic::save(string _dir)
 	{
 		// blend mosaic and save it, using provided filename
 		blender->blendSubMosaic(final_mosaic[0]);
-		imwrite(_dir+"-000.jpg", final_mosaic[0]->final_scene);
+		imwrite(_dir+"-00"+to_string(n)+".jpg", final_mosaic[0]->final_scene);
 		// create track map and save it
 		map.push_back(final_mosaic[0]->buildMap(CIRCLE));
-		imwrite(_dir+"-MAP.jpg", map[n]);
+		imwrite(_dir+"-00"+to_string(n)+"-MAP.jpg", map[n]);
+		n++;
 	}
 }
 
