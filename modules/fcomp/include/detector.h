@@ -24,8 +24,8 @@
  * @param matches Vector of Vectors, container all the Opencv Matches
  * @return vector<cv::DMatch> Vector container good Opencv Matches
  */
-std::vector<cv::DMatch> getGoodMatches(const int n_matches, const std::vector<std::vector<cv::DMatch> > matches);
-
+std::vector<cv::DMatch> getGoodMatches(const std::vector<std::vector<cv::DMatch> > matches);
+std::vector<cv::DMatch> getGoodMatchesBF(const std::vector<cv::DMatch> matches);
 /**
  * @brief 
  * 

@@ -24,7 +24,7 @@ args::Flag op_kaze(op_feature, "KAZE", "Use KAZE Extractor and Descriptor", {"ka
 
 args::Group op_matcher(sub_p, "Select the Feature Matcher:", args::Group::Validators::AtLeastOne);
 args::Flag op_brutef(op_matcher, "Brute Force", "Brute force matcher (default)", {'b'});
-args::Flag op_flann(op_matcher, "Flann", "Flann force matcher (default)", {'f'});
+args::Flag op_flann(op_matcher, "Flann", "Flann base matcher", {'f'});
 
 args::Group op_data(sub_p, "Select imput data:", args::Group::Validators::AtMostOne);
 args::ValueFlagList<std::string> op_img(op_data, "ImageName", "Image imput name. Mus specify two file names (one per flag)",{'i'});

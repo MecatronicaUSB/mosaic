@@ -146,8 +146,8 @@ int main( int argc, char** argv ) {
     t = (double) getTickCount();
     for(i=0; i<n_iter-step_iter; i+=step_iter){
         if(op_dir){
-            img[0] = imread(dir_ent+"/"+file_names[i++],IMREAD_COLOR);
-            img[1] = imread(dir_ent+"/"+file_names[i],IMREAD_COLOR);
+            img[0] = imread(file_names[i++],IMREAD_COLOR);
+            img[1] = imread(file_names[i],IMREAD_COLOR);
         }
         if(op_vid){
             vid.set(CAP_PROP_POS_FRAMES,i);
@@ -180,14 +180,17 @@ int main( int argc, char** argv ) {
             cout << "No Key points Found" <<  endl;
             return -1;
         }
-        // Flann needs the descriptors to be of type CV_32F
-        descriptors[0].convertTo(descriptors[0], CV_32F);
-        descriptors[1].convertTo(descriptors[1], CV_32F);
+        // Flann needs the descriptors to be of type CV_32F (case for binary descriptors)
+        if(descriptors[0].type()!=CV_32F)
+        {
+            descriptors[0].convertTo(descriptors[0], CV_32F);
+            descriptors[1].convertTo(descriptors[1], CV_32F);
+        }
         // Match the keypoints for input images
         matcher->knnMatch( descriptors[0], descriptors[1], matches, 2);
         n_matches = descriptors[0].rows;
         // Discard the bad matches (outliers)
-        good_matches = getGoodMatches(n_matches - 1, matches);
+        good_matches = getGoodMatches(matches);
         if(op_grid){
             good_matches = gridDetector(keypoints[0], good_matches);
         }
@@ -223,8 +226,8 @@ int main( int argc, char** argv ) {
     cout << "\nTotal "<< n_img <<" -- -- -- -- -- -- -- -- -- --"  << endl;
     cout << "-- Total Possible matches  ["<< tot_matches <<"]"  << endl;
     cout << "-- Total Good Matches      ["<<green<<tot_good<<reset<<"]"  << endl;
-    t = 1000 * ((double) getTickCount() - t) / getTickFrequency();        
-    cout << "   Execution time: " << t << " ms" <<endl;
+    t = ((double) getTickCount() - t) / getTickFrequency();        
+    cout << "   Execution time: " << t << " s" <<endl;
 
     return 0;
 }
