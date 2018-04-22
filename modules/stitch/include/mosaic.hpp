@@ -27,8 +27,8 @@ using namespace cv;
 
 namespace m2d //!< mosaic 2d namespace
 {
-const int TARGET_WIDTH	= 640*2;   
-const int TARGET_HEIGHT	= 480*2;
+const int TARGET_WIDTH	= 640;   
+const int TARGET_HEIGHT	= 480;
 
 class Stitcher;
 /**

@@ -268,9 +268,18 @@ void Stitcher::blend2Scene(Mat &_final_scene){
                                                    img[OBJECT]->bound_rect.width,
                                                    img[OBJECT]->bound_rect.height));
 
+    Point points_array2[4] = {img[OBJECT]->bound_points[0],
+                            img[OBJECT]->bound_points[1],
+                            img[OBJECT]->bound_points[2],
+                            img[OBJECT]->bound_points[3]};
+    Point *marcos[1] = {points_array2};
+    int npoitns[1] = {4};
     warp_img.copyTo(object_position, mask);
     // object_position -= _warp_img;
     // object_position += _warp_img;
+
+    polylines(_final_scene, marcos, npoitns, 1, true, Scalar(0,0,255), 2);
+
     mask.release();
 }
 
