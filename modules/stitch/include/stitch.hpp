@@ -38,7 +38,8 @@ enum Detector{
     USE_KAZE,
     USE_AKAZE,
     USE_SIFT,
-    USE_SURF
+    USE_SURF,
+    USE_ORB
 };
 /// Keypoint matcher to use in stitcher class
 enum Matcher{

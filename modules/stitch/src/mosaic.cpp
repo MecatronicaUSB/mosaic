@@ -16,8 +16,8 @@ namespace m2d //!< mosaic 2d namespace
 
 // See description in header file
 Frame::Frame(Mat _img, bool _key, int _width, int _height){
-    if(_img.size().width != _width || _img.size().height != _height)
-        resize(_img, _img, Size(_width, _height));
+    //if(_img.size().width != _width || _img.size().height != _height)
+    resize(_img, _img, Size(_width, _height));
     
     color = _img.clone();
     cvtColor(color, gray, CV_BGR2GRAY);
@@ -93,7 +93,7 @@ void SubMosaic::setRerenceFrame(Mat _scene){
     frames.push_back(new Frame(_scene.clone(), true));
     n_frames++;
     key_frame = frames[0];
-    final_scene = _scene.clone();
+    final_scene = frames[0]->color.clone();
 }
 
 // See description in header file
@@ -109,30 +109,6 @@ bool SubMosaic::add2Mosaic(Mat _object){
     return stitcher->stitch(frames[n_frames-1], frames[n_frames-2], final_scene);
 }
 
-// See description in header file
-void saveHomographyData(Mat H, vector<KeyPoint> keypoints[2], std::vector<DMatch> matches){
-    ofstream file;
-    file.open("homography-data.txt");
-
-    for(int i=0; i<H.cols; i++){
-        for(int j=0; j<H.rows; j++){
-            file << H.at<double>(i, j);
-            file << " ";
-        }
-        file << "\n";
-    }
-    file << matches.size() << "\n";
-    for(auto m: matches){
-        file << keypoints[0][m.queryIdx].pt.x << " ";
-        file << keypoints[0][m.queryIdx].pt.y << "\n";
-    }
-    for(auto m: matches){
-        file << keypoints[1][m.trainIdx].pt.x << " ";
-        file << keypoints[1][m.trainIdx].pt.y << "\n";
-    }
-
-    file.close();
-}
 
 }
 

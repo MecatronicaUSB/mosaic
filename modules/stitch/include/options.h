@@ -20,6 +20,8 @@ args::Flag op_flann(op_matcher, "Flann", "Flann force matcher", {'f',"flann"});
 args::Group op_feature(parser, "Select the Feature Extractor and Descriptor:", args::Group::Validators::AtMostOne);
 args::Flag op_kaze(op_feature, "KAZE", "Use KAZE Extractor and Descriptor (default)", {"kaze"});
 args::Flag op_surf(op_feature, "SURF", "Use SURF Extractor and Descriptor", {"surf"});
+args::Flag op_sift(op_feature, "SIFT", "Use SIFT Extractor and Descriptor", {"sift"});
+args::Flag op_orb(op_feature, "ORB", "Use ORB Extractor and Descriptor", {"orb"});
 
 args::Group op_data(parser, "Select input data:", args::Group::Validators::AtLeastOne);
 args::ValueFlagList<std::string> op_img(op_data, "image-name", "Image input name. Mus specify two file names (one per flag)",{'i'});
@@ -29,3 +31,4 @@ args::Group optional(parser, "(Optional)", args::Group::Validators::DontCare);
 args::Flag op_out(optional, "Output", "Show final blended images", {'o'});
 args::Flag op_pre(optional, "Pre-processing", "Apply pre-processing algorithm to test improvement in keypoints search", {"pre"});
 args::Flag op_grid(optional, "grid", "Filter keypoints based on grid distribution. the grid is fixed at 10x10 cels", {"grid"});
+args::ValueFlag<std::string> op_save(op_data,"save","Save image",{'s'});

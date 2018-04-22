@@ -27,8 +27,8 @@ using namespace cv;
 
 namespace m2d //!< mosaic 2d namespace
 {
-const int TARGET_WIDTH	= 640;   
-const int TARGET_HEIGHT	= 480;
+const int TARGET_WIDTH	= 640*2;   
+const int TARGET_HEIGHT	= 480*2;
 
 class Stitcher;
 /**
@@ -139,5 +139,5 @@ class SubMosaic{
  * @param keypoints Vector with OpenCV Keypoints
  * @param matches Vector with OpenCV Matches
  */
-void saveHomographyData(cv::Mat H, vector<KeyPoint> keypoints[2], vector<cv::DMatch> matches);
+void saveHomographyData(cv::Mat H, vector<KeyPoint> keypoints[2], vector<cv::DMatch> matches, std::string file);
 }

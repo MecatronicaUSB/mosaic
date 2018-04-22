@@ -11,6 +11,7 @@
 #include "../../common/utils.h"
 #include "../include/options.h"
 #include "../include/detector.h"
+#include <fstream>
 
 /// Dimensions to resize images
 #define TARGET_WIDTH	640   
@@ -23,6 +24,9 @@ const std::string reset("\033[0m");
 using namespace std;
 using namespace cv;
 using namespace cv::xfeatures2d;
+
+float getDistance(Point2f _pt1, Point2f _pt2);
+void saveHomographyData(vector<KeyPoint> keypoints[2], std::vector<DMatch> matches, std::string file);
 
 /*
  * @function main
@@ -196,7 +200,10 @@ int main( int argc, char** argv ) {
         if(op_grid){
             good_matches = gridDetector(keypoints[0], good_matches);
         }
-
+        if (op_saveh)
+        {
+            saveHomographyData(keypoints, good_matches, args::get(op_saveh));
+        }
         n_good = good_matches.size();
         tot_matches+=n_matches;
         tot_good+=n_good;
@@ -232,4 +239,59 @@ int main( int argc, char** argv ) {
     cout << "   Execution time: " << t << " s" <<endl;
 
     return 0;
+}
+
+float getDistance(Point2f _pt1, Point2f _pt2)
+{
+	return sqrt(pow((_pt1.x - _pt2.x), 2) + pow((_pt1.y - _pt2.y), 2));
+}
+// See description in header file
+void saveHomographyData(vector<KeyPoint> keypoints[2], std::vector<DMatch> matches, std::string filename){
+    ofstream file;
+    file.open("/home/victor/dataset/Results/homography-data"+filename+".txt");
+
+    // for(int i=0; i<H.cols; i++){
+    //     for(int j=0; j<H.rows; j++){
+    //         file << H.at<double>(i, j);
+    //         file << " ";
+    //     }
+    //     file << "\n";
+    // }
+    // file << matches.size() << "\n";
+    // for(auto m: matches){
+    //     file << keypoints[0][m.queryIdx].pt.x << " ";
+    //     file << keypoints[0][m.queryIdx].pt.y << "\n";
+    // }
+    vector<Point2f> points1, points2;
+    Point2f point;
+    for(auto m: matches){
+        point.x = keypoints[0][m.queryIdx].pt.x;
+        point.y = keypoints[0][m.queryIdx].pt.y;
+        points1.push_back(point);
+    }
+    for (auto m : matches)
+    {
+        point.x = keypoints[1][m.trainIdx].pt.x;
+        point.y = keypoints[1][m.trainIdx].pt.y;
+        points2.push_back(point);
+    }
+    Mat H = findHomography(Mat(points1), Mat(points2), CV_RANSAC);
+    perspectiveTransform(points2, points2, H);
+
+    vector<float> distance;
+    for (int i = 0; i<points1.size(); i++)
+    {
+        distance.push_back(getDistance(points1[i], points2[i]));
+    }
+    for (int i = 0; i<distance.size(); i++)
+    {
+        file << distance[i] << "\n";
+    }
+    // for(auto m: matches){
+    //     file << keypoints[1][m.trainIdx].pt.x << " ";
+    //     file << keypoints[1][m.trainIdx].pt.y << "\n";
+    // }
+
+
+    file.close();
 }

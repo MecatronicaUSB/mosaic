@@ -32,7 +32,7 @@ Stitcher::Stitcher(bool _grid, bool _pre, int _detector, int _matcher){
         detector = SIFT::create();
         break;
     case USE_SURF:
-        detector = SURF::create();
+        detector = SURF::create(400);
         break;
     }
 
@@ -120,13 +120,14 @@ bool Stitcher::stitch(Frame *_object, Frame *_scene, Mat &_final_scene){
         return false;
     }
 
+    //saveHomographyData();
     warp_offset = getWarpOffet(img[OBJECT]->H, _final_scene.size());
 
     // Create padd in scene based on offset in transformed image. when transformed image moves 
     // to negatives values a new padding is created in unexisting sides to achieve a correct stitch
     copyMakeBorder(_final_scene, _final_scene, warp_offset[TOP], warp_offset[BOTTOM],
                                                warp_offset[LEFT], warp_offset[RIGHT],
-                                               BORDER_CONSTANT,Scalar(0,0,0));
+                                               BORDER_CONSTANT,Scalar(255,255,255));
 
     blend2Scene(_final_scene);
 
@@ -250,12 +251,16 @@ void Stitcher::blend2Scene(Mat &_final_scene){
     Point points_array[4] = {img[OBJECT]->bound_points[0],
                              img[OBJECT]->bound_points[1],
                              img[OBJECT]->bound_points[2],
-                             img[OBJECT]->bound_points[3],};
-
+                             img[OBJECT]->bound_points[3]};
+	for (int i = 0; i < 4; i++)
+	{
+		// point[4] correspond to center point
+		points_array[i].x += 1 * (img[OBJECT]->bound_points[4].x - points_array[i].x) / 100;
+		points_array[i].y += 1 * (img[OBJECT]->bound_points[4].y - points_array[i].y) / 100;
+	}
     Mat mask(img[OBJECT]->bound_rect.height, img[OBJECT]->bound_rect.width, CV_8UC3, Scalar(0,0,0));
     fillConvexPoly( mask, points_array, 4, Scalar(255,255,255));
 
-    erode( mask, mask, getStructuringElement( MORPH_RECT, Size(7, 7),Point(-1, -1)));
     img[OBJECT]->bound_rect.x = max(img[OBJECT]->bound_rect.x,0.f);
     img[OBJECT]->bound_rect.y = max(img[OBJECT]->bound_rect.y,0.f);
 	cv::Mat object_position(_final_scene, cv::Rect(img[OBJECT]->bound_rect.x,

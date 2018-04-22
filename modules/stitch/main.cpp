@@ -76,8 +76,8 @@ int main( int argc, char** argv ) {
     sub_mosaic.stitcher = new m2d::Stitcher(
         op_grid,                                            // use grid
         op_pre,                                             // apply histsretch algorithm
-        op_surf ? m2d::USE_SURF : m2d::USE_KAZE,          // select feature extractor
-        op_flann ? m2d::USE_FLANN : m2d::USE_BRUTE_FORCE    // select feature matcher
+        op_surf ? m2d::USE_SURF : op_kaze ? m2d::USE_KAZE : op_orb ? m2d::USE_ORB : m2d::USE_SIFT, // select feature extractor
+        op_flann ? m2d::USE_FLANN : m2d::USE_BRUTE_FORCE   // select feature matcher
     );
 
     // Two images as input
@@ -97,7 +97,7 @@ int main( int argc, char** argv ) {
 
     for(i=0; i < file_names.size(); i++){
 
-        img = imread(file_names[i],IMREAD_COLOR);
+        img = imread(file_names[i], IMREAD_COLOR);
 
         if(!img.data){
             cout<< " --(!) Error reading image "<< i << endl; 
@@ -117,7 +117,7 @@ int main( int argc, char** argv ) {
             cout << "-- Possible matches  ["<< n_matches <<"]"  << endl;
             cout << "-- Good Matches      ["<<green<<n_good<<reset<<"]"  << endl;
         }
-        if(op_out){
+        if(op_out && i>0){
             t = 1000 * ((double) getTickCount() - t) / getTickFrequency();        
             cout << "   Execution time: " << t << " ms" <<endl;
             imshow("STITCH", sub_mosaic.final_scene);
@@ -125,7 +125,11 @@ int main( int argc, char** argv ) {
             t = (double) getTickCount();
         }
     }
-    
+    if (op_save)
+    {
+        imwrite("/home/victor/dataset/Results/"+args::get(op_save)+".png", sub_mosaic.final_scene);
+    }
+
     t = 1000 * ((double) getTickCount() - t) / getTickFrequency();        
     cout << "   Execution time: " << t << " ms" <<endl;
 

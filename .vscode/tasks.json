@@ -4,7 +4,7 @@
         {
             "taskName": "Build FCOMP",            
             "suppressTaskName": true,
-            "isBuildCommand": true,
+            "isBuildCommand": false,
             "command": "g++",
             "showOutput": "silent",
             "args": ["-g","-std=c++11", "modules/fcomp/src/main.cpp", "modules/common/utils.cpp", "modules/fcomp/src/detector.cpp", "-o", "modules/fcomp/fcomp", "-I/usr/local/include/opencv", "-I/usr/local/include","-I/usr/include", "-L/usr/local/lib",
@@ -19,7 +19,7 @@
         {
             "taskName": "Build STITCH",
             "suppressTaskName": true,
-            "isBuildCommand": false,
+            "isBuildCommand": true,
             "command": "g++",
             "showOutput": "always",  
             "args": ["-g","-std=c++11", "modules/stitch/main.cpp","modules/common/utils.cpp", "modules/stitch/src/stitch.cpp", "modules/stitch/src/mosaic.cpp", "-o", "modules/stitch/stitch",
