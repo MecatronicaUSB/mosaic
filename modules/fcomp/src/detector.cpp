@@ -53,24 +53,24 @@ vector<DMatch> gridDetector(vector<KeyPoint> keypoints, vector<DMatch> matches){
 	/// check if stepx/stepy can be provided as function arguments
     int stepx=TARGET_WIDTH/GRID_COLUMNS, stepy=TARGET_HEIGHT/GRID_ROWS;
     vector<DMatch> grid_matches;	// vector containing matches obtained with grid/tiling approach
-    int best_distance = 100;	// forced initial value for best_distance (default value may be ignored as it is not employed)
+    int best_distance = 10000;	// forced initial value for best_distance (default value may be ignored as it is not employed)
     DMatch best_match;	// current best match
     
     for(int i=0; i<10; i++){
         for(int j=0; j<10; j++){
-            best_distance = 100;
+            best_distance = 10000;
             for (auto m: matches) {	// booom, using 'auto' like a pro...
                 //-- Get the keypoints from the good matches
-                if(keypoints[m.queryIdx].pt.x >= stepx*i && keypoints[m.queryIdx].pt.x < stepx*(i+1) &&
-                keypoints[m.queryIdx].pt.y >= stepy*j && keypoints[m.queryIdx].pt.y < stepy*(j+1)){
+                if(keypoints[m.trainIdx].pt.x >= stepx*i && keypoints[m.trainIdx].pt.x < stepx*(i+1) &&
+                keypoints[m.trainIdx].pt.y >= stepy*j && keypoints[m.trainIdx].pt.y < stepy*(j+1)){
                     if(m.distance < best_distance){
                         best_distance = m.distance;
                         best_match = m;
                     }
-                    matches.erase(matches.begin() + m.queryIdx);  
+                    matches.erase(matches.begin() + m.trainIdx);  
                 }
             }
-            if(best_distance != 100)
+            if(best_distance != 10000)
                 grid_matches.push_back(best_match);
         }
     }

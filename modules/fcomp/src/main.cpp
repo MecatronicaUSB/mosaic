@@ -198,7 +198,12 @@ int main( int argc, char** argv ) {
         // Discard the bad matches (outliers)
         good_matches = getGoodMatches(matches);
         if(op_grid){
-            good_matches = gridDetector(keypoints[0], good_matches);
+            good_matches = gridDetector(keypoints[1], good_matches);
+            for (int i = 0; i < 10; i++)
+            {
+                for (int j = 0; j < 10; j++)
+                    rectangle(img_ori[1], Rect(i*64, j*48, 64*(i+1), 48*(j+1)), Scalar(255,255,255));
+            }
         }
         if (op_saveh)
         {
@@ -211,17 +216,23 @@ int main( int argc, char** argv ) {
         cout << "Pair  "<< n_img++ <<" -- -- -- -- -- -- -- -- -- --"  << endl;
         cout << "-- Possible matches  ["<< n_matches <<"]"  << endl;
         cout << "-- Good Matches      ["<<green<<n_good<<reset<<"]"  << endl;
+        Mat img_matches;
         if(op_out){
-            Mat img_matches;
             // Draw only "good" matches
             drawMatches( img_ori[0], keypoints[0], img_ori[1], keypoints[1],
-                        good_matches, img_matches, Scalar::all(-1), Scalar::all(-1),
+                        good_matches, img_matches, Scalar(0,255,0), Scalar::all(-1),
                         vector<char>(), DrawMatchesFlags::NOT_DRAW_SINGLE_POINTS );
+            if (op_grid)
+            {
+            for (auto m: good_matches)
+                circle(img_matches, Point(keypoints[1][m.trainIdx].pt.x+640, keypoints[1][m.trainIdx].pt.y), 2, Scalar(0,0,255), -1);
+            }
             // Show matches
             namedWindow("Good Matches", WINDOW_NORMAL);
             imshow( "Good Matches", img_matches );
             waitKey(0);
         }
+
         matches.clear();
         img[0].release();
         img[1].release();
