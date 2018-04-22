@@ -276,7 +276,7 @@ void saveHomographyData(vector<KeyPoint> keypoints[2], std::vector<DMatch> match
         points2.push_back(point);
     }
     Mat H = findHomography(Mat(points1), Mat(points2), CV_RANSAC);
-    perspectiveTransform(points2, points2, H);
+    perspectiveTransform(points1, points1, H);
 
     vector<float> distance;
     for (int i = 0; i<points1.size(); i++)
