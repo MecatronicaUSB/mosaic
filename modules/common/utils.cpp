@@ -72,6 +72,7 @@ void imgChannelStretch(cv::Mat imgOriginal, cv::Mat imgStretched, int lowerPerce
     int histogram[256];
 
     getHistogram(imgOriginal, histogram);
+    //printHistogram(histogram, "/home/victor/dataset/Results/hist-01.png", cv::Scalar(255, 0, 0));
 
     // Computing the percentiles. We force invalid values as initial values (just in case)
     int channelLowerPercentile = -1, channelHigherPercentile = -1;
@@ -96,6 +97,10 @@ void imgChannelStretch(cv::Mat imgOriginal, cv::Mat imgStretched, int lowerPerce
     b = channelLowerPercentile;
     imgStretched -= b;
     imgStretched *= m;
+
+    //getHistogram(imgStretched, histogram);
+    //printHistogram(histogram, "/home/victor/dataset/Results/hist-stretch-01.png", cv::Scalar(255, 0, 0));
+    
 }
 
 // See description in header file
