@@ -29,9 +29,9 @@ void enhanceImage(Mat &_img, Mat mask)
 	vector<Mat> channels;
 	// split image in three channels, stretch each histograms, and merge them again
 	split(_img, channels);
-	imgChannelStretch(channels[0], channels[0], 1, 99, mask);
-	imgChannelStretch(channels[1], channels[1], 1, 99, mask);
-	imgChannelStretch(channels[2], channels[2], 1, 99, mask);
+	imgChannelStretch(channels[0], channels[0], 0.5, 99.5, mask);
+	imgChannelStretch(channels[1], channels[1], 0.5, 99.5, mask);
+	imgChannelStretch(channels[2], channels[2], 0.5, 99.5, mask);
 	merge(channels, _img);
 }
 
@@ -147,7 +147,7 @@ void printHistogram(int histogram[256], std::string filename, cv::Scalar color)
 }
 
 // Now it will operate in a single channel of the provided image. So, future implementations will require a function call per channel (still faster)
-void imgChannelStretch(cv::Mat imgOriginal, cv::Mat imgStretched, int lowerPercentile, int higherPercentile, Mat mask)
+void imgChannelStretch(cv::Mat imgOriginal, cv::Mat imgStretched, float lowerPercentile, float higherPercentile, Mat mask)
 {
 	// Computing the histograms
 	int histogram[256];

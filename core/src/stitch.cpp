@@ -140,7 +140,7 @@ vector<Mat> Stitcher::stitch(Frame *_object, Frame *_scene)
 		else
 		{
 			// else, update threshold (allow less strong matches) and clean used data
-			thresh += 0.1;
+			thresh -= 0.1;
 			good_matches.clear();
 			neighbors_kp.clear();
 			img[OBJECT]->good_neighbors.clear();
