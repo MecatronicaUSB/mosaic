@@ -21,7 +21,7 @@ void Blender::blendSubMosaic(SubMosaic *_sub_mosaic)
 	_sub_mosaic->computeOffset();
 	_sub_mosaic->final_scene.release();
 	// create final mosaic image
-	_sub_mosaic->final_scene = Mat(_sub_mosaic->scene_size, CV_8UC3, Scalar(0, 0, 0));
+	_sub_mosaic->final_scene = Mat(_sub_mosaic->scene_size, CV_8UC3, Scalar(255, 255, 255));
 
 	MultiBandBlender multiband(false, bands);
 	// define number of bands for multi-band blender

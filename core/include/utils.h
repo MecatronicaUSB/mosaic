@@ -49,10 +49,10 @@ const int TARGET_HEIGHT = 480;
 const int CELLS_DIV = 10;
 
 // intrinsec camera parameters
-const float cx = 682.48926624, cy = 510.35526868;
-const float fx = 1738.62666794, fy = 1736.66673076;
-const float k1 = 0.17427338, k2 = 0.66559118, k3 = 0.99996769;
-const float p1 = 0.00355058, p2 = -0.00255854;
+const float cx = 687.23531391, cy = 501.08026641;
+const float fx = 1736.49233331, fy = 1733.74525406;
+const float k1 = 0.15808590, k2 = 0.76137626, k3 = 0.99996769;
+const float p1 = 0.00569993, p2 = -0.00067913;
 
 /**
  * @brief Calculate the euclidean distance between two given vector in 2D

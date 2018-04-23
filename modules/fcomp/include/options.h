@@ -38,4 +38,6 @@ args::Flag op_pre(optional, "Pre-processing", "Apply pre-processing algorithm to
 args::Flag op_grid(optional, "grid", "Filter keypoints based on grid distribution. the grid is 10x10 cels", {"grid"});
 args::ValueFlag<int> op_frate(optional, "", "Select the desired frame rate for video input option. only for \"-v\" command", {'r',"rate"});
 
+args::ValueFlag<std::string> op_save(optional, "save", "Save image", {'s'});
+
 #endif

@@ -25,7 +25,7 @@ Frame::Frame(Mat _img, bool _pre, int _width, int _height)
 	Mat distortion_coeff = (Mat1d(1, 5) << k1, k2, p1, p2, k3);
 	// resize image to default size
 	if (_img.size().width != _width || _img.size().height != _height)
-		resize(_img, _img, Size(_width, _height));
+		resize(_img, _img, Size(_width*2, _height*2));
 	// remove camera distortion
 	undistort(_img, color, camera_matrix, Mat());
 	// create a gray scale version of image

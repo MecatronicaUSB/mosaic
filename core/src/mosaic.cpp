@@ -89,6 +89,7 @@ void Mosaic::compute(bool _euclidean_mode)
 			sub_mosaics.clear();
 			sub_mosaics.push_back(new SubMosaic());
 			n_subs = 0;
+			sub_mosaics.push_back(new SubMosaic());
 			// if remains enough frames, continue. else break loop
 			if (i < frames.size()-2)
 				sub_mosaics[n_subs]->addFrame(frames[i+1]);
@@ -125,7 +126,7 @@ void Mosaic::compute(bool _euclidean_mode)
 	}
 	cout<<endl;
 	// save resulting sub mosaics to be merged together
-	if (sub_mosaics.size() > 1 || sub_mosaics[n_subs]->n_frames > 1)
+	if (sub_mosaics[n_subs]->n_frames > 1 )
 	{
 		final_mosaics.push_back(sub_mosaics);
 		sub_mosaics.clear();
@@ -429,10 +430,10 @@ void Mosaic::save(string _dir)
 	{
 		// blend mosaic and save it, using provided filename
 		blender->blendSubMosaic(final_mosaic[0]);
-		imwrite(_dir+"-00"+to_string(n)+".jpg", final_mosaic[0]->final_scene);
+		imwrite(_dir+"-000"+to_string(n)+".jpg", final_mosaic[0]->final_scene);
 		// create track map and save it
 		map.push_back(final_mosaic[0]->buildMap(CIRCLE));
-		imwrite(_dir+"-00"+to_string(n)+"-MAP.jpg", map[n]);
+		imwrite(_dir+"-"+to_string(n)+"-MAP.jpg", map[n]);
 		n++;
 	}
 }
