@@ -189,7 +189,7 @@ void Blender::correctColor(SubMosaic *_sub_mosaic)
 		// modify histogram of each channel for second image, based on first one
 		// (in CieLab color space)
 		split(lab_img, channels);
-		for (int j = 0; j<3; j++)
+		for (int j = 0; j<0; j++)
 		{
 			channels[j] = (sc_stdev.val[j]*(channels[j] - ob_mean.val[j]) / ob_stdev.val[j])
 										+ sc_mean.val[j];

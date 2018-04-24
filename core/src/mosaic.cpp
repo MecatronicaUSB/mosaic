@@ -175,8 +175,8 @@ void Mosaic::merge(bool _euclidean_correction)
 		}
 		cout<<"\rMerging sub-mosaics:\t["<<green<<((n+1)*100)/final_mosaics.size()<<reset<<"%]"<<flush;
 		// apply global euclidean correction
-		if (_euclidean_correction)
-			final_mosaics[n][0]->correct();
+		//if (_euclidean_correction)
+		//	final_mosaics[n][0]->correct();
 	}
 	cout << endl;
 }
