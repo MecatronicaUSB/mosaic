@@ -140,7 +140,7 @@ vector<Mat> Stitcher::stitch(Frame *_object, Frame *_scene)
 		else
 		{
 			// else, update threshold (allow less strong matches) and clean used data
-			thresh += 0.1;
+			thresh -= 0.1;
 			good_matches.clear();
 			neighbors_kp.clear();
 			img[OBJECT]->good_neighbors.clear();
@@ -236,7 +236,7 @@ void Stitcher::gridDetector()
 		// loop over vertical cells
 		for (int j = 0; j < cells_div; j++)
 		{
-			best_distance = 100;
+			best_distance = 10000;
 			index = 0;
 			// loop over scene and it's neighbors matches
 			for (int k = 0; k < img[SCENE]->neighbors.size() + 1; k++)
@@ -267,7 +267,7 @@ void Stitcher::gridDetector()
 				}
 			}
 			// check if for this cell we don't have a match.
-			if (best_distance != 100)
+			if (best_distance != 10000)
 				grid_matches[index].push_back(best_match);
 		}
 	}

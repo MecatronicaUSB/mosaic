@@ -147,7 +147,7 @@ void printHistogram(int histogram[256], std::string filename, cv::Scalar color)
 }
 
 // Now it will operate in a single channel of the provided image. So, future implementations will require a function call per channel (still faster)
-void imgChannelStretch(cv::Mat imgOriginal, cv::Mat imgStretched, int lowerPercentile, int higherPercentile, Mat mask)
+void imgChannelStretch(cv::Mat imgOriginal, cv::Mat imgStretched, float lowerPercentile, float higherPercentile, Mat mask)
 {
 	// Computing the histograms
 	int histogram[256];

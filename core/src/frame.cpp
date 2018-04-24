@@ -28,7 +28,7 @@ resize(_img, _img, Size(1360, 1024));
 undistort(_img, color, camera_matrix, distortion_coeff);
 	// resize image to default size
 	if (_img.size().width != _width || _img.size().height != _height)
-		resize(_img, _img, Size(_width, _height));
+		resize(_img, _img, Size(_width*2, _height*2));
 	// remove camera distortion
 	undistort(_img, color, camera_matrix, Mat());
 	// create a gray scale version of image

@@ -62,8 +62,8 @@ int main( int argc, char** argv ) {
     op_img ?   // this flag is activated from argument parser
     cout << "\tTwo images as input\t" << endl:
     cout << "\tDirectory as input\t" << endl;
-    op_surf ? // this flag is activated from argument parser
-    cout << "\tFeature extractor:\t" << "SURF" << endl:
+    op_sift ? // this flag is activated from argument parser
+    cout << "\tFeature extractor:\t" << "SIFT" << endl:
     cout << "\tFeature extractor:\t" << "KAZE\t(Default)" << endl;
     op_flann ? // this flag is activated from argument parser
     cout << "\tFeature Matcher:\t" << "FLANN" << endl:
@@ -76,7 +76,7 @@ int main( int argc, char** argv ) {
     sub_mosaic.stitcher = new m2d::Stitcher(
         op_grid,                                            // use grid
         op_pre,                                             // apply histsretch algorithm
-        op_surf ? m2d::USE_SURF : m2d::USE_KAZE,          // select feature extractor
+        op_sift ? m2d::USE_SIFT : m2d::USE_KAZE,          // select feature extractor
         op_flann ? m2d::USE_FLANN : m2d::USE_BRUTE_FORCE    // select feature matcher
     );
 
@@ -125,7 +125,10 @@ int main( int argc, char** argv ) {
             t = (double) getTickCount();
         }
     }
-    
+    if (op_save)
+    {
+        imwrite("/home/victor/dataset/Results/"+args::get(op_save)+".png", sub_mosaic.final_scene);
+    }
     t = 1000 * ((double) getTickCount() - t) / getTickFrequency();        
     cout << "   Execution time: " << t << " ms" <<endl;
 
