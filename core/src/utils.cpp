@@ -29,9 +29,9 @@ void enhanceImage(Mat &_img, Mat mask)
 	vector<Mat> channels;
 	// split image in three channels, stretch each histograms, and merge them again
 	split(_img, channels);
-	imgChannelStretch(channels[0], channels[0], 0.5, 99.5, mask);
-	imgChannelStretch(channels[1], channels[1], 0.5, 99.5, mask);
-	imgChannelStretch(channels[2], channels[2], 0.5, 99.5, mask);
+	imgChannelStretch(channels[0], channels[0], 1, 99, mask);
+	imgChannelStretch(channels[1], channels[1], 1, 99, mask);
+	imgChannelStretch(channels[2], channels[2], 1, 99, mask);
 	merge(channels, _img);
 }
 
