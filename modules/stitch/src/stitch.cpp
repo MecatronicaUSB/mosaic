@@ -155,14 +155,14 @@ void Stitcher::getGoodMatches(){
 void Stitcher::gridDetector(){
     vector<DMatch> grid_matches;
     DMatch best_match;
-    int k=0, best_distance = 100;
+    int k=0, best_distance = 10000;
     int stepx = img[OBJECT]->color.cols / cells_div;
     int stepy = img[OBJECT]->color.rows / cells_div;
     
     for(int i=0; i<10; i++){
         for(int j=0; j<10; j++){
             k=0;
-            best_distance = 100;
+            best_distance = 10000;
             for (DMatch match: good_matches) {
                 //-- Get the keypoints from the good matches
                 if(keypoints[OBJECT][match.queryIdx].pt.x >= stepx*i && keypoints[OBJECT][match.queryIdx].pt.x < stepx*(i+1) &&
@@ -175,7 +175,7 @@ void Stitcher::gridDetector(){
                 }
                 k++;
             }
-            if(best_distance != 100)
+            if(best_distance != 10000)
                 grid_matches.push_back(best_match);
         }
     }
