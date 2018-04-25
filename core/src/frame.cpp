@@ -23,6 +23,9 @@ Frame::Frame(Mat _img, bool _pre, int _width, int _height)
 	// create camera and coefficients matrix
 	Mat camera_matrix = (Mat1d(3, 3) << fx, 0, cx, 0, fy, cy, 0, 0, 1);
 	Mat distortion_coeff = (Mat1d(1, 5) << k1, k2, p1, p2, k3);
+resize(_img, _img, Size(1360, 1024));
+// remove camera distortion
+undistort(_img, color, camera_matrix, distortion_coeff);
 	// resize image to default size
 	if (_img.size().width != _width || _img.size().height != _height)
 		resize(_img, _img, Size(_width*2, _height*2));
