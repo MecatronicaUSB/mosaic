@@ -171,7 +171,7 @@ void Stitcher::gridDetector(){
                         best_distance = match.distance;
                         best_match = match;
                     }
-                    matches.erase(matches.begin() + k);  
+                    //matches.erase(matches.begin() + k);  
                 }
                 k++;
             }
