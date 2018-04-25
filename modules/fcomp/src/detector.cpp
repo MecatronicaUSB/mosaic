@@ -51,7 +51,7 @@ std::vector<DMatch> getGoodMatchesBF(std::vector<cv::DMatch>  matches){
 vector<DMatch> gridDetector(vector<KeyPoint> keypoints, vector<DMatch> matches){
 	/// TODO: use temporal float variable, and later apply integer cast when employed as image index
 	/// check if stepx/stepy can be provided as function arguments
-    int stepx=2*TARGET_WIDTH/GRID_COLUMNS, stepy=2*TARGET_HEIGHT/GRID_ROWS;
+    int stepx=TARGET_WIDTH/GRID_COLUMNS, stepy=TARGET_HEIGHT/GRID_ROWS;
     vector<DMatch> grid_matches;	// vector containing matches obtained with grid/tiling approach
     int best_distance = 10000;	// forced initial value for best_distance (default value may be ignored as it is not employed)
     DMatch best_match;	// current best match
@@ -67,7 +67,7 @@ vector<DMatch> gridDetector(vector<KeyPoint> keypoints, vector<DMatch> matches){
                         best_distance = m.distance;
                         best_match = m;
                     }
-                    matches.erase(matches.begin() + m.trainIdx);  
+                    //matches.erase(matches.begin() + m.trainIdx);  
                 }
             }
             if(best_distance != 10000)

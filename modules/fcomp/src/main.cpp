@@ -162,8 +162,8 @@ int main( int argc, char** argv ) {
             vid >> img[1];
         }
         // Resize the images to 640 x 480
-        resize(img[0], img[0], Size(TARGET_WIDTH*2, TARGET_HEIGHT*2), 0, 0, CV_INTER_LINEAR);
-        resize(img[1], img[1], Size(TARGET_WIDTH*2, TARGET_HEIGHT*2), 0, 0, CV_INTER_LINEAR);
+        resize(img[0], img[0], Size(TARGET_WIDTH, TARGET_HEIGHT), 0, 0, CV_INTER_LINEAR);
+        resize(img[1], img[1], Size(TARGET_WIDTH, TARGET_HEIGHT), 0, 0, CV_INTER_LINEAR);
 
         img_ori[0] = img[0].clone();
         img_ori[1] = img[1].clone();
@@ -202,7 +202,7 @@ int main( int argc, char** argv ) {
             for (int i = 0; i < 10; i++)
             {
                 for (int j = 0; j < 10; j++)
-                    rectangle(img_ori[1], Rect(2*i*64, 2*j*48, 2*64*(i+1), 2*48*(j+1)), Scalar(255,255,255));
+                    rectangle(img_ori[1], Rect(i*64, j*48, 64*(i+1), 48*(j+1)), Scalar(255,255,255));
             }
         }
         if (op_saveh)
@@ -225,7 +225,7 @@ int main( int argc, char** argv ) {
             if (op_grid)
             {
             for (auto m: good_matches)
-                circle(img_matches, Point(keypoints[1][m.trainIdx].pt.x+2*640, keypoints[1][m.trainIdx].pt.y), 2, Scalar(0,0,255), -1);
+                circle(img_matches, Point(keypoints[1][m.trainIdx].pt.x+640, keypoints[1][m.trainIdx].pt.y), 2, Scalar(0,0,255), -1);
             }
             // Show matches
             namedWindow("Good Matches", WINDOW_NORMAL);
@@ -259,7 +259,7 @@ float getDistance(Point2f _pt1, Point2f _pt2)
 // See description in header file
 void saveHomographyData(vector<KeyPoint> keypoints[2], std::vector<DMatch> matches, std::string filename){
     ofstream file;
-    file.open("/home/victor/dataset/Results/homography-data"+filename+".txt");
+    file.open(filename+".txt");
 
     // for(int i=0; i<H.cols; i++){
     //     for(int j=0; j<H.rows; j++){
