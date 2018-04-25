@@ -45,7 +45,22 @@ void Blender::blendSubMosaic(SubMosaic *_sub_mosaic)
 		// corners in array mode
 		corners.push_back(Point(frames[i]->bound_rect.x, frames[i]->bound_rect.y));
 	}
-	
+	Ptr<ExposureCompensator> compensator = ExposureCompensator::createDefault(ExposureCompensator::GAIN);
+	compensator->feed(corners, warp_imgs, masks);
+
+	// for (int i = 0; i < warp_imgs.size() - 1; i++)
+	// {
+	// 	compensator->apply(i+1, corners[i], warp_imgs[i], masks[i]);
+	// }
+	//compensator->apply(4, corners[3], warp_imgs[3], masks[3]);
+
+	// for (int i=0 ; i<exp_warp_img.size(); i++)
+	// {
+	// 	exp_warp_img[i].convertTo(exp_warp_img[i], CV_32F);
+	// 	warp_imgs.push_back(exp_warp_img[i].getUMat(ACCESS_RW));
+	// 	masks.push_back(exp_mask[i].getUMat(ACCESS_RW));
+	// }
+
 	// apply graph cur algorithm
 	if (graph_cut)
 	{
@@ -55,6 +70,8 @@ void Blender::blendSubMosaic(SubMosaic *_sub_mosaic)
 		cout<<"\rFinding cut line\t"<<green<<"OK                          "<<reset<<flush<<endl;
 	}
 	cout << "Correcting color...\t";
+
+
 	// correct color by Reinhard's method
 	correctColor(_sub_mosaic);
 	cout << flush << "\rCorrecting color\t"<<green<<"OK"<<reset;
@@ -92,7 +109,7 @@ void Blender::blendSubMosaic(SubMosaic *_sub_mosaic)
 	// apply multi-band blender (if selected)	
 	if (bands > 0 && graph_cut)
 	{
-		Mat result_16s, result_mask;
+		Mat result_mask, result_16s;
 		// blender uses CV_16S data type
 		multiband.blend(result_16s, result_mask);
 		result_16s.convertTo(_sub_mosaic->final_scene, CV_8U);
@@ -189,7 +206,7 @@ void Blender::correctColor(SubMosaic *_sub_mosaic)
 		// modify histogram of each channel for second image, based on first one
 		// (in CieLab color space)
 		split(lab_img, channels);
-		for (int j = 0; j<1; j++)
+		for (int j = 0; j<0; j++)
 		{
 			channels[j] = (sc_stdev.val[j]*(channels[j] - ob_mean.val[j]) / ob_stdev.val[j])
 										+ sc_mean.val[j];
