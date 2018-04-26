@@ -126,7 +126,7 @@ void Mosaic::compute(bool _euclidean_mode)
 	}
 	cout<<endl;
 	// save resulting sub mosaics to be merged together
-	if (sub_mosaics[n_subs]->n_frames > 1 )
+	if (sub_mosaics[n_subs]->n_frames > 0 )
 	{
 		final_mosaics.push_back(sub_mosaics);
 		sub_mosaics.clear();
