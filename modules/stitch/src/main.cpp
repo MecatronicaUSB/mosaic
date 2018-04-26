@@ -104,7 +104,14 @@ int main( int argc, char** argv ) {
     // Resize the images to 640 x 480
     resize(img[0], img[0], Size(TARGET_WIDTH, TARGET_HEIGHT), 0, 0, CV_INTER_LINEAR);
     resize(img[1], img[1], Size(TARGET_WIDTH, TARGET_HEIGHT), 0, 0, CV_INTER_LINEAR);
-
+vector<vector<Point> > poly_corners;
+vector<Point> initial = {
+    Point(0, 0),
+    Point(TARGET_WIDTH, 0),
+    Point(TARGET_WIDTH, TARGET_HEIGHT),
+    Point(0, TARGET_HEIGHT)            
+};
+poly_corners.push_back(initial);
     img_ori[0] = img[0].clone();
     img_ori[1] = img[1].clone();
     t = (double) getTickCount();
@@ -121,6 +128,11 @@ int main( int argc, char** argv ) {
             if(n_iter<1)
                 colorChannelStretch(img[1], img[1], 1, 99);
         }
+        if (i==0){
+            //polylines(img_ori[1], poly_corners, true, Scalar(0,0,255), 2);
+            poly_corners.clear();
+        }
+
         // Conver images to gray
         cvtColor(img[0],img[0],COLOR_BGR2GRAY);
         cvtColor(img[1],img[1],COLOR_BGR2GRAY);
@@ -157,7 +169,6 @@ int main( int argc, char** argv ) {
             img0.push_back(keypoints[0][good_matches[i].queryIdx].pt);
             img1.push_back(keypoints[1][good_matches[i].trainIdx].pt);
         }
-        vector<vector<Point> > poly_corners;
         Mat H = findHomography(Mat(img0), Mat(img1), CV_RANSAC);
         if(H.empty()){
             cout << "not enought keypoints to calculate homography matrix. Exiting..." <<  endl;
@@ -172,10 +183,18 @@ int main( int argc, char** argv ) {
             Point(bound.points[2].x, bound.points[2].y),
             Point(bound.points[3].x, bound.points[3].y)            
         };
+        for (int k=0; k<poly_corners.size(); k++)
+        {
+            for (int n=0; n<4; n++)
+            {
+                poly_corners[k][n].x += max(bound.rect.x, 0);
+                poly_corners[k][n].y += max(bound.rect.y, 0);
+            }
+        }
         poly_corners.push_back(corners);
         int npoints[1] = {4};
-        polylines(img_ori[1], poly_corners, true, Scalar(0,0,255) );
-        poly_corners.clear();
+        //polylines(img_ori[1], poly_corners, true, Scalar(0,0,255), 2);
+        //poly_corners.clear();
         imshow("STITCH", img_ori[1]);
         imwrite("/home/victor/dataset/Results/Seguimiento/OLD0.png", img_ori[1]);
         waitKey(0);

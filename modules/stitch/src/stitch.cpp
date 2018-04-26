@@ -63,8 +63,8 @@ struct WarpPoly stitch(Mat object, Mat& scene, Mat H){
     bound.rect.y = max(bound.rect.y,0);
 
     for(int i=0; i< bound.points.size(); i++){
-        bound.points[i].x += bound.rect.x;
-        bound.points[i].y += bound.rect.y;
+        bound.points[i].x += max(bound.rect.x,0);
+        bound.points[i].y += max(bound.rect.y,0);
     }
 
 	return bound;
@@ -104,7 +104,7 @@ vector<DMatch> gridDetector(vector<KeyPoint> keypoints, vector<DMatch> matches){
                         best_distance = m.distance;
                         best_match = m;
                     }
-                    matches.erase(matches.begin() + k);  
+                    //matches.erase(matches.begin() + k);  
                 }
                 k++;
             }
