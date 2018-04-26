@@ -174,7 +174,7 @@ int main( int argc, char** argv ) {
         };
         poly_corners.push_back(corners);
         int npoints[1] = {4};
-        polylines(img_ori[1], poly_corners, npoints, 1, true, Scalar(255,255,255) );
+        polylines(img_ori[1], poly_corners, true, Scalar(0,0,255) );
         poly_corners.clear();
         imshow("STITCH", img_ori[1]);
         imwrite("/home/victor/dataset/Results/Seguimiento/OLD0.png", img_ori[1]);

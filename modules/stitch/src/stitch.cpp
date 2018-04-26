@@ -43,7 +43,7 @@ struct WarpPoly stitch(Mat object, Mat& scene, Mat H){
 
     copyMakeBorder(scene, scene, offset.height, max(0, bound.rect.height+bound.rect.y-scene.rows),
                                  offset.width,  max(0, bound.rect.width+bound.rect.x-scene.cols),
-                                 BORDER_CONSTANT,Scalar(0,0,0));
+                                 BORDER_CONSTANT,Scalar(255,255,255));
 
     for(int i=0; i< bound.points.size(); i++){
         bound.points[i].x -= bound.rect.x;
@@ -61,6 +61,11 @@ struct WarpPoly stitch(Mat object, Mat& scene, Mat H){
     mask.release();
     bound.rect.x = max(bound.rect.x,0);
     bound.rect.y = max(bound.rect.y,0);
+
+    for(int i=0; i< bound.points.size(); i++){
+        bound.points[i].x += bound.rect.x;
+        bound.points[i].y += bound.rect.y;
+    }
 
 	return bound;
 }
