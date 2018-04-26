@@ -127,7 +127,7 @@ int main( int argc, char** argv ) {
 
         // Detect the keypoints using desired Detector and compute the descriptors
         detector->detectAndCompute( img[0], Mat(), keypoints[0], descriptors[0] );
-        detector->detectAndCompute( img[1](detectRoi), Mat(), keypoints[1], descriptors[1] );
+        detector->detectAndCompute( img[1], Mat(), keypoints[1], descriptors[1] );
 
         if(!keypoints[0].size() || !keypoints[1].size()){
             cout << "No Key points Found" <<  endl;
@@ -157,17 +157,27 @@ int main( int argc, char** argv ) {
             img0.push_back(keypoints[0][good_matches[i].queryIdx].pt);
             img1.push_back(keypoints[1][good_matches[i].trainIdx].pt);
         }
-
+        vector<vector<Point> > poly_corners;
         Mat H = findHomography(Mat(img0), Mat(img1), CV_RANSAC);
         if(H.empty()){
             cout << "not enought keypoints to calculate homography matrix. Exiting..." <<  endl;
             break;
         }
-        saveHomographyData(H, keypoints[0], good_matches);
+        //saveHomographyData(H, keypoints[0], good_matches);
         bound = stitch(img_ori[0], img_ori[1], H);
         detectRoi = bound.rect;
-
-        imshow("STITCH",img_ori[1]);
+        vector<Point> corners = {
+            Point(bound.points[0].x, bound.points[0].y),
+            Point(bound.points[1].x, bound.points[1].y),
+            Point(bound.points[2].x, bound.points[2].y),
+            Point(bound.points[3].x, bound.points[3].y)            
+        };
+        poly_corners.push_back(corners);
+        int npoints[1] = {4};
+        polylines(img_ori[1], poly_corners, npoints, 1, true, Scalar(255,255,255) );
+        poly_corners.clear();
+        imshow("STITCH", img_ori[1]);
+        imwrite("/home/victor/dataset/Results/Seguimiento/OLD0.png", img_ori[1]);
         waitKey(0);
 
         if(op_out){

@@ -9,3 +9,5 @@ modules/stitch/build
 
 # data files
 modules/stitch/homography-data.txt
+
+core/
