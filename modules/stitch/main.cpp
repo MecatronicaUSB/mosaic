@@ -121,6 +121,7 @@ int main( int argc, char** argv ) {
             t = 1000 * ((double) getTickCount() - t) / getTickFrequency();        
             cout << "   Execution time: " << t << " ms" <<endl;
             imshow("STITCH", sub_mosaic.final_scene);
+            imwrite("/home/victor/dataset/Results/Seguimiento/NEW00.png", sub_mosaic.final_scene);
             waitKey(0);
             t = (double) getTickCount();
         }

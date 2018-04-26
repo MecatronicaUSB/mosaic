@@ -130,7 +130,7 @@ bool Stitcher::stitch(Frame *_object, Frame *_scene, Mat &_final_scene){
 
     blend2Scene(_final_scene);
 
-    drawKeipoints(warp_offset, _final_scene);
+    //drawKeipoints(warp_offset, _final_scene);
 
     cleanData();
 
@@ -277,6 +277,20 @@ void Stitcher::blend2Scene(Mat &_final_scene){
     warp_img.copyTo(object_position, mask);
     // object_position -= _warp_img;
     // object_position += _warp_img;
+    vector<Point> aux_corner = {
+        Point(img[OBJECT]->bound_points[0].x, img[OBJECT]->bound_points[0].y),
+        Point(img[OBJECT]->bound_points[1].x, img[OBJECT]->bound_points[1].y),
+        Point(img[OBJECT]->bound_points[2].x, img[OBJECT]->bound_points[2].y),
+        Point(img[OBJECT]->bound_points[3].x, img[OBJECT]->bound_points[3].y)
+    };
+    for (Point& pt: aux_corner){
+        pt.x += img[OBJECT]->bound_rect.x;
+        pt.y += img[OBJECT]->bound_rect.y;
+    }
+    vector<vector<Point>> corners;
+    corners.push_back(aux_corner);
+    polylines(_final_scene, corners, true, Scalar(0,255,0));
+    corners.clear();
     mask.release();
 }
 
