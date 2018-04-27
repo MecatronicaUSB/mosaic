@@ -297,10 +297,12 @@ Mat SubMosaic::buildMap(int _type, Scalar _color)
 			}
 		}
 		// third print a circle at the center of each frame
+		int w=1;
 		for (Frame *frame : frames)
 		{
 			center_point = Point(frame->bound_points[PERSPECTIVE][4].x,
 								 frame->bound_points[PERSPECTIVE][4].y) * factor;
+			putText(scene_map, to_string(w++), Point(center_point.x+3, center_point.y+((w==3)?8:2)), FONT_HERSHEY_PLAIN, 2, cvScalar(0, 0, 0), 2);
 			circle(scene_map, center_point, point_size, _color, -1);
 		}
 	}
@@ -317,7 +319,7 @@ Mat SubMosaic::buildMap(int _type, Scalar _color)
 	putText(scene_map, to_string((int)(width/factor)/2), Point((width-120)/2+60, height-30), FONT_HERSHEY_PLAIN, 1, cvScalar(0, 0, 0), 1);
 	putText(scene_map, to_string((int)(width/factor)*3/4), Point((width-120)*3/4+60, height-30), FONT_HERSHEY_PLAIN, 1, cvScalar(0, 0, 0), 1);
 	putText(scene_map, to_string((int)(width/factor)), Point(width-60, height-30), FONT_HERSHEY_PLAIN, 1, cvScalar(0, 0, 0), 1);
-	putText(scene_map, "Units in pixels", Point((int)(width/2)-70, 20), FONT_HERSHEY_PLAIN, 1, cvScalar(0, 0, 0), 1);
+	putText(scene_map, "Unidades en Píxeles", Point((int)(width/2)-70, 20), FONT_HERSHEY_PLAIN, 1, cvScalar(0, 0, 0), 1);
 	return scene_map;
 }
 

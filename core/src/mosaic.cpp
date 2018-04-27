@@ -43,7 +43,7 @@ void Mosaic::compute(bool _euclidean_mode)
 		best_frame = i+2;
 		// search in k-windows for best frame (frame with less distortion)
 		// stop if k-frame or last one is reached
-		for (k =i+1; k < frames.size() && k < i+3; k++)
+		for (k =i+1; k < frames.size() && k < i+2; k++)
 		{
 			// find perspective and best euclidean transformations
 			transform = stitcher->stitch(frames[k], frames[i]);
@@ -150,6 +150,7 @@ void Mosaic::merge(bool _euclidean_correction)
 		// loop over sub mosaics of same mosaic
 		while(final_mosaics[n].size() > 1)
 		{
+			cout << "Entróoo" << endl;
 			// get the sub mosaic pair with higher overlap
 			ransac_mosaics = getBestOverlap(final_mosaics[n]);
 			// remove second sub mosaic, and update neighbors
@@ -176,8 +177,8 @@ void Mosaic::merge(bool _euclidean_correction)
 		}
 		cout<<"\rMerging sub-mosaics:\t["<<green<<((n+1)*100)/final_mosaics.size()<<reset<<"%]"<<flush;
 		// apply global euclidean correction
-		//if (_euclidean_correction)
-		//	final_mosaics[n][0]->correct();
+		if (_euclidean_correction)
+			final_mosaics[n][0]->correct();
 	}
 	cout << endl;
 }
