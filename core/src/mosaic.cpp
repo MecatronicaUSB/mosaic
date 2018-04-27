@@ -43,7 +43,7 @@ void Mosaic::compute(bool _euclidean_mode)
 		best_frame = i+2;
 		// search in k-windows for best frame (frame with less distortion)
 		// stop if k-frame or last one is reached
-		for (k =i+1; k < frames.size() && k < i+2; k++)
+		for (k =i+1; k < frames.size() && k < i+3; k++)
 		{
 			// find perspective and best euclidean transformations
 			transform = stitcher->stitch(frames[k], frames[i]);
@@ -150,7 +150,6 @@ void Mosaic::merge(bool _euclidean_correction)
 		// loop over sub mosaics of same mosaic
 		while(final_mosaics[n].size() > 1)
 		{
-			cout << "Entróoo" << endl;
 			// get the sub mosaic pair with higher overlap
 			ransac_mosaics = getBestOverlap(final_mosaics[n]);
 			// remove second sub mosaic, and update neighbors
@@ -161,7 +160,15 @@ void Mosaic::merge(bool _euclidean_correction)
 				if (ransac_mosaics[1] == final_mosaics[n][i])
 					final_mosaics[n].erase(final_mosaics[n].begin() + i);
 			// join two sub mosaics based on each reference transformation
+//blender->blendSubMosaic(ransac_mosaics[0]);
+//blender->blendSubMosaic(ransac_mosaics[1]);
+//imwrite("/home/ros/dataset/output/temp/SR-Unref0.png", ransac_mosaics[0]->final_scene);
+//imwrite("/home/ros/dataset/output/temp/SR-Unref1.png", ransac_mosaics[1]->final_scene);
 			referenceMosaics(ransac_mosaics);
+//blender->blendSubMosaic(ransac_mosaics[0]);
+//blender->blendSubMosaic(ransac_mosaics[1]);
+//imwrite("/home/ros/dataset/output/temp/SR-Ref0.png", ransac_mosaics[0]->final_scene);
+//imwrite("/home/ros/dataset/output/temp/SR-Ref1.png", ransac_mosaics[1]->final_scene);
 			// align sub mosaics (translate and rotate)
 			alignMosaics(ransac_mosaics);
 			// find transformation which minimize overall geometric distortion
@@ -170,6 +177,8 @@ void Mosaic::merge(bool _euclidean_correction)
 			for (Frame *frame : ransac_mosaics[0]->frames)
 				frame->setHReference(best_H);
 			ransac_mosaics[0]->next_H = best_H * ransac_mosaics[0]->next_H;
+//blender->blendSubMosaic(ransac_mosaics[0]);
+//imwrite("/home/ros/dataset/output/temp/SR-avg0.png", ransac_mosaics[0]->final_scene);
 			// delete second sub mosaic
 			delete ransac_mosaics[1];
 			// update overlap between remains sub mosaics
@@ -177,8 +186,8 @@ void Mosaic::merge(bool _euclidean_correction)
 		}
 		cout<<"\rMerging sub-mosaics:\t["<<green<<((n+1)*100)/final_mosaics.size()<<reset<<"%]"<<flush;
 		// apply global euclidean correction
-		if (_euclidean_correction)
-			final_mosaics[n][0]->correct();
+		//if (_euclidean_correction)
+		//	final_mosaics[n][0]->correct();
 	}
 	cout << endl;
 }
@@ -433,7 +442,7 @@ void Mosaic::save(string _dir)
 		blender->blendSubMosaic(final_mosaic[0]);
 		imwrite(_dir+"-000"+to_string(n)+".jpg", final_mosaic[0]->final_scene);
 		// create track map and save it
-		map.push_back(final_mosaic[0]->buildMap(CIRCLE));
+		map.push_back(final_mosaic[0]->buildMap(RECTANGLE));
 		imwrite(_dir+"-"+to_string(n)+"-MAP.jpg", map[n]);
 		n++;
 	}
