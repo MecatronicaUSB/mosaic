@@ -48,7 +48,7 @@ void Mosaic::compute(bool _euclidean_mode)
 			// find perspective and best euclidean transformations
 			transform = stitcher->stitch(frames[k], frames[i]);
 			// check if transformations are valid
-			if (!transform[PERSPECTIVE].empty() && !transform[EUCLIDEAN].empty())
+			if (!transform[PERSPECTIVE].empty())// && !transform[EUCLIDEAN].empty())
 			{
 				// if euclidean mode is selected, assign euclidean matrix as default transformation
 				if (_euclidean_mode)
@@ -56,7 +56,7 @@ void Mosaic::compute(bool _euclidean_mode)
 				else
 					frames[k]->setHReference(transform[PERSPECTIVE], PERSPECTIVE);
 				// save euclidean transformation (for global euclidean correction)
-				frames[k]->setHReference(transform[EUCLIDEAN], EUCLIDEAN);
+				// frames[k]->setHReference(transform[EUCLIDEAN], EUCLIDEAN);
 				// compute frame distortion (based on perspective transformation)
 				distortion = frames[k]->frameDistortion(PERSPECTIVE);
 				if (distortion < best_distortion)
@@ -191,8 +191,8 @@ int w=0;
 //blender->blendSubMosaic(final_mosaics[n][0]);
 //imwrite("/home/ros/dataset/output/0233-closure-simple_UnCorrect.png", final_mosaics[n][0]->final_scene);
 		// apply global euclidean correction
-		if (_euclidean_correction)
-			final_mosaics[n][0]->correct();
+		//if (_euclidean_correction)
+		//	final_mosaics[n][0]->correct();
 	}
 	cout << endl;
 }
