@@ -129,7 +129,7 @@ vector<Mat> Stitcher::stitch(Frame *_object, Frame *_scene)
 		// Update good neighbors (neighbors who have more than 3 strong matches)
 		img[OBJECT]->good_neighbors.push_back(img[SCENE]);
 		for (int j=1; j<good_matches.size(); j++)
-			if (good_matches[j].size() > 20)
+			if (good_matches[j].size() > 100)
 				img[OBJECT]->good_neighbors.push_back(img[SCENE]->neighbors[j-1]);
 		// Convert the key points into a vector containing the correspond X,Y position in image
 		// and track the key points of scene frame and it's neighbors by correspond homography
@@ -161,7 +161,7 @@ vector<Mat> Stitcher::stitch(Frame *_object, Frame *_scene)
 		// remove scale factor from rotation matrix
 		removeScale(E);
 		// correct perspective transformation based on best euclidean
-		correctHomography(H, E);
+		// correctHomography(H, E);
 	}
 	// find best euclidean transformation from the euclidean model (all frames tracked by euclidean transformation)
 	R = estimateRigidTransform(Mat(object_points), Mat(euclidean_points), false);
