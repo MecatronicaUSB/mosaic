@@ -124,6 +124,11 @@ vector<Mat> Stitcher::stitch(Frame *_object, Frame *_scene)
 		// Discard outliers based on euclidean distance between descriptor's vectors
 		getGoodMatches(thresh);
 		// Apply grid detector if flag is activated
+		// Update good neighbors (neighbors who have more than 3 strong matches)
+		img[OBJECT]->good_neighbors.push_back(img[SCENE]);
+		for (int j=1; j<good_matches.size(); j++)
+			if (good_matches[j].size() > 8)
+				img[OBJECT]->good_neighbors.push_back(img[SCENE]->neighbors[j-1]);
 		if (use_grid)
 			gridDetector();
 		// Convert the key points into a vector containing the correspond X,Y position in image
@@ -141,12 +146,6 @@ vector<Mat> Stitcher::stitch(Frame *_object, Frame *_scene)
 			img[OBJECT]->good_neighbors.clear();
 		}
 	}
-// Update good neighbors (neighbors who have more than 3 strong matches)
-img[OBJECT]->good_neighbors.push_back(img[SCENE]);
-for (int j=1; j<good_matches.size(); j++)
-	if (good_matches[j].size() > 8)
-		img[OBJECT]->good_neighbors.push_back(img[SCENE]->neighbors[j-1]);
-
 	// find perspective transformation from object to scene
 	Mat H = findHomography(Mat(object_points), Mat(scene_points), CV_RANSAC);
 	// if possible, force bottom-right element to 1
