@@ -109,7 +109,7 @@ void printHistogram(int histogram[256], std::string filename, cv::Scalar color);
  * 0 and 100.\n
  * \e lowerPercentile must be smaller than \e higherPercentile
  */
-void imgChannelStretch(cv::Mat imgOriginal, cv::Mat imgStretched, float lowerPercentile, float higherPercentile, Mat mask = Mat());
+void imgChannelStretch(cv::Mat imgOriginal, cv::Mat imgStretched, int lowerPercentile, int higherPercentile, Mat mask = Mat());
 // Transform imgOriginal so that, for each channel histogram, its
 // lowerPercentile and higherPercentile values are moved to 0 and 255,
 // respectively. Values in between are linearly scaled. Values smaller

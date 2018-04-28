@@ -26,6 +26,8 @@ Point2f getMidPoint(Point2f _pt1, Point2f _pt2)
 // See description in header file
 void enhanceImage(Mat &_img, Mat mask)
 {
+Ptr<CLAHE> clahe = createCLAHE();
+clahe->setClipLimit(2);
 	vector<Mat> channels;
 	Ptr<CLAHE> clahe = createCLAHE();
 	clahe->setClipLimit(4);
@@ -108,7 +110,7 @@ void getHistogram(cv::Mat img, int *histogram, Mat mask)
 	// Computing the histogram as a cumulative of each integer value. WARNING: this will fail for any non-integer image matrix
 	for (i = 0; i < height; i++)
 		for (j = 0; j < width; j++)
-			if (mask.at<unsigned char>(i, j) != 0)
+			//if (mask.at<unsigned char>(i, j) != 0)
 				histogram[img.at<unsigned char>(i, j)]++;
 }
 
@@ -152,7 +154,7 @@ void printHistogram(int histogram[256], std::string filename, cv::Scalar color)
 }
 
 // Now it will operate in a single channel of the provided image. So, future implementations will require a function call per channel (still faster)
-void imgChannelStretch(cv::Mat imgOriginal, cv::Mat imgStretched, float lowerPercentile, float higherPercentile, Mat mask)
+void imgChannelStretch(cv::Mat imgOriginal, cv::Mat imgStretched, int lowerPercentile, int higherPercentile, Mat mask)
 {
 	// Computing the histograms
 	int histogram[256];
