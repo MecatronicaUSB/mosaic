@@ -26,8 +26,6 @@ Point2f getMidPoint(Point2f _pt1, Point2f _pt2)
 // See description in header file
 void enhanceImage(Mat &_img, Mat mask)
 {
-Ptr<CLAHE> clahe = createCLAHE();
-clahe->setClipLimit(2);
 	vector<Mat> channels;
 	Ptr<CLAHE> clahe = createCLAHE();
 	clahe->setClipLimit(4);
