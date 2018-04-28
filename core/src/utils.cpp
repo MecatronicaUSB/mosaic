@@ -27,11 +27,16 @@ Point2f getMidPoint(Point2f _pt1, Point2f _pt2)
 void enhanceImage(Mat &_img, Mat mask)
 {
 	vector<Mat> channels;
+	Ptr<CLAHE> clahe = createCLAHE();
+	clahe->setClipLimit(4);
 	// split image in three channels, stretch each histograms, and merge them again
 	split(_img, channels);
-	imgChannelStretch(channels[0], channels[0], 1, 99, mask);
-	imgChannelStretch(channels[1], channels[1], 1, 99, mask);
-	imgChannelStretch(channels[2], channels[2], 1, 99, mask);
+	clahe->apply(channels[0],channels[0]);
+	clahe->apply(channels[1],channels[1]);
+	clahe->apply(channels[2],channels[2]);
+	// imgChannelStretch(channels[0], channels[0], 1, 99, mask);
+	// imgChannelStretch(channels[1], channels[1], 1, 99, mask);
+	// imgChannelStretch(channels[2], channels[2], 1, 99, mask);
 	merge(channels, _img);
 }
 

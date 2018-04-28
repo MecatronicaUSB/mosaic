@@ -289,7 +289,7 @@ void Stitcher::blend2Scene(Mat &_final_scene){
     }
     vector<vector<Point>> corners;
     corners.push_back(aux_corner);
-    polylines(_final_scene, corners, true, Scalar(0,255,0));
+    //polylines(_final_scene, corners, true, Scalar(0,255,0));
     corners.clear();
     mask.release();
 }

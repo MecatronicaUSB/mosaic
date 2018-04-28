@@ -80,6 +80,16 @@ void Blender::blendSubMosaic(SubMosaic *_sub_mosaic)
 	Mat roi;
 	cout << endl << "Blending...\t";
 	// loop over all frames
+	vector<vector<vector<Point> > > tot_contour;
+	vector<vector<Point> > cont;
+	for (int i = 0; i < masks.size(); i++)
+	{
+		findContours(masks[i], cont, CV_RETR_LIST, CV_CHAIN_APPROX_NONE);
+		//drawContours(warp_imgs[i], cont, -1, Scalar(0,0,255), 2);		
+		tot_contour.push_back(cont);
+		cont.clear();
+	}
+
 	for (int i = 0; i < frames.size(); i++)
 	{
 		warp_imgs[i].copyTo(aux_img);
@@ -93,19 +103,23 @@ void Blender::blendSubMosaic(SubMosaic *_sub_mosaic)
 		{
 			// locate region of interest in final image
 			roi = Mat(_sub_mosaic->final_scene, Rect(bound_rect[i].x,
-													bound_rect[i].y,
-													bound_rect[i].width,
-													bound_rect[i].height));
+													 bound_rect[i].y,
+													 bound_rect[i].width,
+													 bound_rect[i].height));
 			// copy using mask
 			aux_img.copyTo(roi, masks[i]);
 			roi = Mat(final_mask, Rect(bound_rect[i].x,
-									bound_rect[i].y,
-									bound_rect[i].width,
-									bound_rect[i].height));
+									   bound_rect[i].y,
+									   bound_rect[i].width,
+									   bound_rect[i].height));
 			// copy final image mask
 			masks[i].copyTo(roi, masks[i]);
 		}
 	}
+	// for (int i = 0; i < masks.size(); i++)
+	// {
+	// 	drawContours(_sub_mosaic->final_scene, tot_contour[i], -1, Scalar(0,0,255), 1);
+	// }
 	// apply multi-band blender (if selected)	
 	if (bands > 0 && graph_cut)
 	{
