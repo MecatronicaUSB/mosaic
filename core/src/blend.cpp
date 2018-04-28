@@ -79,13 +79,6 @@ void Blender::blendSubMosaic(SubMosaic *_sub_mosaic)
 	Mat final_mask = Mat(_sub_mosaic->final_scene.size(), CV_8U, Scalar(0));
 	Mat roi;
 	cout << endl << "Blending...\t";
-for (int i = 0; i < masks.size(); i++)
-{
-	findContours(masks[i], cont, CV_RETR_LIST, CV_CHAIN_APPROX_NONE);
-	//drawContours(warp_imgs[i], cont, -1, Scalar(0,0,255), 2);		
-	tot_contour.push_back(cont);
-	cont.clear();
-}
 	// loop over all frames
 	// vector<vector<vector<Point> > > tot_contour;
 	// vector<vector<Point> > cont;
