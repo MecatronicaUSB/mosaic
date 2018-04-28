@@ -215,10 +215,10 @@ bool Frame::isGoodFrame()
 	// keypoints_area = boundAreaKeypoints();
 
 	// 1.3 initial threshold value, must be adjusted in future tests
-	if (area_error > 1.3)
+	if (area_error > 1.15)
 		return false;
 	// 1.3 initial threshold value, must be adjusted in future tests
-	if (diagonal_error > 1.3)
+	if (diagonal_error > 1.15)
 		return false;
 	// if (keypoints_area < 0.2 * color.cols * color.rows)
 	// 	return false;

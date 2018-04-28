@@ -43,7 +43,7 @@ void Mosaic::compute(bool _euclidean_mode)
 		best_frame = i+2;
 		// search in k-windows for best frame (frame with less distortion)
 		// stop if k-frame or last one is reached
-		for (k =i+1; k < frames.size() && k < i+3; k++)
+		for (k =i+1; k < frames.size() && k < i+2; k++)
 		{
 			// find perspective and best euclidean transformations
 			transform = stitcher->stitch(frames[k], frames[i]);
@@ -82,14 +82,13 @@ void Mosaic::compute(bool _euclidean_mode)
 		// and start a new mosaic. (Separate mosaics)
 		if (best_distortion == 100)
 		{
-			break;
+			//break;
 			// save all sub mosaics to be merged together
 			if (sub_mosaics.size() > 0)
 				final_mosaics.push_back(sub_mosaics);
 			sub_mosaics.clear();
 			sub_mosaics.push_back(new SubMosaic());
 			n_subs = 0;
-			sub_mosaics.push_back(new SubMosaic());
 			// if remains enough frames, continue. else break loop
 			if (i < frames.size()-2)
 				sub_mosaics[n_subs]->addFrame(frames[i+1]);
@@ -147,9 +146,11 @@ void Mosaic::merge(bool _euclidean_correction)
 	// a mosaic is a vector with all sub mosaics that can be merged
 	for (int n=0; n<final_mosaics.size(); n++)
 	{
+int w=0;
 		// loop over sub mosaics of same mosaic
 		while(final_mosaics[n].size() > 1)
 		{
+//cout << "Entrooo" << endl;
 			// get the sub mosaic pair with higher overlap
 			ransac_mosaics = getBestOverlap(final_mosaics[n]);
 			// remove second sub mosaic, and update neighbors
@@ -162,13 +163,15 @@ void Mosaic::merge(bool _euclidean_correction)
 			// join two sub mosaics based on each reference transformation
 //blender->blendSubMosaic(ransac_mosaics[0]);
 //blender->blendSubMosaic(ransac_mosaics[1]);
-//imwrite("/home/ros/dataset/output/temp/SR-Unref0.png", ransac_mosaics[0]->final_scene);
-//imwrite("/home/ros/dataset/output/temp/SR-Unref1.png", ransac_mosaics[1]->final_scene);
+//imwrite("/home/ros/dataset/output/temp/SR-Unref0-"+to_string(w)+".png", ransac_mosaics[0]->final_scene);
+//imwrite("/home/ros/dataset/output/temp/SR-Unref1-"+to_string(w)+".png", ransac_mosaics[1]->final_scene);
 			referenceMosaics(ransac_mosaics);
 //blender->blendSubMosaic(ransac_mosaics[0]);
 //blender->blendSubMosaic(ransac_mosaics[1]);
-//imwrite("/home/ros/dataset/output/temp/SR-Ref0.png", ransac_mosaics[0]->final_scene);
-//imwrite("/home/ros/dataset/output/temp/SR-Ref1.png", ransac_mosaics[1]->final_scene);
+//imwrite("/home/ros/dataset/output/temp/SR-Ref0-"+to_string(w)+".png", ransac_mosaics[0]->final_scene);
+//imwrite("/home/ros/dataset/output/temp/SR-Ref1-"+to_string(w)+".png", ransac_mosaics[1]->final_scene);
+//ransac_mosaics[0]->final_scene.release();
+//ransac_mosaics[1]->final_scene.release();
 			// align sub mosaics (translate and rotate)
 			alignMosaics(ransac_mosaics);
 			// find transformation which minimize overall geometric distortion
@@ -178,16 +181,18 @@ void Mosaic::merge(bool _euclidean_correction)
 				frame->setHReference(best_H);
 			ransac_mosaics[0]->next_H = best_H * ransac_mosaics[0]->next_H;
 //blender->blendSubMosaic(ransac_mosaics[0]);
-//imwrite("/home/ros/dataset/output/temp/SR-avg0.png", ransac_mosaics[0]->final_scene);
+//imwrite("/home/ros/dataset/output/temp/SR-avg-"+to_string(w++)+".png", ransac_mosaics[0]->final_scene);
 			// delete second sub mosaic
 			delete ransac_mosaics[1];
 			// update overlap between remains sub mosaics
 			updateOverlap(final_mosaics[n]);
 		}
 		cout<<"\rMerging sub-mosaics:\t["<<green<<((n+1)*100)/final_mosaics.size()<<reset<<"%]"<<flush;
+//blender->blendSubMosaic(final_mosaics[n][0]);
+//imwrite("/home/ros/dataset/output/0233-closure-simple_UnCorrect.png", final_mosaics[n][0]->final_scene);
 		// apply global euclidean correction
-		//if (_euclidean_correction)
-		//	final_mosaics[n][0]->correct();
+		if (_euclidean_correction)
+			final_mosaics[n][0]->correct();
 	}
 	cout << endl;
 }
@@ -363,6 +368,10 @@ Mat Mosaic::getBestModel(vector<SubMosaic *> _ransac_mosaics, int _niter)
 		}
 		// find perspective transformation from SM0  points to midpoints
 		temp_H = getPerspectiveTransform(points[0], mid_points);
+if (i==0)
+{
+	temp_H = Mat::eye(3, 3, CV_64F);
+}
 		// apply transformation to corner points of each frame
 		for (Frame *frame : _ransac_mosaics[0]->frames)
 		{
@@ -442,7 +451,7 @@ void Mosaic::save(string _dir)
 		blender->blendSubMosaic(final_mosaic[0]);
 		imwrite(_dir+"-000"+to_string(n)+".jpg", final_mosaic[0]->final_scene);
 		// create track map and save it
-		map.push_back(final_mosaic[0]->buildMap(RECTANGLE));
+		map.push_back(final_mosaic[0]->buildMap(CIRCLE));
 		imwrite(_dir+"-"+to_string(n)+"-MAP.jpg", map[n]);
 		n++;
 	}

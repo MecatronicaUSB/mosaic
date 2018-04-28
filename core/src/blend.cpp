@@ -79,6 +79,15 @@ void Blender::blendSubMosaic(SubMosaic *_sub_mosaic)
 	Mat final_mask = Mat(_sub_mosaic->final_scene.size(), CV_8U, Scalar(0));
 	Mat roi;
 	cout << endl << "Blending...\t";
+vector<vector<vector<Point> > > tot_contour;
+vector<vector<Point> > cont;
+for (int i = 0; i < masks.size(); i++)
+{
+	findContours(masks[i], cont, CV_RETR_LIST, CV_CHAIN_APPROX_NONE);
+	//drawContours(warp_imgs[i], cont, -1, Scalar(0,0,255), 2);		
+	tot_contour.push_back(cont);
+	cont.clear();
+}
 	// loop over all frames
 	for (int i = 0; i < frames.size(); i++)
 	{
@@ -206,7 +215,7 @@ void Blender::correctColor(SubMosaic *_sub_mosaic)
 		// modify histogram of each channel for second image, based on first one
 		// (in CieLab color space)
 		split(lab_img, channels);
-		for (int j = 0; j<0; j++)
+		for (int j = 0; j<3; j++)
 		{
 			channels[j] = (sc_stdev.val[j]*(channels[j] - ob_mean.val[j]) / ob_stdev.val[j])
 										+ sc_mean.val[j];

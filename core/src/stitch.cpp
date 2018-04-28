@@ -129,7 +129,7 @@ vector<Mat> Stitcher::stitch(Frame *_object, Frame *_scene)
 		// Update good neighbors (neighbors who have more than 3 strong matches)
 		img[OBJECT]->good_neighbors.push_back(img[SCENE]);
 		for (int j=1; j<good_matches.size(); j++)
-			if (good_matches[j].size() > 8)
+			if (good_matches[j].size() > 20)
 				img[OBJECT]->good_neighbors.push_back(img[SCENE]->neighbors[j-1]);
 		// Convert the key points into a vector containing the correspond X,Y position in image
 		// and track the key points of scene frame and it's neighbors by correspond homography
@@ -251,6 +251,7 @@ void Stitcher::gridDetector()
 						img[OBJECT]->keypoints[match.queryIdx].pt.y >= stepy * j && img[OBJECT]->keypoints[match.queryIdx].pt.y < stepy * (j + 1))
 					{
 						// look for strongest match in this cell
+						//if ( match.distance < best_distance * (1 + 1*k*(k>0?1:0)) )
 						if (match.distance < best_distance)
 						{
 							// save the match data
