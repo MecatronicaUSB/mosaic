@@ -28,7 +28,7 @@ void enhanceImage(Mat &_img, Mat mask)
 {
 	vector<Mat> channels;
 	Ptr<CLAHE> clahe = createCLAHE();
-	clahe->setClipLimit(4);
+	clahe->setClipLimit(3);
 	// split image in three channels, stretch each histograms, and merge them again
 	split(_img, channels);
 	clahe->apply(channels[0],channels[0]);

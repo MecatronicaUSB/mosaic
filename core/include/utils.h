@@ -42,8 +42,8 @@ namespace m2d
 {
 
 // default dimensions of each image
-const int TARGET_WIDTH = 640*2;
-const int TARGET_HEIGHT = 480*2;
+const int TARGET_WIDTH = 640;
+const int TARGET_HEIGHT = 480;
 
 // number of cells to use in grid detector
 const int CELLS_DIV = 10;
