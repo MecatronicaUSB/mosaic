@@ -161,7 +161,7 @@ vector<Mat> Stitcher::stitch(Frame *_object, Frame *_scene)
 		// remove scale factor from rotation matrix
 		removeScale(E);
 		// correct perspective transformation based on best euclidean
-		correctHomography(H, E);
+		// correctHomography(H, E);
 	}
 	// find best euclidean transformation from the euclidean model (all frames tracked by euclidean transformation)
 	R = estimateRigidTransform(Mat(object_points), Mat(euclidean_points), false);
