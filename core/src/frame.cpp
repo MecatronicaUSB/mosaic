@@ -23,12 +23,12 @@ Frame::Frame(Mat _img, bool _pre, int _width, int _height)
 	// create camera and coefficients matrix
 	Mat camera_matrix = (Mat1d(3, 3) << fx, 0, cx, 0, fy, cy, 0, 0, 1);
 	Mat distortion_coeff = (Mat1d(1, 5) << k1, k2, p1, p2, k3);
-// resize(_img, _img, Size(1360, 1024));
-// // remove camera distortion
-// undistort(_img, color, camera_matrix, distortion_coeff);
-// color = color(Rect(45, 45, color.cols-82, color.rows-78));
-// resize(color, color, Size(_width, _height));
-resize(_img, color, Size(_width, _height));
+resize(_img, _img, Size(1360, 1024));
+// remove camera distortion
+undistort(_img, color, camera_matrix, distortion_coeff);
+color = color(Rect(45, 45, color.cols-82, color.rows-78));
+resize(color, color, Size(_width, _height));
+//resize(_img, _img, Size(_width, _height));
 	// resize image to default size
 	// if (_img.size().width != _width || _img.size().height != _height)
 	// 	resize(_img, _img, Size(_width, _height));
@@ -221,10 +221,10 @@ bool Frame::isGoodFrame()
 	// keypoints_area = boundAreaKeypoints();
 
 	// 1.3 initial threshold value, must be adjusted in future tests
-	if (area_error > 1.15)
+	if (area_error > 1.15) // 1.15
 		return false;
 	// 1.3 initial threshold value, must be adjusted in future tests
-	if (diagonal_error > 1.15)
+	if (diagonal_error > 1.5)
 		return false;
 	// if (keypoints_area < 0.2 * color.cols * color.rows)
 	// 	return false;

@@ -148,7 +148,7 @@ float SubMosaic::calcDistortion(int _ref)
 	// distortion of worst frame
 	// TODO: try cumulative distortion.
 	for (Frame *frame : frames)
-		tot_error = max(tot_error, frame->frameDistortion(RANSAC));
+		tot_error = max(tot_error, frame->frameDistortion(_ref));
 	
 	return tot_error;
 }
@@ -164,7 +164,7 @@ void SubMosaic::correct()
 	for (Frame *frame : frames)
 	{
 		// save it in temporal frame object variable
-		perspectiveTransform(frame->bound_points[PERSPECTIVE], frame->bound_points[RANSAC], correct_H1 * frame->H);
+		perspectiveTransform(frame->bound_points[PERSPECTIVE], frame->bound_points[RANSAC], correct_H1);
 	}
 	// calculate the overall geometric distortion
 	temp_distortion = calcDistortion(RANSAC);
@@ -173,7 +173,7 @@ void SubMosaic::correct()
 	for (Frame *frame : frames)
 	{
 		// save it in temporal frame object variable
-		perspectiveTransform(frame->bound_points[PERSPECTIVE], frame->bound_points[RANSAC], correct_H2 * frame->H);
+		perspectiveTransform(frame->bound_points[PERSPECTIVE], frame->bound_points[RANSAC], correct_H2);
 	}
 	Mat correct_H;
 	if (temp_distortion < calcDistortion(RANSAC))
@@ -220,19 +220,19 @@ vector<vector<Point2f> > SubMosaic::getBorderPoints()
 				p1 = pidx;
 				f1 = fidx;
 			}
-			else if (point.y > bottom)
+			if (point.y > bottom)
 			{
 				bottom = point.y;
 				p2 = pidx;
 				f2 = fidx;
 			}
-			else if (point.x < left)
+			if (point.x < left)
 			{
 				left = point.x;
 				p3 = pidx;
 				f3 = fidx;
 			}
-			else if (point.x > right)
+			if (point.x > right)
 			{
 				right = point.x;
 				p4 = pidx;
