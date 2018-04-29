@@ -54,6 +54,11 @@ const float fx = 1736.49233331, fy = 1733.74525406;
 const float k1 = 0.15808590, k2 = 0.76137626, k3 = 0.99996769;
 const float p1 = 0.00569993, p2 = -0.00067913;
 
+// const float cx = 959.5, cy = 719.5;
+// const float fx = 883, fy = 883;
+// const float k1 = 0.0719 , k2 =  -0.0833 , k3 = 0.0;
+// const float p1 = 0.0013, p2 = -6.1840e-04;
+
 /**
  * @brief Calculate the euclidean distance between two given vector in 2D
  * @param _pt1 First floating point OpenCV coordinate 
