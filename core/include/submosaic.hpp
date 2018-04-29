@@ -120,6 +120,7 @@ class SubMosaic
      * @return vector<vector<Point2f> > border points of euclidean and perspective transformation
      */
     vector<vector<Point2f> > getCornerPoints();
+    vector<vector<Point2f> > getBorderPoints();
     /**
      * @brief Build the trajectory map of sub mosaic
      * @param type type of map, border lines or circle points and neighbor links

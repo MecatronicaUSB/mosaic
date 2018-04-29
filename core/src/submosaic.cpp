@@ -159,7 +159,35 @@ void SubMosaic::correct()
 	// get corner points of mosaic, based on first and last frame
 	vector<vector<Point2f> > corner_points = getCornerPoints();
 	// calculate perspective transform from perspective points to euclidean ones
-	Mat correct_H = getPerspectiveTransform(corner_points[PERSPECTIVE], corner_points[EUCLIDEAN]);
+	Mat correct_H1 = getPerspectiveTransform(corner_points[PERSPECTIVE], corner_points[EUCLIDEAN]);
+	float temp_distortion;
+	for (Frame *frame : frames)
+	{
+		// save it in temporal frame object variable
+		perspectiveTransform(frame->bound_points[PERSPECTIVE], frame->bound_points[RANSAC], correct_H1 * frame->H);
+	}
+	// calculate the overall geometric distortion
+	temp_distortion = calcDistortion(RANSAC);
+	corner_points = getBorderPoints();
+	Mat correct_H2 = getPerspectiveTransform(corner_points[PERSPECTIVE], corner_points[EUCLIDEAN]);
+	for (Frame *frame : frames)
+	{
+		// save it in temporal frame object variable
+		perspectiveTransform(frame->bound_points[PERSPECTIVE], frame->bound_points[RANSAC], correct_H2 * frame->H);
+	}
+	Mat correct_H;
+	if (temp_distortion < calcDistortion(RANSAC))
+	{
+		cout << "corners" << endl;
+		correct_H = correct_H1;
+	}
+	else
+	{
+		cout << "borders" << endl;
+		correct_H = correct_H2;
+	}
+
+
 	// update each frame of mosaic
 	for (Frame *frame : frames)
 		frame->setHReference(correct_H);
@@ -168,6 +196,72 @@ void SubMosaic::correct()
 	next_E = correct_H * next_E;
 }
 
+
+vector<vector<Point2f> > SubMosaic::getBorderPoints()
+{
+	int p1, p2, p3, p4;
+	int f1, f2, f3, f4;
+	int pidx=0, fidx=0;
+	float top, bottom, left, right;
+	
+	top = frames[0]->bound_points[EUCLIDEAN][0].y;
+	bottom = frames[0]->bound_points[EUCLIDEAN][0].y;
+	left = frames[0]->bound_points[EUCLIDEAN][0].x;
+	right = frames[0]->bound_points[EUCLIDEAN][0].x;
+	
+	for (Frame *frame: frames)
+	{
+		pidx=0;
+		for (Point2f point: frame->bound_points[EUCLIDEAN])
+		{
+			if (point.y < top)
+			{
+				top = point.y;
+				p1 = pidx;
+				f1 = fidx;
+			}
+			else if (point.y > bottom)
+			{
+				bottom = point.y;
+				p2 = pidx;
+				f2 = fidx;
+			}
+			else if (point.x < left)
+			{
+				left = point.x;
+				p3 = pidx;
+				f3 = fidx;
+			}
+			else if (point.x > right)
+			{
+				right = point.x;
+				p4 = pidx;
+				f4 = fidx;
+			}
+			pidx++;
+		}
+		fidx++;
+	}
+
+	vector<vector<Point2f> > border_points(2);
+	// save points with bigger distance for each frame
+	vector<Point2f> euclidean_points;
+	euclidean_points.push_back(frames[f1]->bound_points[EUCLIDEAN][p1]);
+	euclidean_points.push_back(frames[f2]->bound_points[EUCLIDEAN][p2]);
+	euclidean_points.push_back(frames[f3]->bound_points[EUCLIDEAN][p3]);
+	euclidean_points.push_back(frames[f4]->bound_points[EUCLIDEAN][p4]);
+	// save points with bigger distance for each frame, using the point index
+	vector<Point2f> perspective_points;
+	perspective_points.push_back(frames[f1]->bound_points[PERSPECTIVE][p1]);
+	perspective_points.push_back(frames[f2]->bound_points[PERSPECTIVE][p2]);
+	perspective_points.push_back(frames[f3]->bound_points[PERSPECTIVE][p3]);
+	perspective_points.push_back(frames[f4]->bound_points[PERSPECTIVE][p4]);
+
+	border_points[EUCLIDEAN]= euclidean_points;
+	border_points[PERSPECTIVE]= perspective_points;
+
+	return border_points;
+}
 // See description in header file
 vector<vector<Point2f> > SubMosaic::getCornerPoints()
 {
