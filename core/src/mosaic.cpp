@@ -43,7 +43,7 @@ void Mosaic::compute(bool _euclidean_mode)
 		best_frame = i+2;
 		// search in k-windows for best frame (frame with less distortion)
 		// stop if k-frame or last one is reached
-		for (k =i+1; k < frames.size() && k < i+4; k++)
+		for (k =i+1; k < frames.size() && k < i+2; k++)
 		{
 			// find perspective and best euclidean transformations
 			transform = stitcher->stitch(frames[k], frames[i]);
@@ -187,6 +187,9 @@ int w=0;
 			// update overlap between remains sub mosaics
 			updateOverlap(final_mosaics[n]);
 		}
+		//blender->blendSubMosaic(ransac_mosaics[0]);
+		//imshow("avg", ransac_mosaics[0]->final_scene);
+		//waitKey(0);
 		cout<<"\rMerging sub-mosaics:\t["<<green<<((n+1)*100)/final_mosaics.size()<<reset<<"%]"<<flush;
 //blender->blendSubMosaic(final_mosaics[n][0]);
 //imwrite("/home/ros/dataset/output/0233-closure-simple_UnCorrect.png", final_mosaics[n][0]->final_scene);
@@ -377,7 +380,7 @@ if (i==0)
 		{
 			// save it in temporal frame object variable
 			perspectiveTransform(frame->bound_points[PERSPECTIVE],
-								 frame->bound_points[RANSAC], temp_H * frame->H);
+								 frame->bound_points[RANSAC], temp_H);// old: temp_Hxframe->H *******************
 		}
 		// calculate the overall geometric distortion
 		temp_distortion = _ransac_mosaics[0]->calcDistortion(RANSAC);
