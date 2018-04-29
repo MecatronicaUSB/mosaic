@@ -96,7 +96,7 @@ int main( int argc, char** argv ) {
     t = (double) getTickCount();
 
     file_names = read_filenames(input_directory);
-    for (int i=0; i<file_names.size(); i++) {
+    for (int i=0; i<file_names.size()-20; i++) {
         img = imread(file_names[i], IMREAD_COLOR);
         if (!img.data) {
             cout<< red <<" --(!) Error reading image "<< reset << endl;
