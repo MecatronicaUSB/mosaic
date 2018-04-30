@@ -25,6 +25,7 @@ Frame::Frame(Mat _img, bool _pre, int _width, int _height)
 	Mat distortion_coeff = (Mat1d(1, 5) << k1, k2, p1, p2, k3);
 // resize(_img, _img, Size(1920, 1440));
 resize(_img, _img, Size(1360, 1024));
+
 // remove camera distortion
 undistort(_img, color, camera_matrix, distortion_coeff);
 color = color(Rect(45, 45, color.cols-82, color.rows-78));
