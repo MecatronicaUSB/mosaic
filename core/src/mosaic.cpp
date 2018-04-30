@@ -194,8 +194,8 @@ int w=0;
 //blender->blendSubMosaic(final_mosaics[n][0]);
 //imwrite("/home/ros/dataset/output/0233-closure-simple_UnCorrect.png", final_mosaics[n][0]->final_scene);
 		// apply global euclidean correction
-		//if (_euclidean_correction)
-		//	final_mosaics[n][0]->correct();
+		if (_euclidean_correction)
+			final_mosaics[n][0]->correct();
 	}
 	cout << endl;
 }

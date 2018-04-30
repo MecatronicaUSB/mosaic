@@ -199,15 +199,15 @@ void SubMosaic::correct()
 
 vector<vector<Point2f> > SubMosaic::getBorderPoints()
 {
-	int p1, p2, p3, p4;
-	int f1, f2, f3, f4;
+	int p1=0, p2=0, p3=0, p4=0;
+	int f1=0, f2=0, f3=0, f4=0;
 	int pidx=0, fidx=0;
 	float top, bottom, left, right;
 	
-	top = frames[0]->bound_points[EUCLIDEAN][0].y;
-	bottom = frames[0]->bound_points[EUCLIDEAN][0].y;
-	left = frames[0]->bound_points[EUCLIDEAN][0].x;
-	right = frames[0]->bound_points[EUCLIDEAN][0].x;
+	top = frames[0]->bound_points[EUCLIDEAN][4].y;
+	bottom = frames[0]->bound_points[EUCLIDEAN][4].y;
+	left = frames[0]->bound_points[EUCLIDEAN][4].x;
+	right = frames[0]->bound_points[EUCLIDEAN][4].x;
 	
 	for (Frame *frame: frames)
 	{

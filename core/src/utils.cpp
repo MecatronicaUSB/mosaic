@@ -109,6 +109,7 @@ void getHistogram(cv::Mat img, int *histogram, Mat mask)
 	for (i = 0; i < height; i++)
 		for (j = 0; j < width; j++)
 			//if (mask.at<unsigned char>(i, j) != 0)
+			//if (img.at<unsigned char>(i, j) != 128 && img.at<unsigned char>(i, j) != 127 && img.at<unsigned char>(i, j) != 0)
 				histogram[img.at<unsigned char>(i, j)]++;
 }
 

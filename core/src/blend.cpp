@@ -76,7 +76,7 @@ void Blender::blendSubMosaic(SubMosaic *_sub_mosaic)
 	correctColor(_sub_mosaic);
 	cout << flush << "\rCorrecting color\t"<<green<<"OK"<<reset;
 	Mat aux_img;
-	Mat final_mask = Mat(_sub_mosaic->final_scene.size(), CV_8U, Scalar(0));
+	//Mat final_mask = Mat(_sub_mosaic->final_scene.size(), CV_8U, Scalar(0));
 	Mat roi;
 	cout << endl << "Blending...\t";
 	// loop over all frames
@@ -108,10 +108,10 @@ void Blender::blendSubMosaic(SubMosaic *_sub_mosaic)
 													 bound_rect[i].height));
 			// copy using mask
 			aux_img.copyTo(roi, masks[i]);
-			roi = Mat(final_mask, Rect(bound_rect[i].x,
-									   bound_rect[i].y,
-									   bound_rect[i].width,
-									   bound_rect[i].height));
+			// roi = Mat(final_mask, Rect(bound_rect[i].x,
+			// 						   bound_rect[i].y,
+			// 						   bound_rect[i].width,
+			// 						   bound_rect[i].height));
 			// copy final image mask
 			masks[i].copyTo(roi, masks[i]);
 		}
@@ -127,7 +127,7 @@ void Blender::blendSubMosaic(SubMosaic *_sub_mosaic)
 		// blender uses CV_16S data type
 		multiband.blend(result_16s, result_mask);
 		result_16s.convertTo(_sub_mosaic->final_scene, CV_8U);
-		final_mask = result_mask;
+		//final_mask = result_mask;
 	}
 	cout<<flush << "\rBlending\t\t"<<green<<"OK"<<reset;
 	// clear used data
@@ -194,7 +194,8 @@ UMat Blender::getMask(Frame *_frame)
 void Blender::correctColor(SubMosaic *_sub_mosaic)
 {
 	Mat lab_img;
-	Scalar ob_mean, sc_mean, ob_stdev, sc_stdev;
+	Scalar temp_ob_mean, temp_sc_mean, temp_ob_stdev, temp_sc_stdev;
+	vector<Scalar> ob_mean, sc_mean, ob_stdev, sc_stdev;
 	vector<Mat> over_masks;
 	vector<Mat> channels;
 	Mat aux_img;
@@ -209,26 +210,68 @@ void Blender::correctColor(SubMosaic *_sub_mosaic)
 		// convert to CieLab color space
 		cvtColor(aux_img, lab_img, CV_BGR2Lab);
 		// get the mean and standard deviation in intersection area
-		meanStdDev(lab_img, sc_mean, sc_stdev, over_masks[0]);
+		meanStdDev(lab_img, temp_sc_mean, temp_sc_stdev, over_masks[0]);
+		sc_mean.push_back(temp_sc_mean);
+		sc_stdev.push_back(temp_sc_stdev);
 		// return to BGR color space
 		cvtColor(lab_img, warp_imgs[i], CV_Lab2BGR);
 		// -- now with the first image, apply the first 3 steps
 		warp_imgs[i+1].copyTo(aux_img);
 		aux_img.convertTo(aux_img, CV_8U);
 		cvtColor(aux_img, lab_img, CV_BGR2Lab);
-		meanStdDev(lab_img, ob_mean, ob_stdev, over_masks[1]);
-		// modify histogram of each channel for second image, based on first one
-		// (in CieLab color space)
-		split(lab_img, channels);
-		for (int j = 0; j<0; j++)
-		{
-			channels[j] = (sc_stdev.val[j]*(channels[j] - ob_mean.val[j]) / ob_stdev.val[j])
-										+ sc_mean.val[j];
-		}
-		merge(channels, lab_img);
-		// return to BGR color space
+		meanStdDev(lab_img, temp_ob_mean, temp_ob_stdev, over_masks[1]);
+		ob_mean.push_back(temp_ob_mean);
+		ob_stdev.push_back(temp_ob_stdev);
 		cvtColor(lab_img, warp_imgs[i+1], CV_Lab2BGR);
 	}
+	Mat gray_img;
+	vector<Scalar> sc_g_mean, ob_g_mean;
+	Scalar aux_mean;
+	// for (int i = 0; i < warp_imgs.size()-1; i++)
+	// {
+	// 	warp_imgs[i+1].copyTo(aux_img);
+	// 	cvtColor(aux_img, lab_img, CV_BGR2Lab);
+	// 	// modify histogram of each channel for second image, based on first one
+	// 	// (in CieLab color space)
+	// 	split(lab_img, channels);
+	// 	Scalar aux_mean1, aux_stdev1, aux_mean2, aux_stdev2;
+	// 	for (int j = 0; j<3; j++)
+	// 	{
+	// 		// getHistogram(channels[j], histogram);
+	// 		// printHistogram(histogram, "/home/victor/dataset/Results/Color-Correction/U_hist_"+to_string(j)+".png", color[j]);
+
+	// 		channels[j] = (sc_stdev[i].val[j]*(channels[j] - ob_mean[i].val[j]) / ob_stdev[i].val[j])
+	// 									+ sc_mean[i].val[j];
+
+	// 		// getHistogram(channels[j], histogram);
+	// 		// printHistogram(histogram, "/home/victor/dataset/Results/Color-Correction/C_hist_"+to_string(j)+".png", color[j]);
+	// 	}
+	// 	merge(channels, lab_img);
+	// 	// return to BGR color space
+	// 	cvtColor(lab_img, warp_imgs[i+1], CV_Lab2BGR);
+	// }
+	for (int i=0; i<warp_imgs.size()-1; i++)
+	{
+		over_masks = getOverlapMasks(i+1, i);
+		
+		warp_imgs[i].copyTo(aux_img);
+		cvtColor(aux_img, gray_img, CV_BGR2GRAY);
+		sc_g_mean.push_back(mean(aux_img , over_masks[0]));
+
+		warp_imgs[i+1].copyTo(aux_img);
+		cvtColor(aux_img, gray_img, CV_BGR2GRAY);
+		ob_g_mean.push_back(mean(aux_img , over_masks[1]));
+	}
+	for (int i=0; i<warp_imgs.size()-2; i++)
+	{
+		warp_imgs[i+1].copyTo(aux_img);
+		aux_img *= (sc_g_mean[i].val[0] +ob_g_mean[i+1].val[0]) / (ob_g_mean[i].val[0]+sc_g_mean[i+1].val[0]);
+		
+		aux_img.copyTo(warp_imgs[i+1]);
+	}
+	warp_imgs[warp_imgs.size()-1].copyTo(aux_img);
+	aux_img *= (sc_g_mean[warp_imgs.size()-1].val[0]) / (ob_g_mean[warp_imgs.size()-1].val[0]);
+		
 }
 
 // See description in header file
