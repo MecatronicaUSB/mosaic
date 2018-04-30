@@ -262,20 +262,20 @@ void Blender::correctColor(SubMosaic *_sub_mosaic)
 		cvtColor(aux_img, gray_img, CV_BGR2GRAY);
 		ob_g_mean.push_back(mean(aux_img , over_masks[1]));
 	}
-	for (int i=0; i<warp_imgs.size()-2; i++)
+	for (int i=0; i<warp_imgs.size()-1; i++)
 	{
 		warp_imgs[i+1].copyTo(aux_img);
-		//aux_img *= (sc_g_mean[i].val[0] +ob_g_mean[i+1].val[0]) / (ob_g_mean[i].val[0]+sc_g_mean[i+1].val[0]);
+		aux_img *= (sc_g_mean[i].val[0] +ob_g_mean[i+1].val[0]) / (ob_g_mean[i].val[0]+sc_g_mean[i+1].val[0]);
 		
 		aux_img.copyTo(warp_imgs[i+1]);
 	}
 	warp_imgs[0].copyTo(aux_img);
 	aux_img *= (ob_g_mean[0].val[0]) / (sc_g_mean[0].val[0]);
 	aux_img.copyTo(warp_imgs[0]);
-	
-	warp_imgs[warp_imgs.size()-1].copyTo(aux_img);
-	aux_img *= (sc_g_mean[warp_imgs.size()-1].val[0]) / (ob_g_mean[warp_imgs.size()-1].val[0]);
-	aux_img.copyTo(warp_imgs[warp_imgs.size()-1]);
+
+	// warp_imgs[warp_imgs.size()-1].copyTo(aux_img);
+	// aux_img *= (sc_g_mean[warp_imgs.size()-1].val[0]) / (ob_g_mean[warp_imgs.size()-1].val[0]);
+	// aux_img.copyTo(warp_imgs[warp_imgs.size()-1]);
 		
 }
 
