@@ -27,9 +27,9 @@ Frame::Frame(Mat _img, bool _pre, int _width, int _height)
 resize(_img, _img, Size(1360, 1024));
 
 // remove camera distortion
-undistort(_img, color, camera_matrix, distortion_coeff);
-color = color(Rect(45, 45, color.cols-82, color.rows-78));
-resize(color, color, Size(_width, _height));
+//undistort(_img, color, camera_matrix, distortion_coeff);
+//color = color(Rect(45, 45, color.cols-82, color.rows-78));
+resize(_img, color, Size(_width, _height));
 //resize(_img, _img, Size(_width, _height));
 	// resize image to default size
 	// if (_img.size().width != _width || _img.size().height != _height)

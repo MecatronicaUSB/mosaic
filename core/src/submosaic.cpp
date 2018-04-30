@@ -201,7 +201,7 @@ vector<vector<Point2f> > SubMosaic::getBorderPoints()
 {
 	int p1=0, p2=0, p3=0, p4=0;
 	int f1=0, f2=0, f3=0, f4=0;
-	int pidx=0, fidx=0;
+	int pidx=-1, fidx=-1;
 	float top, bottom, left, right;
 	
 	top = frames[0]->bound_points[EUCLIDEAN][4].y;
@@ -211,9 +211,11 @@ vector<vector<Point2f> > SubMosaic::getBorderPoints()
 	
 	for (Frame *frame: frames)
 	{
-		pidx=0;
+		fidx++;
+		pidx=-1;
 		for (Point2f point: frame->bound_points[EUCLIDEAN])
 		{
+			pidx++;
 			if (point.y < top)
 			{
 				top = point.y;
@@ -238,9 +240,7 @@ vector<vector<Point2f> > SubMosaic::getBorderPoints()
 				p4 = pidx;
 				f4 = fidx;
 			}
-			pidx++;
 		}
-		fidx++;
 	}
 
 	vector<vector<Point2f> > border_points(2);
