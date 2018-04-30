@@ -90,6 +90,7 @@ int main( int argc, char** argv ) {
         matcher_flann  ? m2d::USE_FLANN : m2d::USE_BRUTE_FORCE
     );
     mosaic.blender = new m2d::Blender(blender_bands ? args::get(blender_bands) : 0,
+                                      color_c,
                                       graph_cut,
                                       final_scb);
 

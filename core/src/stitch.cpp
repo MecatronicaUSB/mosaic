@@ -161,7 +161,7 @@ vector<Mat> Stitcher::stitch(Frame *_object, Frame *_scene)
 		// remove scale factor from rotation matrix
 		removeScale(E);
 		// correct perspective transformation based on best euclidean
-		// correctHomography(H, E);
+		correctHomography(H, E);
 	}
 	// find best euclidean transformation from the euclidean model (all frames tracked by euclidean transformation)
 	R = estimateRigidTransform(Mat(object_points), Mat(euclidean_points), false);
@@ -361,14 +361,14 @@ void Stitcher::correctHomography(Mat &_H, Mat _E)
 	perspectiveTransform(e_points, e_points, _E);
 	// get the mid points between perspective and euclidean points
 	vector<Point2f> mid_points = {
-		// getMidPoint(getMidPoint(h_points[0], e_points[0]), h_points[0]),
-		// getMidPoint(getMidPoint(h_points[1], e_points[1]), h_points[1]),
-		// getMidPoint(getMidPoint(h_points[2], e_points[2]), h_points[2]),
-		// getMidPoint(getMidPoint(h_points[3], e_points[3]), h_points[3])
-		getMidPoint(h_points[0], e_points[0]),
-		getMidPoint(h_points[1], e_points[1]),
-		getMidPoint(h_points[2], e_points[2]),
-		getMidPoint(h_points[3], e_points[3])
+		getMidPoint(getMidPoint(h_points[0], e_points[0]), h_points[0]),
+		getMidPoint(getMidPoint(h_points[1], e_points[1]), h_points[1]),
+		getMidPoint(getMidPoint(h_points[2], e_points[2]), h_points[2]),
+		getMidPoint(getMidPoint(h_points[3], e_points[3]), h_points[3])
+		// getMidPoint(h_points[0], e_points[0]),
+		// getMidPoint(h_points[1], e_points[1]),
+		// getMidPoint(h_points[2], e_points[2]),
+		// getMidPoint(h_points[3], e_points[3])
 	};
 	// get the perspective transformation between perspective points and calculated mid points
 	Mat correct_H = getPerspectiveTransform(h_points, mid_points);

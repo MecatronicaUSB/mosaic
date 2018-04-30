@@ -69,13 +69,20 @@ void Blender::blendSubMosaic(SubMosaic *_sub_mosaic)
 		seam_finder->find(warp_imgs, corners, masks);
 		cout<<"\rFinding cut line\t"<<green<<"OK                          "<<reset<<flush<<endl;
 	}
-	cout << "Correcting color...\t";
-
-
-	// correct color by Reinhard's method
-	correctColor(_sub_mosaic);
-	cout << flush << "\rCorrecting color\t"<<green<<"OK"<<reset;
 	Mat aux_img;
+	for (int i = 0; i < warp_imgs.size(); i++)
+	{
+		warp_imgs[i].copyTo(aux_img);
+		aux_img.convertTo(aux_img, CV_8U);
+		aux_img.copyTo(warp_imgs[i]);
+	}
+	// correct color by Reinhard's method or Gain compensation
+	if (color_correction)
+	{
+		correctColor(_sub_mosaic);
+		cout << flush << "\rCorrecting color\t"<<green<<"OK"<<reset;
+	}
+	
 	//Mat final_mask = Mat(_sub_mosaic->final_scene.size(), CV_8U, Scalar(0));
 	Mat roi;
 	cout << endl << "Blending...\t";
@@ -113,7 +120,7 @@ void Blender::blendSubMosaic(SubMosaic *_sub_mosaic)
 			// 						   bound_rect[i].width,
 			// 						   bound_rect[i].height));
 			// copy final image mask
-			masks[i].copyTo(roi, masks[i]);
+			//masks[i].copyTo(roi, masks[i]);
 		}
 	}
 	// for (int i = 0; i < masks.size(); i++)
@@ -200,30 +207,30 @@ void Blender::correctColor(SubMosaic *_sub_mosaic)
 	vector<Mat> channels;
 	Mat aux_img;
 	// loop over all warp images
-	for (int i = 0; i < warp_imgs.size() - 1; i++)
-	{
-		// get intersection mask, referenced to each frame
-		over_masks = getOverlapMasks(i+1, i);
-		// cast from UMat to Mat type
-		warp_imgs[i].copyTo(aux_img);
-		aux_img.convertTo(aux_img, CV_8U);
-		// convert to CieLab color space
-		cvtColor(aux_img, lab_img, CV_BGR2Lab);
-		// get the mean and standard deviation in intersection area
-		meanStdDev(lab_img, temp_sc_mean, temp_sc_stdev, over_masks[0]);
-		sc_mean.push_back(temp_sc_mean);
-		sc_stdev.push_back(temp_sc_stdev);
-		// return to BGR color space
-		cvtColor(lab_img, warp_imgs[i], CV_Lab2BGR);
-		// -- now with the first image, apply the first 3 steps
-		warp_imgs[i+1].copyTo(aux_img);
-		aux_img.convertTo(aux_img, CV_8U);
-		cvtColor(aux_img, lab_img, CV_BGR2Lab);
-		meanStdDev(lab_img, temp_ob_mean, temp_ob_stdev, over_masks[1]);
-		ob_mean.push_back(temp_ob_mean);
-		ob_stdev.push_back(temp_ob_stdev);
-		cvtColor(lab_img, warp_imgs[i+1], CV_Lab2BGR);
-	}
+	// for (int i = 0; i < warp_imgs.size() - 1; i++)
+	// {
+	// 	// get intersection mask, referenced to each frame
+	// 	over_masks = getOverlapMasks(i+1, i);
+	// 	// cast from UMat to Mat type
+	// 	warp_imgs[i].copyTo(aux_img);
+	// 	aux_img.convertTo(aux_img, CV_8U);
+	// 	// convert to CieLab color space
+	// 	cvtColor(aux_img, lab_img, CV_BGR2Lab);
+	// 	// get the mean and standard deviation in intersection area
+	// 	meanStdDev(lab_img, temp_sc_mean, temp_sc_stdev, over_masks[0]);
+	// 	sc_mean.push_back(temp_sc_mean);
+	// 	sc_stdev.push_back(temp_sc_stdev);
+	// 	// return to BGR color space
+	// 	cvtColor(lab_img, warp_imgs[i], CV_Lab2BGR);
+	// 	// -- now with the first image, apply the first 3 steps
+	// 	warp_imgs[i+1].copyTo(aux_img);
+	// 	aux_img.convertTo(aux_img, CV_8U);
+	// 	cvtColor(aux_img, lab_img, CV_BGR2Lab);
+	// 	meanStdDev(lab_img, temp_ob_mean, temp_ob_stdev, over_masks[1]);
+	// 	ob_mean.push_back(temp_ob_mean);
+	// 	ob_stdev.push_back(temp_ob_stdev);
+	// 	cvtColor(lab_img, warp_imgs[i+1], CV_Lab2BGR);
+	// }
 	Mat gray_img;
 	vector<Scalar> sc_g_mean, ob_g_mean;
 	Scalar aux_mean;

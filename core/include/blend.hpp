@@ -41,6 +41,7 @@ class Blender
   public:
     int bands;                      //!< number of bands for multi-band blender
     bool graph_cut;                 //!< boolean to use or nor graph-cut algorithm
+    bool color_correction;
     bool scb;                       //!< boolean to use or not simple color balance in final image
     vector<UMat> warp_imgs;         //!< Vector to store all warped images
     vector<UMat> masks;             //!< Vector to store correspond warped masks (to be cropped by seam finder algorithm)
@@ -49,7 +50,8 @@ class Blender
     /**
      * @brief Blender constructor
      */
-    Blender(int _bands = 5, bool _cut_line = false, int _scb = false): bands(_bands),
+    Blender(int _bands = 5, bool _color = true, bool _cut_line = false, int _scb = false): bands(_bands),
+                                                                       color_correction(_color),
                                                                        graph_cut(_cut_line),
                                                                        scb(_scb){};
     /**

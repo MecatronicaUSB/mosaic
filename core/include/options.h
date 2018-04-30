@@ -39,3 +39,4 @@ args::Flag euclidean_mode(group_optional, "", "Euclidean mode, aproximate projec
 // args::Flag euclidean_correction(group_optional, "", "Euclidean correction, match first and last frame positions by euclidean model.", {'c'});
 args::Flag graph_cut(group_optional, "", "Graph-cut seam findel --pixel level-- (slower).", {'g'});
 args::Flag output(group_optional, "print", "Show final blended images.", {'o'});
+args::Flag color_c(group_optional, "color_correction", "appply color correction", {'c'});
