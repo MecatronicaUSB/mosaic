@@ -27,18 +27,18 @@ Frame::Frame(Mat _img, bool _pre, int _width, int _height)
 resize(_img, _img, Size(1360, 1024));
 
 // remove camera distortion
-//undistort(_img, color, camera_matrix, distortion_coeff);
-//color = color(Rect(45, 45, color.cols-82, color.rows-78));
-resize(_img, color, Size(_width, _height));
+undistort(_img, color, camera_matrix, distortion_coeff);
+color = color(Rect(20, 10, color.cols-38, color.rows-40));
+resize(color, color, Size(_width, _height));
 //resize(_img, _img, Size(_width, _height));
 	// resize image to default size
 	// if (_img.size().width != _width || _img.size().height != _height)
 	// 	resize(_img, _img, Size(_width, _height));
 	// remove camera distortion
-	// imshow("distort", _img);
+	//imshow("distort", _img);
 	// //undistort(_img, color, camera_matrix, distortion_coeff);
-	// imshow("undistort", color); 
-	// waitKey(0);
+	//imshow("undistort", color); 
+	//waitKey(0); 
 	// create a gray scale version of image
 	cvtColor(color, gray, CV_BGR2GRAY);
 	// apply scb to gray image
