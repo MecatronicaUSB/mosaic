@@ -50,7 +50,7 @@ const int CELLS_DIV = 10;
 
 // intrinsec camera parameters
 const float cx = 687.23531391, cy = 501.08026641;
-const float fx = 1736.49233331*1.4, fy = 1733.74525406*1.4;
+const float fx = 1736.49233331*1.2, fy = 1733.74525406*1.2;
 const float k1 = 0.15808590, k2 = 0.76137626, k3 = 0.99996769;
 const float p1 = 0.00569993, p2 = -0.00067913;
 

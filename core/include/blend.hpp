@@ -94,5 +94,13 @@ class Blender
      * @brief (Currently unused) find the area where the matches are below a threshold value
      */
     vector<Point2f> findLocalStitch(Frame *_object, Frame *_scene);
+    /**
+     * @brief 
+     * @param _object 
+     * @param _scene 
+     * @return true 
+     * @return false 
+     */
+    bool checkCollision(Frame *_object, Frame *_scene);
 };
 }

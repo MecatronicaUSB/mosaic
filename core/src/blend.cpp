@@ -60,7 +60,7 @@ void Blender::blendSubMosaic(SubMosaic *_sub_mosaic)
 	// 	warp_imgs.push_back(exp_warp_img[i].getUMat(ACCESS_RW));
 	// 	masks.push_back(exp_mask[i].getUMat(ACCESS_RW));
 	// }
-
+	int j=0;
 	// apply graph cur algorithm
 	if (graph_cut)
 	{
@@ -69,7 +69,23 @@ void Blender::blendSubMosaic(SubMosaic *_sub_mosaic)
 		seam_finder->find(warp_imgs, corners, masks);
 		cout<<"\rFinding cut line\t"<<green<<"OK                          "<<reset<<flush<<endl;
 	}
+	else
+	{
+		// for (int i = 0; i < warp_imgs.size(); i++)
+		// {
+		// 	j = i + 1;
+		// 	while (j < warp_imgs.size())
+		// 	{
+		// 		if (!checkCollision(frames[j], frames[i]))
+		// 			break;
+				
+		// 		cropMask(j++, i);
+
+		// 	}
+		// }
+	}
 	Mat aux_img;
+	//imwrite("/home/victor/dataset/Results/cut-line/geo/mask0x.jpg", masks[0]); 
 	for (int i = 0; i < warp_imgs.size(); i++)
 	{
 		warp_imgs[i].copyTo(aux_img);
@@ -92,7 +108,7 @@ void Blender::blendSubMosaic(SubMosaic *_sub_mosaic)
 	// for (int i = 0; i < masks.size(); i++)
 	// {
 	// 	findContours(masks[i], cont, CV_RETR_LIST, CV_CHAIN_APPROX_NONE);
-	// 	//drawContours(warp_imgs[i], cont, -1, Scalar(0,0,255), 2);		
+	// 	drawContours(warp_imgs[i], cont, -1, Scalar(0,0,255), 2);		
 	// 	tot_contour.push_back(cont);
 	// 	cont.clear();
 	// }
@@ -197,6 +213,39 @@ UMat Blender::getMask(Frame *_frame)
 	return umask;
 }
 
+void Blender::cropMask(int _object, int _scene)
+{
+	Mat obj_mask, sc_mask;
+	// cast to Mat type
+	masks[_object].copyTo(obj_mask);
+	masks[_scene].copyTo(sc_mask);
+	Rect overlap_roi;
+
+	overlap_roi.x = max(bound_rect[_scene].x, bound_rect[_object].x) - bound_rect[_object].x;
+	overlap_roi.y = max(bound_rect[_scene].y, bound_rect[_object].y) - bound_rect[_object].y;
+
+	overlap_roi.width = min(bound_rect[_scene].x + bound_rect[_scene].width,
+							bound_rect[_object].x + bound_rect[_object].width) - 
+						max(bound_rect[_scene].x, bound_rect[_object].x);
+						
+
+	overlap_roi.height = min(bound_rect[_scene].y + bound_rect[_scene].height,
+							 bound_rect[_object].y + bound_rect[_object].height) - 
+						 max(bound_rect[_scene].y, bound_rect[_object].y);
+						 
+
+	Mat object_roi(obj_mask, overlap_roi);
+
+	overlap_roi.x = max(bound_rect[_object].x - bound_rect[_scene].x, 0.f);
+	overlap_roi.y = max(bound_rect[_object].y - bound_rect[_scene].y, 0.f);
+
+	Mat scene_roi(sc_mask, overlap_roi);
+
+	scene_roi -= object_roi;
+	obj_mask.copyTo(masks[_object]);
+	sc_mask.copyTo(masks[_scene]);
+}
+
 // See description in header file
 void Blender::correctColor(SubMosaic *_sub_mosaic)
 {
@@ -269,19 +318,19 @@ void Blender::correctColor(SubMosaic *_sub_mosaic)
 		cvtColor(aux_img, gray_img, CV_BGR2GRAY);
 		ob_g_mean.push_back(mean(aux_img , over_masks[1]));
 	}
-	for (int i=0; i<warp_imgs.size()-1; i++)
+	for (int i=0; i<warp_imgs.size()-2; i++)
 	{
 		warp_imgs[i+1].copyTo(aux_img);
 		aux_img *= (sc_g_mean[i].val[0] +ob_g_mean[i+1].val[0]) / (ob_g_mean[i].val[0]+sc_g_mean[i+1].val[0]);
 		
 		aux_img.copyTo(warp_imgs[i+1]);
 	}
-	warp_imgs[0].copyTo(aux_img);
-	aux_img *= (ob_g_mean[0].val[0]) / (sc_g_mean[0].val[0]);
-	aux_img.copyTo(warp_imgs[0]);
+	// warp_imgs[0].copyTo(aux_img);
+	// aux_img *= (ob_g_mean[0].val[0]) / (sc_g_mean[0].val[0]);
+	// aux_img.copyTo(warp_imgs[0]);
 
 	// warp_imgs[warp_imgs.size()-1].copyTo(aux_img);
-	// aux_img *= (sc_g_mean[warp_imgs.size()-1].val[0]) / (ob_g_mean[warp_imgs.size()-1].val[0]);
+	// aux_img *= (sc_g_mean[warp_imgs.size()-2].val[0]) / (ob_g_mean[warp_imgs.size()-2].val[0]);
 	// aux_img.copyTo(warp_imgs[warp_imgs.size()-1]);
 		
 }
@@ -335,34 +384,36 @@ vector<Mat> Blender::getOverlapMasks(int _object, int _scene)
 }
 
 // See description in header file
-void Blender::cropMask(int _object, int _scene)
-{
-	Rect overlap_roi;
-	// get overlap roi dimensions
-	overlap_roi.x = max(bound_rect[_scene].x, bound_rect[_object].x) - bound_rect[_object].x;
-	overlap_roi.y = max(bound_rect[_scene].y, bound_rect[_object].y) - bound_rect[_object].y;
-	overlap_roi.width = min(bound_rect[_scene].x + bound_rect[_scene].width,
-							bound_rect[_object].x + bound_rect[_object].width) - 
-						max(bound_rect[_scene].x, bound_rect[_object].x);
-	overlap_roi.height = min(bound_rect[_scene].y + bound_rect[_scene].height,
-							 bound_rect[_object].y + bound_rect[_object].height) - 
-						 max(bound_rect[_scene].y, bound_rect[_object].y);
+// void Blender::cropMask(int _object, int _scene)
+// {
+// 	Rect overlap_roi;
+// 	// get overlap roi dimensions
+// 	overlap_roi.x = max(bound_rect[_scene].x, bound_rect[_object].x) - bound_rect[_object].x;
+// 	overlap_roi.y = max(bound_rect[_scene].y, bound_rect[_object].y) - bound_rect[_object].y;
+// 	overlap_roi.width = min(bound_rect[_scene].x + bound_rect[_scene].width,
+// 							bound_rect[_object].x + bound_rect[_object].width) - 
+// 						max(bound_rect[_scene].x, bound_rect[_object].x);
+// 	overlap_roi.height = min(bound_rect[_scene].y + bound_rect[_scene].height,
+// 							 bound_rect[_object].y + bound_rect[_object].height) - 
+// 						 max(bound_rect[_scene].y, bound_rect[_object].y);
 	
-	Mat obj_mask, sc_mask;
-	// cast to Mat type
-	masks[_object].copyTo(obj_mask);
-	masks[_scene].copyTo(sc_mask);
-	// locate roi in object image masks
-	Mat object_roi(obj_mask, overlap_roi);
-	// move roi to scene intersection location
-	overlap_roi.x = max(bound_rect[_object].x - bound_rect[_scene].x, 0.f);
-	overlap_roi.y = max(bound_rect[_object].y - bound_rect[_scene].y, 0.f);
+// 	Mat obj_mask, sc_mask;
+// 	// cast to Mat type
+// 	masks[_object].copyTo(obj_mask);
+// 	masks[_scene].copyTo(sc_mask);
+// 	// locate roi in object image masks
+// 	Mat object_roi(obj_mask, overlap_roi);
+// 	// move roi to scene intersection location
+// 	overlap_roi.x = max(bound_rect[_object].x - bound_rect[_scene].x, 0.f);
+// 	overlap_roi.y = max(bound_rect[_object].y - bound_rect[_scene].y, 0.f);
 
-	// locate roi in object image masks
-	Mat scene_roi(sc_mask, overlap_roi);
-	// remove scene portion mask that intersect scene
-	scene_roi -= object_roi;
-}
+// 	// locate roi in object image masks
+// 	Mat scene_roi(sc_mask, overlap_roi);
+// 	// remove scene portion mask that intersect scene
+// 	scene_roi -= object_roi;
+// 	obj_mask.copyTo(masks[_object]);
+// 	sc_mask.copyTo(masks[_scene]);
+// }
 
 // See description in header file
 vector<Point2f> Blender::findLocalStitch(Frame *_object, Frame *_scene)
@@ -391,4 +442,18 @@ vector<Point2f> Blender::findLocalStitch(Frame *_object, Frame *_scene)
 
 	return good_points;
 }
+
+bool Blender::checkCollision(Frame *_object, Frame *_scene)
+{
+	if (_object->bound_rect.x > _scene->bound_rect.x)
+		if (_object->bound_rect.x > _scene->bound_rect.x + _scene->bound_rect.width)
+			return false;
+		
+	if (_object->bound_rect.y > _scene->bound_rect.y)
+		if (_object->bound_rect.y > _scene->bound_rect.y + _scene->bound_rect.height)
+			return false;
+
+	return true;
+}
+
 }
