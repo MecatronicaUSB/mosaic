@@ -48,26 +48,25 @@ In both cases the resulting mosaic and track map will be saved in the provided o
 ### Test using:
 - Graph cut seam finder.
 - multiband blender with five bands.
-- Simple color balance (in BGR).
-- 28 images input.
+- CLAHE (in BGR).
+- 87 images input.
 - Perspective transformations.
 
 <p align="center">
-  <img src="https://github.com/MecatronicaUSB/mosaic/blob/master/core/results/0234-1.jpg" width="450"/>
+  <img src="https://github.com/MecatronicaUSB/mosaic/blob/master/core/results/0234-1.jpg" width="400"/>
   <img src="https://github.com/MecatronicaUSB/mosaic/blob/master/core/results/0234-map.jpg" width="450"/>
 </p>
 - Lef. Final Mosaic.<br />
 - Right. Final Map.<br />
 
 ### Test using:
-- Graph cut seam finder.
-- 11 Images input.
-- Perspective transformations.
-- Correct global distortion by euclidean model.
+ScottReef 25 dataset from ACFR.
+- 177 Images input.
+- Euclidean transformations.
 
 <p align="center">
-  <img src="https://github.com/MecatronicaUSB/mosaic/blob/master/core/results/SR2-1.jpg" width="450"/>
-  <img src="https://github.com/MecatronicaUSB/mosaic/blob/master/core/results/SR2-map.jpg" width="450"/>
+  <img src="https://github.com/MecatronicaUSB/mosaic/blob/master/core/results/SR2-1.jpg" width="350"/>
+  <img src="https://github.com/MecatronicaUSB/mosaic/blob/master/core/results/SR2-map.jpg" width="550"/>
 </p>
-- Left. Mosaic before average homography correction.<br />
-- Right. Mosaic after average homography correction.<br />
+- Left. Mosaic in BGR.<br />
+- Right. Mosaic map, in pixels.<br />
