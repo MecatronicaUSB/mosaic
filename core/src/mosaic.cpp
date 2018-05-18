@@ -43,7 +43,7 @@ void Mosaic::compute(bool _euclidean_mode)
 		best_frame = i+2;
 		// search in k-windows for best frame (frame with less distortion)
 		// stop if k-frame or last one is reached
-		for (k =i+1; k < frames.size() && k < i+3; k++)
+		for (k =i+1; k < frames.size() && k < i+2; k++)
 		{
 			// find perspective and best euclidean transformations
 			transform = stitcher->stitch(frames[k], frames[i]);
@@ -82,11 +82,13 @@ void Mosaic::compute(bool _euclidean_mode)
 		// and start a new mosaic. (Separate mosaics)
 		if (best_distortion == 100)
 		{
+			//break;
 			// save all sub mosaics to be merged together
-			final_mosaics.push_back(sub_mosaics);
+			if (sub_mosaics.size() > 0)
+				final_mosaics.push_back(sub_mosaics);
 			sub_mosaics.clear();
-			n_subs = 0;
 			sub_mosaics.push_back(new SubMosaic());
+			n_subs = 0;
 			// if remains enough frames, continue. else break loop
 			if (i < frames.size()-2)
 				sub_mosaics[n_subs]->addFrame(frames[i+1]);
@@ -123,7 +125,7 @@ void Mosaic::compute(bool _euclidean_mode)
 	}
 	cout<<endl;
 	// save resulting sub mosaics to be merged together
-	if (sub_mosaics[n_subs]->n_frames > 1 )
+	if (sub_mosaics[n_subs]->n_frames > 0 )
 	{
 		final_mosaics.push_back(sub_mosaics);
 		sub_mosaics.clear();
@@ -144,6 +146,7 @@ void Mosaic::merge(bool _euclidean_correction)
 	// a mosaic is a vector with all sub mosaics that can be merged
 	for (int n=0; n<final_mosaics.size(); n++)
 	{
+int w=0;
 		// loop over sub mosaics of same mosaic
 		while(final_mosaics[n].size() > 1)
 		{
@@ -350,12 +353,16 @@ Mat Mosaic::getBestModel(vector<SubMosaic *> _ransac_mosaics, int _niter)
 		}
 		// find perspective transformation from SM0  points to midpoints
 		temp_H = getPerspectiveTransform(points[0], mid_points);
+if (i==0)
+{
+	temp_H = Mat::eye(3, 3, CV_64F);
+}
 		// apply transformation to corner points of each frame
 		for (Frame *frame : _ransac_mosaics[0]->frames)
 		{
 			// save it in temporal frame object variable
 			perspectiveTransform(frame->bound_points[PERSPECTIVE],
-								 frame->bound_points[RANSAC], temp_H * frame->H);
+								 frame->bound_points[RANSAC], temp_H);// old: temp_Hxframe->H *******************
 		}
 		// calculate the overall geometric distortion
 		temp_distortion = _ransac_mosaics[0]->calcDistortion(RANSAC);

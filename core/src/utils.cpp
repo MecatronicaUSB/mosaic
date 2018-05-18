@@ -27,11 +27,16 @@ Point2f getMidPoint(Point2f _pt1, Point2f _pt2)
 void enhanceImage(Mat &_img, Mat mask)
 {
 	vector<Mat> channels;
+	Ptr<CLAHE> clahe = createCLAHE();
+	clahe->setClipLimit(2);
 	// split image in three channels, stretch each histograms, and merge them again
 	split(_img, channels);
-	imgChannelStretch(channels[0], channels[0], 1, 99, mask);
-	imgChannelStretch(channels[1], channels[1], 1, 99, mask);
-	imgChannelStretch(channels[2], channels[2], 1, 99, mask);
+	clahe->apply(channels[0],channels[0]);
+	clahe->apply(channels[1],channels[1]);
+	clahe->apply(channels[2],channels[2]);
+	// imgChannelStretch(channels[0], channels[0], 1, 99, mask);
+	// imgChannelStretch(channels[1], channels[1], 1, 99, mask);
+	// imgChannelStretch(channels[2], channels[2], 1, 99, mask);
 	merge(channels, _img);
 }
 
@@ -103,7 +108,8 @@ void getHistogram(cv::Mat img, int *histogram, Mat mask)
 	// Computing the histogram as a cumulative of each integer value. WARNING: this will fail for any non-integer image matrix
 	for (i = 0; i < height; i++)
 		for (j = 0; j < width; j++)
-			if (mask.at<unsigned char>(i, j) != 0)
+			//if (mask.at<unsigned char>(i, j) != 0)
+			//if (img.at<unsigned char>(i, j) != 128 && img.at<unsigned char>(i, j) != 127 && img.at<unsigned char>(i, j) != 0)
 				histogram[img.at<unsigned char>(i, j)]++;
 }
 

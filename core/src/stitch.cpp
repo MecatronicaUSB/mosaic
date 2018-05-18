@@ -124,13 +124,13 @@ vector<Mat> Stitcher::stitch(Frame *_object, Frame *_scene)
 		// Discard outliers based on euclidean distance between descriptor's vectors
 		getGoodMatches(thresh);
 		// Apply grid detector if flag is activated
-		if (use_grid)
-			gridDetector();
 		// Update good neighbors (neighbors who have more than 3 strong matches)
 		img[OBJECT]->good_neighbors.push_back(img[SCENE]);
 		for (int j=1; j<good_matches.size(); j++)
-			if (good_matches[j].size() > 3)
+			if (good_matches[j].size() > 8)
 				img[OBJECT]->good_neighbors.push_back(img[SCENE]->neighbors[j-1]);
+		if (use_grid)
+			gridDetector();
 		// Convert the key points into a vector containing the correspond X,Y position in image
 		// and track the key points of scene frame and it's neighbors by correspond homography
 		positionFromKeypoints();
@@ -140,7 +140,7 @@ vector<Mat> Stitcher::stitch(Frame *_object, Frame *_scene)
 		else
 		{
 			// else, update threshold (allow less strong matches) and clean used data
-			thresh += 0.1;
+			thresh -= 0.1;
 			good_matches.clear();
 			neighbors_kp.clear();
 			img[OBJECT]->good_neighbors.clear();
@@ -161,7 +161,7 @@ vector<Mat> Stitcher::stitch(Frame *_object, Frame *_scene)
 		// remove scale factor from rotation matrix
 		removeScale(E);
 		// correct perspective transformation based on best euclidean
-		correctHomography(H, E);
+		// correctHomography(H, E);
 	}
 	// find best euclidean transformation from the euclidean model (all frames tracked by euclidean transformation)
 	R = estimateRigidTransform(Mat(object_points), Mat(euclidean_points), false);
@@ -251,6 +251,7 @@ void Stitcher::gridDetector()
 						img[OBJECT]->keypoints[match.queryIdx].pt.y >= stepy * j && img[OBJECT]->keypoints[match.queryIdx].pt.y < stepy * (j + 1))
 					{
 						// look for strongest match in this cell
+						//if ( match.distance < best_distance * (1 + 1*k*(k>0?1:0)) )
 						if (match.distance < best_distance)
 						{
 							// save the match data
@@ -360,14 +361,14 @@ void Stitcher::correctHomography(Mat &_H, Mat _E)
 	perspectiveTransform(e_points, e_points, _E);
 	// get the mid points between perspective and euclidean points
 	vector<Point2f> mid_points = {
-		// getMidPoint(getMidPoint(h_points[0], e_points[0]), h_points[0]),
-		// getMidPoint(getMidPoint(h_points[1], e_points[1]), h_points[1]),
-		// getMidPoint(getMidPoint(h_points[2], e_points[2]), h_points[2]),
-		// getMidPoint(getMidPoint(h_points[3], e_points[3]), h_points[3])
-		getMidPoint(h_points[0], e_points[0]),
-		getMidPoint(h_points[1], e_points[1]),
-		getMidPoint(h_points[2], e_points[2]),
-		getMidPoint(h_points[3], e_points[3])
+		getMidPoint(getMidPoint(h_points[0], e_points[0]), h_points[0]),
+		getMidPoint(getMidPoint(h_points[1], e_points[1]), h_points[1]),
+		getMidPoint(getMidPoint(h_points[2], e_points[2]), h_points[2]),
+		getMidPoint(getMidPoint(h_points[3], e_points[3]), h_points[3])
+		// getMidPoint(h_points[0], e_points[0]),
+		// getMidPoint(h_points[1], e_points[1]),
+		// getMidPoint(h_points[2], e_points[2]),
+		// getMidPoint(h_points[3], e_points[3])
 	};
 	// get the perspective transformation between perspective points and calculated mid points
 	Mat correct_H = getPerspectiveTransform(h_points, mid_points);

@@ -48,11 +48,17 @@ const int TARGET_HEIGHT = 480;
 // number of cells to use in grid detector
 const int CELLS_DIV = 10;
 
-// intrinsec camera parameters
+// intrinsec camera parameters (ScottReef 25 dataset)
 const float cx = 687.23531391, cy = 501.08026641;
-const float fx = 1736.49233331, fy = 1733.74525406;
+const float fx = 1736.49233331*1.2, fy = 1733.74525406*1.2;
 const float k1 = 0.15808590, k2 = 0.76137626, k3 = 0.99996769;
 const float p1 = 0.00569993, p2 = -0.00067913;
+
+// 1920 x 1440
+// const float cx = 959.5, cy = 719.5;
+// const float fx = 883, fy = 883;
+// const float k1 = 0.0719 , k2 =  -0.0833 , k3 = 0.0;
+// const float p1 = 0.0013, p2 = -6.1840e-04;
 
 /**
  * @brief Calculate the euclidean distance between two given vector in 2D
@@ -79,7 +85,7 @@ int sign(double _num1);
  * @param img OpenCV Matrix container input image
  * @param histogram Integer matrix to store the histogram
  */
-void getHistogram(cv::Mat img, int *histogram, Mat mask);
+void getHistogram(cv::Mat img, int *histogram, Mat mask = Mat());
 // Histogram[3][256].
 //      Histogram[0] corresponds to the Blue channel
 //      Histogram[1] corresponds to the Green channel

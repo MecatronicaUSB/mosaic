@@ -93,7 +93,7 @@ void SubMosaic::setRerenceFrame(Mat _scene){
     frames.push_back(new Frame(_scene.clone(), true));
     n_frames++;
     key_frame = frames[0];
-    final_scene = _scene.clone();
+    final_scene = frames[0]->color.clone();
 }
 
 // See description in header file

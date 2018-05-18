@@ -126,7 +126,7 @@ bool Stitcher::stitch(Frame *_object, Frame *_scene, Mat &_final_scene){
     // to negatives values a new padding is created in unexisting sides to achieve a correct stitch
     copyMakeBorder(_final_scene, _final_scene, warp_offset[TOP], warp_offset[BOTTOM],
                                                warp_offset[LEFT], warp_offset[RIGHT],
-                                               BORDER_CONSTANT,Scalar(0,0,0));
+                                               BORDER_CONSTANT,Scalar(255,255,255));
 
     blend2Scene(_final_scene);
 
@@ -155,14 +155,14 @@ void Stitcher::getGoodMatches(){
 void Stitcher::gridDetector(){
     vector<DMatch> grid_matches;
     DMatch best_match;
-    int k=0, best_distance = 100;
+    int k=0, best_distance = 10000;
     int stepx = img[OBJECT]->color.cols / cells_div;
     int stepy = img[OBJECT]->color.rows / cells_div;
     
     for(int i=0; i<10; i++){
         for(int j=0; j<10; j++){
             k=0;
-            best_distance = 100;
+            best_distance = 10000;
             for (DMatch match: good_matches) {
                 //-- Get the keypoints from the good matches
                 if(keypoints[OBJECT][match.queryIdx].pt.x >= stepx*i && keypoints[OBJECT][match.queryIdx].pt.x < stepx*(i+1) &&
@@ -171,11 +171,11 @@ void Stitcher::gridDetector(){
                         best_distance = match.distance;
                         best_match = match;
                     }
-                    matches.erase(matches.begin() + k);  
+                    //matches.erase(matches.begin() + k);  
                 }
                 k++;
             }
-            if(best_distance != 100)
+            if(best_distance != 10000)
                 grid_matches.push_back(best_match);
         }
     }
@@ -190,7 +190,11 @@ void  Stitcher::positionFromKeypoints(){
         img[SCENE]->keypoints_pos[NEXT].push_back(keypoints[SCENE][good.trainIdx].pt);
     }
 }
-
+// See description in header file
+float getDistance(Point2f _pt1, Point2f _pt2)
+{
+	return sqrt(pow((_pt1.x - _pt2.x), 2) + pow((_pt1.y - _pt2.y), 2));
+}
 // See description in header file
 void Stitcher::drawKeipoints(vector<float> _warp_offset, Mat &_final_scene){
     vector<Point2f> aux_kp[2];
@@ -203,8 +207,15 @@ void Stitcher::drawKeipoints(vector<float> _warp_offset, Mat &_final_scene){
 
     perspectiveTransform(img[OBJECT]->keypoints_pos[PREV], aux_kp[1], img[OBJECT]->H);
     for(int j=0; j<aux_kp[0].size(); j++){
+        if (getDistance(aux_kp[0][j], aux_kp[1][j]) < 2)
+        {
+            circle(_final_scene, aux_kp[1][j], 3, Scalar(0, 255, 0), -1);
+        }
+        else
+        {
+            circle(_final_scene, aux_kp[1][j], 3, Scalar(0, 0, 255), -1);
+        }
         circle(_final_scene, aux_kp[0][j], 3, Scalar(255, 0, 0), -1);
-        circle(_final_scene, aux_kp[1][j], 3, Scalar(0, 0, 255), -1);
     }
 
 }
@@ -266,6 +277,20 @@ void Stitcher::blend2Scene(Mat &_final_scene){
     warp_img.copyTo(object_position, mask);
     // object_position -= _warp_img;
     // object_position += _warp_img;
+    vector<Point> aux_corner = {
+        Point(img[OBJECT]->bound_points[0].x, img[OBJECT]->bound_points[0].y),
+        Point(img[OBJECT]->bound_points[1].x, img[OBJECT]->bound_points[1].y),
+        Point(img[OBJECT]->bound_points[2].x, img[OBJECT]->bound_points[2].y),
+        Point(img[OBJECT]->bound_points[3].x, img[OBJECT]->bound_points[3].y)
+    };
+    for (Point& pt: aux_corner){
+        pt.x += img[OBJECT]->bound_rect.x;
+        pt.y += img[OBJECT]->bound_rect.y;
+    }
+    vector<vector<Point>> corners;
+    corners.push_back(aux_corner);
+    //polylines(_final_scene, corners, true, Scalar(0,255,0));
+    corners.clear();
     mask.release();
 }
 

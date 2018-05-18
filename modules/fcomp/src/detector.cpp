@@ -67,7 +67,7 @@ vector<DMatch> gridDetector(vector<KeyPoint> keypoints, vector<DMatch> matches){
                         best_distance = m.distance;
                         best_match = m;
                     }
-                    matches.erase(matches.begin() + m.queryIdx);  
+                    //matches.erase(matches.begin() + m.queryIdx);  
                 }
             }
             if(best_distance != 100)

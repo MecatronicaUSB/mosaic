@@ -33,9 +33,10 @@ args::Positional<std::string> output_dir(group_data, "Output directory", "Direct
 // Optional commands
 args::Group group_optional(parser, "(Optional)", args::Group::Validators::DontCare);
 args::ValueFlag<int> blender_bands(group_optional, "", "number of bands for multi-band blender (avilable for graph-cut option only).", {'n'});
-// args::Flag use_grid(group_optional, "grid", "Filter key points based on grid distribution. the grid is fixed at 10x10 cels.", {"grid"});
+args::Flag use_grid(group_optional, "grid", "Filter key points based on grid distribution. the grid is fixed at 10x10 cels.", {"grid"});
 args::Flag final_scb(group_optional, "SCB", "Apply Simple-Color-Balance algorithm to enhance final image.", {"scb"});
 args::Flag euclidean_mode(group_optional, "", "Euclidean mode, aproximate projective transformation to best euclidean.", {'e'});
 // args::Flag euclidean_correction(group_optional, "", "Euclidean correction, match first and last frame positions by euclidean model.", {'c'});
 args::Flag graph_cut(group_optional, "", "Graph-cut seam findel --pixel level-- (slower).", {'g'});
 args::Flag output(group_optional, "print", "Show final blended images.", {'o'});
+args::Flag color_c(group_optional, "color_correction", "appply color correction", {'c'});

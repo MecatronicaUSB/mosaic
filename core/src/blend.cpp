@@ -45,7 +45,7 @@ void Blender::blendSubMosaic(SubMosaic *_sub_mosaic)
 		// corners in array mode
 		corners.push_back(Point(frames[i]->bound_rect.x, frames[i]->bound_rect.y));
 	}
-	
+	int j=0;
 	// apply graph cur algorithm
 	if (graph_cut)
 	{
@@ -54,15 +54,24 @@ void Blender::blendSubMosaic(SubMosaic *_sub_mosaic)
 		seam_finder->find(warp_imgs, corners, masks);
 		cout<<"\rFinding cut line\t"<<green<<"OK                          "<<reset<<flush<<endl;
 	}
-	cout << "Correcting color...\t";
-	// correct color by Reinhard's method
-	correctColor(_sub_mosaic);
-	cout << flush << "\rCorrecting color\t"<<green<<"OK"<<reset;
 	Mat aux_img;
-	Mat final_mask = Mat(_sub_mosaic->final_scene.size(), CV_8U, Scalar(0));
+
+	for (int i = 0; i < warp_imgs.size(); i++)
+	{
+		warp_imgs[i].copyTo(aux_img);
+		aux_img.convertTo(aux_img, CV_8U);
+		aux_img.copyTo(warp_imgs[i]);
+	}
+	// correct color by Reinhard's method or Gain compensation
+	if (color_correction)
+	{
+		correctColor(_sub_mosaic);
+		cout << flush << "\rCorrecting color\t"<<green<<"OK"<<reset;
+	}
+	
 	Mat roi;
 	cout << endl << "Blending...\t";
-	// loop over all frames
+
 	for (int i = 0; i < frames.size(); i++)
 	{
 		warp_imgs[i].copyTo(aux_img);
@@ -76,27 +85,21 @@ void Blender::blendSubMosaic(SubMosaic *_sub_mosaic)
 		{
 			// locate region of interest in final image
 			roi = Mat(_sub_mosaic->final_scene, Rect(bound_rect[i].x,
-													bound_rect[i].y,
-													bound_rect[i].width,
-													bound_rect[i].height));
+													 bound_rect[i].y,
+													 bound_rect[i].width,
+													 bound_rect[i].height));
 			// copy using mask
 			aux_img.copyTo(roi, masks[i]);
-			roi = Mat(final_mask, Rect(bound_rect[i].x,
-									bound_rect[i].y,
-									bound_rect[i].width,
-									bound_rect[i].height));
-			// copy final image mask
-			masks[i].copyTo(roi, masks[i]);
 		}
 	}
 	// apply multi-band blender (if selected)	
 	if (bands > 0 && graph_cut)
 	{
-		Mat result_16s, result_mask;
+		Mat result_mask, result_16s;
 		// blender uses CV_16S data type
 		multiband.blend(result_16s, result_mask);
 		result_16s.convertTo(_sub_mosaic->final_scene, CV_8U);
-		final_mask = result_mask;
+		//final_mask = result_mask;
 	}
 	cout<<flush << "\rBlending\t\t"<<green<<"OK"<<reset;
 	// clear used data
@@ -159,44 +162,95 @@ UMat Blender::getMask(Frame *_frame)
 	return umask;
 }
 
+void Blender::cropMask(int _object, int _scene)
+{
+	Mat obj_mask, sc_mask;
+	// cast to Mat type
+	masks[_object].copyTo(obj_mask);
+	masks[_scene].copyTo(sc_mask);
+	Rect overlap_roi;
+
+	overlap_roi.x = max(bound_rect[_scene].x, bound_rect[_object].x) - bound_rect[_object].x;
+	overlap_roi.y = max(bound_rect[_scene].y, bound_rect[_object].y) - bound_rect[_object].y;
+
+	overlap_roi.width = min(bound_rect[_scene].x + bound_rect[_scene].width,
+							bound_rect[_object].x + bound_rect[_object].width) - 
+						max(bound_rect[_scene].x, bound_rect[_object].x);
+						
+
+	overlap_roi.height = min(bound_rect[_scene].y + bound_rect[_scene].height,
+							 bound_rect[_object].y + bound_rect[_object].height) - 
+						 max(bound_rect[_scene].y, bound_rect[_object].y);
+						 
+
+	Mat object_roi(obj_mask, overlap_roi);
+
+	overlap_roi.x = max(bound_rect[_object].x - bound_rect[_scene].x, 0.f);
+	overlap_roi.y = max(bound_rect[_object].y - bound_rect[_scene].y, 0.f);
+
+	Mat scene_roi(sc_mask, overlap_roi);
+
+	scene_roi -= object_roi;
+	obj_mask.copyTo(masks[_object]);
+	sc_mask.copyTo(masks[_scene]);
+}
+
 // See description in header file
 void Blender::correctColor(SubMosaic *_sub_mosaic)
 {
 	Mat lab_img;
-	Scalar ob_mean, sc_mean, ob_stdev, sc_stdev;
+	Scalar temp_ob_mean, temp_sc_mean, temp_ob_stdev, temp_sc_stdev;
+	vector<Scalar> ob_mean, sc_mean, ob_stdev, sc_stdev;
 	vector<Mat> over_masks;
 	vector<Mat> channels;
 	Mat aux_img;
 	// loop over all warp images
-	for (int i = 0; i < warp_imgs.size() - 1; i++)
+	// for (int i = 0; i < warp_imgs.size() - 1; i++)
+	// {
+	// 	// get intersection mask, referenced to each frame
+	// 	over_masks = getOverlapMasks(i+1, i);
+	// 	// cast from UMat to Mat type
+	// 	warp_imgs[i].copyTo(aux_img);
+	// 	aux_img.convertTo(aux_img, CV_8U);
+	// 	// convert to CieLab color space
+	// 	cvtColor(aux_img, lab_img, CV_BGR2Lab);
+	// 	// get the mean and standard deviation in intersection area
+	// 	meanStdDev(lab_img, temp_sc_mean, temp_sc_stdev, over_masks[0]);
+	// 	sc_mean.push_back(temp_sc_mean);
+	// 	sc_stdev.push_back(temp_sc_stdev);
+	// 	// return to BGR color space
+	// 	cvtColor(lab_img, warp_imgs[i], CV_Lab2BGR);
+	// 	// -- now with the first image, apply the first 3 steps
+	// 	warp_imgs[i+1].copyTo(aux_img);
+	// 	aux_img.convertTo(aux_img, CV_8U);
+	// 	cvtColor(aux_img, lab_img, CV_BGR2Lab);
+	// 	meanStdDev(lab_img, temp_ob_mean, temp_ob_stdev, over_masks[1]);
+	// 	ob_mean.push_back(temp_ob_mean);
+	// 	ob_stdev.push_back(temp_ob_stdev);
+	// 	cvtColor(lab_img, warp_imgs[i+1], CV_Lab2BGR);
+	// }
+	Mat gray_img;
+	vector<Scalar> sc_g_mean, ob_g_mean;
+	Scalar aux_mean;
+
+	for (int i=0; i<warp_imgs.size()-1; i++)
 	{
-		// get intersection mask, referenced to each frame
 		over_masks = getOverlapMasks(i+1, i);
-		// cast from UMat to Mat type
+		
 		warp_imgs[i].copyTo(aux_img);
-		aux_img.convertTo(aux_img, CV_8U);
-		// convert to CieLab color space
-		cvtColor(aux_img, lab_img, CV_BGR2Lab);
-		// get the mean and standard deviation in intersection area
-		meanStdDev(lab_img, sc_mean, sc_stdev, over_masks[0]);
-		// return to BGR color space
-		cvtColor(lab_img, warp_imgs[i], CV_Lab2BGR);
-		// -- now with the first image, apply the first 3 steps
+		cvtColor(aux_img, gray_img, CV_BGR2GRAY);
+		sc_g_mean.push_back(mean(aux_img , over_masks[0]));
+
 		warp_imgs[i+1].copyTo(aux_img);
-		aux_img.convertTo(aux_img, CV_8U);
-		cvtColor(aux_img, lab_img, CV_BGR2Lab);
-		meanStdDev(lab_img, ob_mean, ob_stdev, over_masks[1]);
-		// modify histogram of each channel for second image, based on first one
-		// (in CieLab color space)
-		split(lab_img, channels);
-		for (int j = 0; j<3; j++)
-		{
-			channels[j] = (sc_stdev.val[j]*(channels[j] - ob_mean.val[j]) / ob_stdev.val[j])
-										+ sc_mean.val[j];
-		}
-		merge(channels, lab_img);
-		// return to BGR color space
-		cvtColor(lab_img, warp_imgs[i+1], CV_Lab2BGR);
+		cvtColor(aux_img, gray_img, CV_BGR2GRAY);
+		ob_g_mean.push_back(mean(aux_img , over_masks[1]));
+	}
+	for (int i=0; i<warp_imgs.size()-2; i++)
+	{
+		warp_imgs[i+1].copyTo(aux_img);
+		aux_img *= (sc_g_mean[i].val[0] +ob_g_mean[i+1].val[0]) / (ob_g_mean[i].val[0]+sc_g_mean[i+1].val[0]);
+		
+		aux_img.copyTo(warp_imgs[i+1]);
 	}
 }
 
@@ -249,36 +303,6 @@ vector<Mat> Blender::getOverlapMasks(int _object, int _scene)
 }
 
 // See description in header file
-void Blender::cropMask(int _object, int _scene)
-{
-	Rect overlap_roi;
-	// get overlap roi dimensions
-	overlap_roi.x = max(bound_rect[_scene].x, bound_rect[_object].x) - bound_rect[_object].x;
-	overlap_roi.y = max(bound_rect[_scene].y, bound_rect[_object].y) - bound_rect[_object].y;
-	overlap_roi.width = min(bound_rect[_scene].x + bound_rect[_scene].width,
-							bound_rect[_object].x + bound_rect[_object].width) - 
-						max(bound_rect[_scene].x, bound_rect[_object].x);
-	overlap_roi.height = min(bound_rect[_scene].y + bound_rect[_scene].height,
-							 bound_rect[_object].y + bound_rect[_object].height) - 
-						 max(bound_rect[_scene].y, bound_rect[_object].y);
-	
-	Mat obj_mask, sc_mask;
-	// cast to Mat type
-	masks[_object].copyTo(obj_mask);
-	masks[_scene].copyTo(sc_mask);
-	// locate roi in object image masks
-	Mat object_roi(obj_mask, overlap_roi);
-	// move roi to scene intersection location
-	overlap_roi.x = max(bound_rect[_object].x - bound_rect[_scene].x, 0.f);
-	overlap_roi.y = max(bound_rect[_object].y - bound_rect[_scene].y, 0.f);
-
-	// locate roi in object image masks
-	Mat scene_roi(sc_mask, overlap_roi);
-	// remove scene portion mask that intersect scene
-	scene_roi -= object_roi;
-}
-
-// See description in header file
 vector<Point2f> Blender::findLocalStitch(Frame *_object, Frame *_scene)
 {
 	vector<Point2f> local_stitch;
@@ -305,4 +329,18 @@ vector<Point2f> Blender::findLocalStitch(Frame *_object, Frame *_scene)
 
 	return good_points;
 }
+
+bool Blender::checkCollision(Frame *_object, Frame *_scene)
+{
+	if (_object->bound_rect.x > _scene->bound_rect.x)
+		if (_object->bound_rect.x > _scene->bound_rect.x + _scene->bound_rect.width)
+			return false;
+		
+	if (_object->bound_rect.y > _scene->bound_rect.y)
+		if (_object->bound_rect.y > _scene->bound_rect.y + _scene->bound_rect.height)
+			return false;
+
+	return true;
+}
+
 }

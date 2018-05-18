@@ -148,7 +148,7 @@ float SubMosaic::calcDistortion(int _ref)
 	// distortion of worst frame
 	// TODO: try cumulative distortion.
 	for (Frame *frame : frames)
-		tot_error = max(tot_error, frame->frameDistortion(RANSAC));
+		tot_error = max(tot_error, frame->frameDistortion(_ref));
 	
 	return tot_error;
 }
@@ -159,7 +159,31 @@ void SubMosaic::correct()
 	// get corner points of mosaic, based on first and last frame
 	vector<vector<Point2f> > corner_points = getCornerPoints();
 	// calculate perspective transform from perspective points to euclidean ones
-	Mat correct_H = getPerspectiveTransform(corner_points[PERSPECTIVE], corner_points[EUCLIDEAN]);
+	Mat correct_H1 = getPerspectiveTransform(corner_points[PERSPECTIVE], corner_points[EUCLIDEAN]);
+	float temp_distortion;
+	for (Frame *frame : frames)
+	{
+		// save it in temporal frame object variable
+		perspectiveTransform(frame->bound_points[PERSPECTIVE], frame->bound_points[RANSAC], correct_H1);
+	}
+	// calculate the overall geometric distortion
+	temp_distortion = calcDistortion(RANSAC);
+	corner_points = getBorderPoints();
+	Mat correct_H2 = getPerspectiveTransform(corner_points[PERSPECTIVE], corner_points[EUCLIDEAN]);
+	for (Frame *frame : frames)
+	{
+		// save it in temporal frame object variable
+		perspectiveTransform(frame->bound_points[PERSPECTIVE], frame->bound_points[RANSAC], correct_H2);
+	}
+	Mat correct_H;
+	if (temp_distortion < calcDistortion(RANSAC))
+	{
+		correct_H = correct_H1;
+	}
+	else
+	{
+		correct_H = correct_H2;
+	}
 	// update each frame of mosaic
 	for (Frame *frame : frames)
 		frame->setHReference(correct_H);
@@ -168,6 +192,72 @@ void SubMosaic::correct()
 	next_E = correct_H * next_E;
 }
 
+
+vector<vector<Point2f> > SubMosaic::getBorderPoints()
+{
+	int p1=0, p2=0, p3=0, p4=0;
+	int f1=0, f2=0, f3=0, f4=0;
+	int pidx=-1, fidx=-1;
+	float top, bottom, left, right;
+	
+	top = frames[0]->bound_points[EUCLIDEAN][4].y;
+	bottom = frames[0]->bound_points[EUCLIDEAN][4].y;
+	left = frames[0]->bound_points[EUCLIDEAN][4].x;
+	right = frames[0]->bound_points[EUCLIDEAN][4].x;
+	
+	for (Frame *frame: frames)
+	{
+		fidx++;
+		pidx=-1;
+		for (Point2f point: frame->bound_points[EUCLIDEAN])
+		{
+			pidx++;
+			if (point.y < top)
+			{
+				top = point.y;
+				p1 = pidx;
+				f1 = fidx;
+			}
+			if (point.y > bottom)
+			{
+				bottom = point.y;
+				p2 = pidx;
+				f2 = fidx;
+			}
+			if (point.x < left)
+			{
+				left = point.x;
+				p3 = pidx;
+				f3 = fidx;
+			}
+			if (point.x > right)
+			{
+				right = point.x;
+				p4 = pidx;
+				f4 = fidx;
+			}
+		}
+	}
+
+	vector<vector<Point2f> > border_points(2);
+	// save points with bigger distance for each frame
+	vector<Point2f> euclidean_points;
+	euclidean_points.push_back(frames[f1]->bound_points[EUCLIDEAN][p1]);
+	euclidean_points.push_back(frames[f2]->bound_points[EUCLIDEAN][p2]);
+	euclidean_points.push_back(frames[f3]->bound_points[EUCLIDEAN][p3]);
+	euclidean_points.push_back(frames[f4]->bound_points[EUCLIDEAN][p4]);
+	// save points with bigger distance for each frame, using the point index
+	vector<Point2f> perspective_points;
+	perspective_points.push_back(frames[f1]->bound_points[PERSPECTIVE][p1]);
+	perspective_points.push_back(frames[f2]->bound_points[PERSPECTIVE][p2]);
+	perspective_points.push_back(frames[f3]->bound_points[PERSPECTIVE][p3]);
+	perspective_points.push_back(frames[f4]->bound_points[PERSPECTIVE][p4]);
+
+	border_points[EUCLIDEAN]= euclidean_points;
+	border_points[PERSPECTIVE]= perspective_points;
+
+	return border_points;
+}
 // See description in header file
 vector<vector<Point2f> > SubMosaic::getCornerPoints()
 {
@@ -265,7 +355,7 @@ Mat SubMosaic::buildMap(int _type, Scalar _color)
 								  frame->bound_points[PERSPECTIVE][3].y) * factor;
 			map_points.push_back(aux_points);
 		}
-		polylines(scene_map, map_points, true, _color, 1);
+		polylines(scene_map, map_points, true, Scalar(0,0,0), 1);
 	}
 	else
 	{
@@ -297,27 +387,30 @@ Mat SubMosaic::buildMap(int _type, Scalar _color)
 			}
 		}
 		// third print a circle at the center of each frame
+		int w=1;
 		for (Frame *frame : frames)
 		{
 			center_point = Point(frame->bound_points[PERSPECTIVE][4].x,
 								 frame->bound_points[PERSPECTIVE][4].y) * factor;
+			//putText(scene_map, to_string(w++), Point(center_point.x+3, center_point.y+((w==3)?8:2)), FONT_HERSHEY_PLAIN, 2, cvScalar(0, 0, 0), 2);
 			circle(scene_map, center_point, point_size, _color, -1);
 		}
 	}
+    	copyMakeBorder(scene_map, scene_map, 40, 50, 100, 30, BORDER_CONSTANT,Scalar(255,255,255));
 	// y-axis labels
-	rectangle(scene_map, Point(60, 40), Point(width-30, height-50), cvScalar(0, 0, 0), 1);
+	rectangle(scene_map, Point(70, 30), Point(width+110, height+50), cvScalar(0, 0, 0), 1);
 	putText(scene_map, to_string(0), Point(5, 50), FONT_HERSHEY_PLAIN, 1, cvScalar(0, 0, 0), 1);
 	putText(scene_map, to_string((int)(height/factor)/4), Point(5, (height-50) / 4), FONT_HERSHEY_PLAIN, 1, cvScalar(0, 0, 0), 1);
 	putText(scene_map, to_string((int)(height/factor)/2), Point(5, (height-50) / 2), FONT_HERSHEY_PLAIN, 1, cvScalar(0, 0, 0), 1);
 	putText(scene_map, to_string((int)(height/factor)*3/4), Point(5, (height-50) * 3 / 4), FONT_HERSHEY_PLAIN, 1, cvScalar(0, 0, 0), 1);
 	putText(scene_map, to_string((int)(height/factor)), Point(5, height-50), FONT_HERSHEY_PLAIN, 1, cvScalar(0, 0, 0), 1);
 	// x-axis labels
-	putText(scene_map, to_string(0), Point(60, height-30), FONT_HERSHEY_PLAIN, 1, cvScalar(0, 0, 0), 1);
-	putText(scene_map, to_string((int)(width/factor)/4), Point((width-120)/4+60, height-30), FONT_HERSHEY_PLAIN, 1, cvScalar(0, 0, 0), 1);
-	putText(scene_map, to_string((int)(width/factor)/2), Point((width-120)/2+60, height-30), FONT_HERSHEY_PLAIN, 1, cvScalar(0, 0, 0), 1);
-	putText(scene_map, to_string((int)(width/factor)*3/4), Point((width-120)*3/4+60, height-30), FONT_HERSHEY_PLAIN, 1, cvScalar(0, 0, 0), 1);
-	putText(scene_map, to_string((int)(width/factor)), Point(width-60, height-30), FONT_HERSHEY_PLAIN, 1, cvScalar(0, 0, 0), 1);
-	putText(scene_map, "Units in pixels", Point((int)(width/2)-70, 20), FONT_HERSHEY_PLAIN, 1, cvScalar(0, 0, 0), 1);
+	putText(scene_map, to_string(0), Point(65, height+65), FONT_HERSHEY_PLAIN, 1, cvScalar(0, 0, 0), 1);
+	putText(scene_map, to_string((int)(width/factor)/4), Point((width+20)/4+60, height+65), FONT_HERSHEY_PLAIN, 1, cvScalar(0, 0, 0), 1);
+	putText(scene_map, to_string((int)(width/factor)/2), Point((width+20)/2+60, height+65), FONT_HERSHEY_PLAIN, 1, cvScalar(0, 0, 0), 1);
+	putText(scene_map, to_string((int)(width/factor)*3/4), Point((width+20)*3/4+60, height+65), FONT_HERSHEY_PLAIN, 1, cvScalar(0, 0, 0), 1);
+	putText(scene_map, to_string((int)(width/factor)), Point(width+80, height+65), FONT_HERSHEY_PLAIN, 1, cvScalar(0, 0, 0), 1);
+	putText(scene_map, "Unidades en Pixeles", Point((int)(width/2)-20, 20), FONT_HERSHEY_PLAIN, 1, cvScalar(0, 0, 0), 1);
 	return scene_map;
 }
 
