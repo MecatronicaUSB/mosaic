@@ -30,14 +30,14 @@ To see detailed usage information, enter the following command:
 ```
 ### Usage examples:
 ```bash
-./mosaic /home/data/frames2MOSAIC/ /home/data/outputPATH -o -g -n 3
+./mosaic /home/data/<path-of-frames> /home/data/<output-path> -o -g -n 3
 ```
 The above code will build a mosaic using perspective transformations, 
 to find the best seam line a graph cut algorithm wil be used, then a multiband blender with 3 bands will be applied.
 Finally the resulting mosaic will be shown.
 
 ```bash
-./mosaic /home/data/frames2MOSAIC/ /home/data/outputPATH -e --sift --bf --scb
+./mosaic /home/data/<path-of-frames> /home/data/<output-path> -e --sift --bf --scb
 ```
 The above code will build a mosaic using euclidean transformations, the SCB algorithm will be applied on each frame to 
 enhance final mosaic view, SIFT detector and BruteForce matcher are used.
@@ -48,26 +48,25 @@ In both cases the resulting mosaic and track map will be saved in the provided o
 ### Test using:
 - Graph cut seam finder.
 - multiband blender with five bands.
-- Simple color balance (in BGR).
-- 28 images input.
+- CLAHE (in BGR).
+- 87 images input.
 - Perspective transformations.
 
 <p align="center">
-  <img src="https://github.com/MecatronicaUSB/mosaic/blob/master/core/results/MVI_0234-28imgs-graphcut-5bands-scb.png" width="350"/>
-  <img src="https://github.com/MecatronicaUSB/mosaic/blob/master/core/results/MVI_0234-28imgs-graphcut-5bands-scb-MAP.jpg" width="350"/>
+  <img src="https://github.com/MecatronicaUSB/mosaic/blob/master/core/results/0234-1.jpg" width="400"/>
+  <img src="https://github.com/MecatronicaUSB/mosaic/blob/master/core/results/0234-map.jpg" width="450"/>
 </p>
 - Lef. Final Mosaic.<br />
 - Right. Final Map.<br />
 
 ### Test using:
-- Graph cut seam finder.
-- 11 Images input.
-- Perspective transformations.
-- Correct global distortion by euclidean model.
+ScottReef 25 dataset from ACFR.
+- 177 Images input.
+- Euclidean transformations.
 
 <p align="center">
-  <img src="https://github.com/MecatronicaUSB/mosaic/blob/master/core/results/ScottReef-SM0-before_correct.png" width="350"/>
-  <img src="https://github.com/MecatronicaUSB/mosaic/blob/master/core/results/ScottReef-SM0-after-correct.png" width="350"/>
+  <img src="https://github.com/MecatronicaUSB/mosaic/blob/master/core/results/SR2-1.jpg" width="350"/>
+  <img src="https://github.com/MecatronicaUSB/mosaic/blob/master/core/results/SR2-map.jpg" width="550"/>
 </p>
-- Left. Mosaic before average homography correction.<br />
-- Right. Mosaic after average homography correction.<br />
+- Left. Mosaic in BGR.<br />
+- Right. Mosaic map, in pixels.<br />
