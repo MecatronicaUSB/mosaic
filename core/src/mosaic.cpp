@@ -19,8 +19,10 @@ void Mosaic::feed(Mat _img)
 {
 	if (this->to_calibrate) {
 		Mat temp = _img.clone();
+		//cout<< this->distortion_coeff << endl;
 		undistort(temp, _img, this->camera_matrix, this->distortion_coeff);
 	}
+	//cout<< this->distortion_coeff << endl;
 	// create and store new frame object
 	Frame *new_frame = new Frame(_img.clone(), apply_pre);
 	frames.push_back(new_frame);
@@ -154,6 +156,7 @@ int w=0;
 		// loop over sub mosaics of same mosaic
 		while(final_mosaics[n].size() > 1)
 		{
+//cout << "Entrooo" << endl;
 			// get the sub mosaic pair with higher overlap
 			ransac_mosaics = getBestOverlap(final_mosaics[n]);
 			// remove second sub mosaic, and update neighbors
@@ -164,7 +167,17 @@ int w=0;
 				if (ransac_mosaics[1] == final_mosaics[n][i])
 					final_mosaics[n].erase(final_mosaics[n].begin() + i);
 			// join two sub mosaics based on each reference transformation
+//blender->blendSubMosaic(ransac_mosaics[0]);
+//blender->blendSubMosaic(ransac_mosaics[1]);
+//imwrite("/home/ros/dataset/output/temp/SR-Unref0-"+to_string(w)+".png", ransac_mosaics[0]->final_scene);
+//imwrite("/home/ros/dataset/output/temp/SR-Unref1-"+to_string(w)+".png", ransac_mosaics[1]->final_scene);
 			referenceMosaics(ransac_mosaics);
+//blender->blendSubMosaic(ransac_mosaics[0]);
+//blender->blendSubMosaic(ransac_mosaics[1]);
+//imwrite("/home/ros/dataset/output/temp/SR-Ref0-"+to_string(w)+".png", ransac_mosaics[0]->final_scene);
+//imwrite("/home/ros/dataset/output/temp/SR-Ref1-"+to_string(w)+".png", ransac_mosaics[1]->final_scene);
+//ransac_mosaics[0]->final_scene.release();
+//ransac_mosaics[1]->final_scene.release();
 			// align sub mosaics (translate and rotate)
 			alignMosaics(ransac_mosaics);
 			// find transformation which minimize overall geometric distortion
@@ -173,12 +186,19 @@ int w=0;
 			for (Frame *frame : ransac_mosaics[0]->frames)
 				frame->setHReference(best_H);
 			ransac_mosaics[0]->next_H = best_H * ransac_mosaics[0]->next_H;
+//blender->blendSubMosaic(ransac_mosaics[0]);
+//imwrite("/home/ros/dataset/output/temp/SR-avg-"+to_string(w++)+".png", ransac_mosaics[0]->final_scene);
 			// delete second sub mosaic
 			delete ransac_mosaics[1];
 			// update overlap between remains sub mosaics
 			updateOverlap(final_mosaics[n]);
 		}
+		//blender->blendSubMosaic(ransac_mosaics[0]);
+		//imshow("avg", ransac_mosaics[0]->final_scene);
+		//waitKey(0);
 		cout<<"\rMerging sub-mosaics:\t["<<green<<((n+1)*100)/final_mosaics.size()<<reset<<"%]"<<flush;
+//blender->blendSubMosaic(final_mosaics[n][0]);
+//imwrite("/home/ros/dataset/output/0233-closure-simple_UnCorrect.png", final_mosaics[n][0]->final_scene);
 		// apply global euclidean correction
 		if (_euclidean_correction)
 			final_mosaics[n][0]->correct();
@@ -468,8 +488,8 @@ void Mosaic::show()
 
 void Mosaic::SetCameraMatrix(cv::Mat _camera_matrix, cv::Mat _distortion_coeff)
 {
-	this->camera_matrix = _camera_matrix;
-	this->distortion_coeff = _distortion_coeff;
+	this->camera_matrix = _camera_matrix.clone();
+	this->distortion_coeff = _distortion_coeff.clone();
 
 	if(this->camera_matrix.empty()){
 		this->to_calibrate = false;

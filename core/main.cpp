@@ -58,11 +58,11 @@ int main( int argc, char** argv ) {
     //-- Feature Extractor
     detector_surf ?
     cout<<"  Feature extractor:\t"<<cyan<< "SURF"<<reset<<endl:
-    detector_sift ?
-    cout<<"  Feature extractor:\t"<<cyan<< "SIFT"<<reset<<endl:
+    detector_kaze ?
+    cout<<"  Feature extractor:\t"<<cyan<< "KAZE"<<reset<<endl:
     detector_akaze ?
     cout<<"  Feature extractor:\t"<<cyan<< "A-KAZE"<<reset<<endl:
-    cout<<"  Feature extractor:\t"<<cyan<< "KAZE\t(Default)"<<reset<<endl;
+    cout<<"  Feature extractor:\t"<<cyan<< "SIFT\t(Default)"<<reset<<endl;
     //-- Feature Matcher
     matcher_brutef ?
     cout<<"  Feature Matcher:\t"<<cyan<<"BRUTE FORCE"<< reset << endl:
@@ -70,7 +70,7 @@ int main( int argc, char** argv ) {
     //-- # bands for multiband blender
     blender_bands ?
     cout<<"  Nº bands (blender):\t"<<cyan<< args::get(blender_bands)<<reset<<endl :
-    cout<<"  Nº bands (blender):\t"<<cyan<<0<< reset << endl;
+    cout<<"  Nº bands (blender):\t"<<cyan<<"5 (default)"<< reset << endl;
     //-- Mosaic mode
     cout << "  Mosaic Mode:\t\t" << cyan;
     euclidean_mode ? cout<<cyan<<"Euclidean" : cout <<cyan<<"Perspective";
@@ -89,11 +89,11 @@ int main( int argc, char** argv ) {
     mosaic.stitcher = new m2d::Stitcher(
         use_grid, // grid detection                                                   
         detector_surf  ? m2d::USE_SURF  :
-        detector_sift  ? m2d::USE_SIFT  :
-        detector_akaze ? m2d::USE_AKAZE : m2d::USE_KAZE,
+        detector_kaze  ? m2d::USE_KAZE  :
+        detector_akaze ? m2d::USE_AKAZE : m2d::USE_SIFT,
         matcher_flann  ? m2d::USE_FLANN : m2d::USE_BRUTE_FORCE
     );
-    mosaic.blender = new m2d::Blender(blender_bands ? args::get(blender_bands) : 0,
+    mosaic.blender = new m2d::Blender(blender_bands ? args::get(blender_bands) : 5,
                                       color_c,
                                       graph_cut,
                                       final_scb);

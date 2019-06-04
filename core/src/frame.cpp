@@ -21,16 +21,12 @@ Frame::Frame(Mat _img, bool _pre, int _width, int _height)
 	grid_points = vector<vector<Point2f>>(2);
 	good_points = vector<vector<Point2f>>(2);
 	// create camera and coefficients matrix
-	//Mat camera_matrix = (Mat1d(3, 3) << fx, 0, cx, 0, fy, cy, 0, 0, 1);
-	//Mat distortion_coeff = (Mat1d(1, 5) << k1, k2, p1, p2, k3);
 
 	// resize image to default size
-	// resize(_img, color, Size(_width, _height));
-	// resize and keept aspect ratio
 	float ratio = (float) _width / (float)_img.cols;
-	//cv::resize(_img, color, cv::Size(), ratio, ratio);
 	resize(_img, color, cv::Size(ratio * _img.cols, ratio * _img.rows), 0, 0, CV_INTER_LINEAR);
 
+	// resize(_img, color, Size(_width, _height));
 	// create a gray scale version of image
 	cvtColor(color, gray, CV_BGR2GRAY);
 	// apply scb to gray image

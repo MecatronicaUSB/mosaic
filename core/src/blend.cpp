@@ -92,6 +92,10 @@ void Blender::blendSubMosaic(SubMosaic *_sub_mosaic)
 			aux_img.copyTo(roi, masks[i]);
 		}
 	}
+	// for (int i = 0; i < masks.size(); i++)
+	// {
+	// 	drawContours(_sub_mosaic->final_scene, tot_contour[i], -1, Scalar(0,0,255), 1);
+	// }
 	// apply multi-band blender (if selected)	
 	if (bands > 0 && graph_cut)
 	{
@@ -238,7 +242,7 @@ void Blender::correctColor(SubMosaic *_sub_mosaic)
 		over_masks = getOverlapMasks(i+1, i);
 		
 		warp_imgs[i].copyTo(aux_img);
-		cvtColor(aux_img, gray_img, CV_BGR2GRAY);
+		cvtColor(aux_img, gray_img, cv::COLOR_BGR2GRAY);
 		sc_g_mean.push_back(mean(aux_img , over_masks[0]));
 
 		warp_imgs[i+1].copyTo(aux_img);

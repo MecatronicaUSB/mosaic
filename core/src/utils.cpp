@@ -124,7 +124,7 @@ void printHistogram(int histogram[256], std::string filename, cv::Scalar color)
 			max = histogram[i];
 	}
 	// Creating an image from the histogram.
-	cv::Mat imgHist(1480, 1580, CV_8UC3, cv::Scalar(255, 255, 255));
+	cv::Mat imgHist(1480, 1580, CV_8UC3, cvScalar(255, 255, 255));
 	cv::Point pt1, pt2;
 	pt1.y = 1380;
 	for (i = 0; i < 256; i++)
