@@ -98,7 +98,7 @@ void getHistogram(cv::Mat img, int *histogram, Mat mask = Mat());
  * @param filename name of output file to print the histogram
  * @param color OpenCV Scalar containing the color of bars in histogram
  */
-void printHistogram(int histogram[256], std::string filename, cv::Scalar color);
+void printHistogram(int histogram[256], std::string filename, cvScalar color);
 
 /**
  * @brief Transform imgOriginal so that, for each channel histogram, its
