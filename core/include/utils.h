@@ -48,7 +48,7 @@ const int TARGET_HEIGHT = 480;
 // number of cells to use in grid detector
 const int CELLS_DIV = 10;
 
-// intrinsec camera parameters
+// intrinsec camera parameters (ScottReef 25 dataset)
 const float cx = 687.23531391, cy = 501.08026641;
 const float fx = 1736.49233331*1.2, fy = 1733.74525406*1.2;
 const float k1 = 0.15808590, k2 = 0.76137626, k3 = 0.99996769;

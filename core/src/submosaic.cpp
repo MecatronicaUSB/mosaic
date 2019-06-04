@@ -178,16 +178,12 @@ void SubMosaic::correct()
 	Mat correct_H;
 	if (temp_distortion < calcDistortion(RANSAC))
 	{
-		cout << "corners" << endl;
 		correct_H = correct_H1;
 	}
 	else
 	{
-		cout << "borders" << endl;
 		correct_H = correct_H2;
 	}
-
-
 	// update each frame of mosaic
 	for (Frame *frame : frames)
 		frame->setHReference(correct_H);

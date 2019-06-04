@@ -20,6 +20,9 @@ class Mosaic
 {
   public:
     // ---------- Attributes
+    cv::Mat camera_matrix;
+    cv::Mat distortion_coeff;
+    bool to_calibrate;
     int n_subs;                                   //!< Number of sub mosaics for each mosaic build
     bool apply_pre;                               //!< flag to apply or not SCB preprocessing algorithm on gray image
     vector<Mat> map;                              //!< Track map for each mosaic
@@ -33,7 +36,7 @@ class Mosaic
      * @brief Mosaic constructor
      * @param _pre bollean to apply or not SCB on gray scale image (improve feature detection)
      */
-    Mosaic(bool _pre = true) : apply_pre(_pre), n_subs(0){};
+    Mosaic(bool _pre = true) : apply_pre(_pre), n_subs(0), to_calibrate(false){};
     /**
      * @brief Add new frame to mosaic, create frame object and count total frames number
      * @param _object OpenCV Matrix containing input image
@@ -106,5 +109,9 @@ class Mosaic
      * @brief show the final mosaic (reduced version)
      */
     void show();
+    /**
+     * @brief Set the camera matrix (pin hole parameters and distortion coefficients)
+     */
+    void SetCameraMatrix(cv::Mat _camera_matrix, cv::Mat _distortion_coeff);
 };
 }
