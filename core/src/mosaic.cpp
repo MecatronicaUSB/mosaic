@@ -19,8 +19,10 @@ void Mosaic::feed(Mat _img)
 {
 	if (this->to_calibrate) {
 		Mat temp = _img.clone();
+		//cout<< this->distortion_coeff << endl;
 		undistort(temp, _img, this->camera_matrix, this->distortion_coeff);
 	}
+	//cout<< this->distortion_coeff << endl;
 	// create and store new frame object
 	Frame *new_frame = new Frame(_img.clone(), apply_pre);
 	frames.push_back(new_frame);
@@ -486,8 +488,8 @@ void Mosaic::show()
 
 void Mosaic::SetCameraMatrix(cv::Mat _camera_matrix, cv::Mat _distortion_coeff)
 {
-	this->camera_matrix = _camera_matrix;
-	this->distortion_coeff = _distortion_coeff;
+	this->camera_matrix = _camera_matrix.clone();
+	this->distortion_coeff = _distortion_coeff.clone();
 
 	if(this->camera_matrix.empty()){
 		this->to_calibrate = false;

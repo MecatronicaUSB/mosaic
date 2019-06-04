@@ -13,11 +13,12 @@
 </camera_matrix>
 
 <distortion_coefficients type_id="opencv-matrix">
-  <rows>5</rows>
-  <cols>1</cols>
+  <rows>1</rows>
+  <cols>5</cols>
   <dt>d</dt>
   <data>
-    0. 0. 0. 0. 0.</data>
+    0.0 0.0 0.0 0.0 0.0
+  </data>
 </distortion_coefficients>
 
 </opencv_storage> 
