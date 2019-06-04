@@ -21,7 +21,7 @@ int main( int argc, char** argv ) {
 
     double t;
     cv::Mat img;
-    string input_directory, output_directory;
+    string input_directory, output_directory, calibration_file;
     vector<string> file_names;
 
     try{
@@ -44,6 +44,7 @@ int main( int argc, char** argv ) {
 
     input_directory = args::get(input_dir);
     output_directory = args::get(output_dir);
+    calibration_file = args::get(calibration_dir);
 
     //-- VERBOSE SECTION --//
     cout << endl << "2D mosaic generation"<<endl;
@@ -51,6 +52,9 @@ int main( int argc, char** argv ) {
     cout << "  Built with OpenCV\t" <<cyan<< CV_VERSION << reset << endl;
     cout << "  Input directory:\t"<<cyan<< input_directory<<reset << endl;
     cout << "  Output directory:\t"<<cyan<< output_directory<<reset << endl;
+    calibration_dir ?
+    cout << "  Calibration file:\t"<<cyan<< calibration_file<<reset << endl:
+    cout << "  No calib. file given\t"<<yellow<< "(Assuming undistorted images)"<<reset << endl;
     //-- Feature Extractor
     detector_surf ?
     cout<<"  Feature extractor:\t"<<cyan<< "SURF"<<reset<<endl:
@@ -93,6 +97,25 @@ int main( int argc, char** argv ) {
                                       color_c,
                                       graph_cut,
                                       final_scb);
+
+    FileStorage fs;
+    cv::Mat camera_matrix;
+    cv::Mat distortion_coeff;
+    if (!calibration_dir) {
+        calibration_file = "../calibration.xml";
+    }
+    fs.open(calibration_file, FileStorage::READ);
+    if (!fs.isOpened())
+    {
+      cout << "No calibration file. Assuming undistorted images" << endl;
+    }
+    else
+    {
+        fs["camera_matrix"] >> camera_matrix;
+        fs["distortion_coefficients"] >> distortion_coeff;
+    }
+    
+    mosaic.SetCameraMatrix(camera_matrix, distortion_coeff);
 
     t = (double) getTickCount();
 
