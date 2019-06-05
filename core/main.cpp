@@ -54,7 +54,7 @@ int main( int argc, char** argv ) {
     cout << "  Output directory:\t"<<cyan<< output_directory<<reset << endl;
     calibration_dir ?
     cout << "  Calibration file:\t"<<cyan<< calibration_file<<reset << endl:
-    cout << "  No calib. file given\t"<<yellow<< "(Assuming undistorted images)"<<reset << endl;
+    cout << "  No calibration file given\t"<<yellow<< "(Assuming undistorted images)"<<reset << endl;
     //-- Feature Extractor
     detector_surf ?
     cout<<"  Feature extractor:\t"<<cyan<< "SURF"<<reset<<endl:
@@ -118,7 +118,7 @@ int main( int argc, char** argv ) {
     mosaic.SetCameraMatrix(camera_matrix, distortion_coeff);
 
     t = (double) getTickCount();
-
+    // There is an error when non-image files are contained in the source directory
     file_names = read_filenames(input_directory);
     for (int i=0; i<file_names.size(); i++) {
         img = imread(file_names[i], IMREAD_COLOR);
