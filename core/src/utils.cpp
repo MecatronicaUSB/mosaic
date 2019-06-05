@@ -113,7 +113,7 @@ void getHistogram(cv::Mat img, int *histogram, Mat mask)
 				histogram[img.at<unsigned char>(i, j)]++;
 }
 
-void printHistogram(int histogram[256], std::string filename, cvScalar color)
+void printHistogram(int histogram[256], std::string filename, cv::Scalar color)
 {
 	// Finding the maximum value of the histogram. It will be used to scale the
 	// histogram to fit the image.
@@ -182,7 +182,7 @@ void imgChannelStretch(cv::Mat imgOriginal, cv::Mat imgStretched, int lowerPerce
 	}
 	int j;
 	float m;
-	cvScalar b;
+	cv::Scalar b;
 	m = 255 / (channelHigherPercentile - channelLowerPercentile);
 	b = channelLowerPercentile;
 	imgStretched -= b;
