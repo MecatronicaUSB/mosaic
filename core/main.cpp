@@ -11,6 +11,7 @@
 #include "include/mosaic.hpp"
 
 /// User namespaces
+// TODO: consistent use of std:: as qualifier of constants.
 using namespace std;
 
 /*
@@ -47,8 +48,9 @@ int main( int argc, char** argv ) {
     calibration_file = args::get(calibration_dir);
 
     //-- VERBOSE SECTION --//
-    cout << endl << "2D mosaic generation"<<endl;
+    cout << endl << "2D mosaic generation. Part of the underwater image processing toolbox."<<endl;
     cout << "Author: Victor Garcia"<<endl<<endl;
+    cout << "Maintainers: Jose Cappelletto"<<endl<<endl;
     cout << "  Built with OpenCV\t" <<cyan<< CV_VERSION << reset << endl;
     cout << "  Input directory:\t"<<cyan<< input_directory<<reset << endl;
     cout << "  Output directory:\t"<<cyan<< output_directory<<reset << endl;
@@ -56,21 +58,24 @@ int main( int argc, char** argv ) {
     cout << "  Calibration file:\t"<<cyan<< calibration_file<<reset << endl:
     cout << "  No calibration file given\t"<<yellow<< "(Assuming undistorted images)"<<reset << endl;
     //-- Feature Extractor
+    cout<<"  Feature extractor:\t";
     detector_surf ?
-    cout<<"  Feature extractor:\t"<<cyan<< "SURF"<<reset<<endl:
+    cout<<cyan<< "SURF"<<reset<<endl:
     detector_kaze ?
-    cout<<"  Feature extractor:\t"<<cyan<< "KAZE"<<reset<<endl:
+    cout<<cyan<< "KAZE"<<reset<<endl:
     detector_akaze ?
-    cout<<"  Feature extractor:\t"<<cyan<< "A-KAZE"<<reset<<endl:
-    cout<<"  Feature extractor:\t"<<cyan<< "SIFT\t(Default)"<<reset<<endl;
+    cout<<cyan<< "A-KAZE"<<reset<<endl:
+    cout<<cyan<< "SIFT\t(Default)"<<reset<<endl;
     //-- Feature Matcher
+    cout<<"  Feature Matcher:\t";
     matcher_brutef ?
-    cout<<"  Feature Matcher:\t"<<cyan<<"BRUTE FORCE"<< reset << endl:
-    cout<<"  Feature Matcher:\t"<<cyan<<"FLANN\t(Default)"<< reset << endl;
+    cout<<cyan<<"BRUTE FORCE"<< reset << endl:
+    cout<<cyan<<"FLANN\t(Default)"<< reset << endl;
     //-- # bands for multiband blender
+    cout<<"  Nº bands (blender):\t";
     blender_bands ?
-    cout<<"  Nº bands (blender):\t"<<cyan<< args::get(blender_bands)<<reset<<endl :
-    cout<<"  Nº bands (blender):\t"<<cyan<<"5 (default)"<< reset << endl;
+    cout<<cyan<< args::get(blender_bands)<<reset<<endl :
+    cout<<cyan<<"5 (default)"<< reset << endl;
     //-- Mosaic mode
     cout << "  Mosaic Mode:\t\t" << cyan;
     euclidean_mode ? cout<<cyan<<"Euclidean" : cout <<cyan<<"Perspective";
@@ -85,6 +90,7 @@ int main( int argc, char** argv ) {
     // cout << "  Eclidean correction:\t"<<cyan<< euclidean_correction <<reset << endl;
     cout << "  Apply SCB:\t\t"<<cyan<< final_scb <<reset << endl<< endl;
 
+    // create mosaic object
     m2d::Mosaic mosaic(true);
     mosaic.stitcher = new m2d::Stitcher(
         use_grid, // grid detection                                                   
@@ -102,8 +108,10 @@ int main( int argc, char** argv ) {
     cv::Mat camera_matrix;
     cv::Mat distortion_coeff;
     if (!calibration_dir) {
+    	cout << "Using default path for <calibration.xml>" << endl;
         calibration_file = "../calibration.xml";
     }
+
     fs.open(calibration_file, FileStorage::READ);
     if (!fs.isOpened())
     {
@@ -111,6 +119,7 @@ int main( int argc, char** argv ) {
     }
     else
     {
+		cout << "Importing parameters from calibration file" << endl;
         fs["camera_matrix"] >> camera_matrix;
         fs["distortion_coefficients"] >> distortion_coeff;
     }
@@ -121,6 +130,7 @@ int main( int argc, char** argv ) {
     // There is an error when non-image files are contained in the source directory
     file_names = read_filenames(input_directory);
     for (int i=0; i<file_names.size(); i++) {
+    	// TODO: if a no-image file is contained (such as a directory), it will fail
         img = imread(file_names[i], IMREAD_COLOR);
         if (!img.data) {
             cout<< red <<" --(!) Error reading image "<< reset << endl;
@@ -132,6 +142,7 @@ int main( int argc, char** argv ) {
     mosaic.merge(true);
     mosaic.save(output_directory);
     
+    // retrieve elapsed time
     t = ((double)getTickCount() - t) / getTickFrequency();
     cout <<endl<<endl<<"  Execution time:\t" << green << t << reset <<" s" <<endl;
 

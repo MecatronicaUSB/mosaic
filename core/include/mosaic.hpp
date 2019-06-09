@@ -34,7 +34,7 @@ class Mosaic
     // ---------- Methods
     /**
      * @brief Mosaic constructor
-     * @param _pre bollean to apply or not SCB on gray scale image (improve feature detection)
+     * @param _pre boolean to apply or not SCB on gray scale image (improve feature detection)
      */
     Mosaic(bool _pre = true) : apply_pre(_pre), n_subs(0), to_calibrate(false){};
     /**

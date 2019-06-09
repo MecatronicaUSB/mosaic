@@ -39,11 +39,14 @@ void Mosaic::compute(bool _euclidean_mode)
 	// detect and compute features for all images
 	stitcher->detectFeatures(frames);
 	//create initial sub mosaic and add it the first frame
+	cout << "Creating initial submosaic" << endl;
 	sub_mosaics.push_back(new SubMosaic());
 	sub_mosaics[0]->addFrame(frames[0]);
 	// loop over all frames to build sub mosaics
+	cout << "Looping through all the frames" << endl;
 	for (int i = 0; i<frames.size()-1; i++)
 	{
+		cout << "i: " << i << endl;
 		best_distortion = 100;
 		distortion = 100;
 		best_frame = i+2;
@@ -52,7 +55,9 @@ void Mosaic::compute(bool _euclidean_mode)
 		for (k =i+1; k < frames.size() && k < i+2; k++)
 		{
 			// find perspective and best euclidean transformations
+			cout << "k: " << k << endl;
 			transform = stitcher->stitch(frames[k], frames[i]);
+			cout << "Stitched frames ["<<k<<" + "<<i<< endl;
 			// check if transformations are valid
 			if (!transform[PERSPECTIVE].empty() && !transform[EUCLIDEAN].empty())
 			{
@@ -130,12 +135,14 @@ void Mosaic::compute(bool _euclidean_mode)
 		cout<<"\rBuilding sub-mosaics:\t[" <<green<<((i+2)*100)/frames.size()<<reset<<"%]"<<flush;
 	}
 	cout<<endl;
+	cout << "Saving resulting submosaics before merge" << endl;
 	// save resulting sub mosaics to be merged together
 	if (sub_mosaics[n_subs]->n_frames > 0 )
 	{
 		final_mosaics.push_back(sub_mosaics);
 		sub_mosaics.clear();
 	}
+	cout << "rMerging" << endl;
 	// compute the overlap between sub mosaics (hierarchy to merge)
 	for (vector<SubMosaic *> &final_mosaic : final_mosaics)
 		updateOverlap(final_mosaic);

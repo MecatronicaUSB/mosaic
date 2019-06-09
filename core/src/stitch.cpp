@@ -92,8 +92,7 @@ void Stitcher::detectFeatures(vector<Frame *> &_frames)
 		// update status
 		cout<<"\rDetecting Features:\t["<<green<<((++i)*100)/_frames.size()<<reset<<"%]"<<flush;
 	}
-	cout<<endl;
-
+	cout<<"\t☑"<<endl;
 }
 
 // See description in header file
@@ -105,8 +104,10 @@ vector<Mat> Stitcher::stitch(Frame *_object, Frame *_scene)
 	// to store matches temporarily
 	vector<vector<DMatch>> aux_matches;
 	// match using desired matcher
+	cout << "[stitcher] Starting knnMatch" << endl;
 	matcher->knnMatch(img[OBJECT]->descriptors, img[SCENE]->descriptors, aux_matches, 2);
 	// save in global class variable
+	cout << "[stitcher] push back matches" << endl;
 	matches.push_back(aux_matches);
 	// if scene frame have neighbors, try to match key points with them
 	for (Frame *neighbor : img[SCENE]->neighbors)
@@ -119,6 +120,7 @@ vector<Mat> Stitcher::stitch(Frame *_object, Frame *_scene)
 	float thresh = 0.8;
 	bool good_thresh = true;
 	// loop until enough key points are found (>4)
+	cout << "[stitcher] sifting good matches" << endl;
 	while (good_thresh)
 	{
 		// Discard outliers based on euclidean distance between descriptor's vectors
@@ -126,9 +128,16 @@ vector<Mat> Stitcher::stitch(Frame *_object, Frame *_scene)
 		// Apply grid detector if flag is activated
 		// Update good neighbors (neighbors who have more than 3 strong matches)
 		img[OBJECT]->good_neighbors.push_back(img[SCENE]);
-		for (int j=1; j<good_matches.size(); j++)
-			if (good_matches[j].size() > 8)
-				img[OBJECT]->good_neighbors.push_back(img[SCENE]->neighbors[j-1]);
+
+		cout << "[stitcher] good matches: " << good_matches.size() << endl;
+
+		for (int j=0; j<good_matches.size(); j++)
+			{
+				cout << j << "/" << good_matches.size() << endl;
+				if (good_matches[j].size() > 8)
+					img[OBJECT]->good_neighbors.push_back(img[SCENE]->neighbors[j-1]);
+				cout << "Good matches: " << good_matches[j].size() << endl;
+			}
 		if (use_grid)
 			gridDetector();
 		// Convert the key points into a vector containing the correspond X,Y position in image
@@ -140,12 +149,14 @@ vector<Mat> Stitcher::stitch(Frame *_object, Frame *_scene)
 		else
 		{
 			// else, update threshold (allow less strong matches) and clean used data
+			cout << "[stitcher] Decreased threshold: " << thresh << endl;
 			thresh -= 0.1;
 			good_matches.clear();
 			neighbors_kp.clear();
 			img[OBJECT]->good_neighbors.clear();
 		}
 	}
+	cout << "[stitcher] Finding homography" << endl;
 	// find perspective transformation from object to scene
 	Mat H = findHomography(Mat(object_points), Mat(scene_points), CV_RANSAC);
 	// if possible, force bottom-right element to 1
