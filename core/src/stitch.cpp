@@ -129,15 +129,18 @@ vector<Mat> Stitcher::stitch(Frame *_object, Frame *_scene)
 		// Update good neighbors (neighbors who have more than 3 strong matches)
 		img[OBJECT]->good_neighbors.push_back(img[SCENE]);
 
-		cout << "[stitcher] good matches: " << good_matches.size() << endl;
-
-		for (int j=0; j<good_matches.size(); j++)
+		//cout << "[stitcher] good_matches: " << good_matches.size() << endl;
+		// WARNING: j formerly starting at 1, blame?
+		for (int j=1; j<good_matches.size(); j++)
 			{
 				cout << j << "/" << good_matches.size() << endl;
+
 				if (good_matches[j].size() > 8)
+					//cout << "[stitcher] Pushing [" << j << "] into good_neighbors" << endl;
 					img[OBJECT]->good_neighbors.push_back(img[SCENE]->neighbors[j-1]);
-				cout << "Good matches: " << good_matches[j].size() << endl;
 			}
+
+
 		if (use_grid)
 			gridDetector();
 		// Convert the key points into a vector containing the correspond X,Y position in image

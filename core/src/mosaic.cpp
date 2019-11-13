@@ -132,21 +132,23 @@ void Mosaic::compute(bool _euclidean_mode)
 				sub_mosaics[n_subs]->addFrame(frames[i+1]);
 			}
 		}
-		cout<<"\rBuilding sub-mosaics:\t[" <<green<<((i+2)*100)/frames.size()<<reset<<"%]"<<flush;
+		cout<<"\r[mosaic] Building sub-mosaics:\t[" <<green<<((i+2)*100)/frames.size()<<reset<<"%]"<<flush;
 	}
 	cout<<endl;
-	cout << "Saving resulting submosaics before merge" << endl;
+	cout << "[mosaic] Saving resulting submosaics before merge" << endl;
 	// save resulting sub mosaics to be merged together
 	if (sub_mosaics[n_subs]->n_frames > 0 )
 	{
 		final_mosaics.push_back(sub_mosaics);
 		sub_mosaics.clear();
 	}
-	cout << "rMerging" << endl;
+
+	cout << "[mosaic] Updating overlap for final mosaic" << endl;
 	// compute the overlap between sub mosaics (hierarchy to merge)
 	for (vector<SubMosaic *> &final_mosaic : final_mosaics)
 		updateOverlap(final_mosaic);
 	// merge sub mosaics
+	cout << "[mosaic] Merging" << endl;
 }
 
 // See description in header file
@@ -159,14 +161,17 @@ void Mosaic::merge(bool _euclidean_correction)
 	// a mosaic is a vector with all sub mosaics that can be merged
 	for (int n=0; n<final_mosaics.size(); n++)
 	{
-int w=0;
+		int w=0;
 		// loop over sub mosaics of same mosaic
+
 		while(final_mosaics[n].size() > 1)
 		{
-//cout << "Entrooo" << endl;
+			cout << "\n\n\t----> final_mosaics[n].size(): " << final_mosaics[n].size() << endl;
+			cout << "getBestOverlap" << endl;
 			// get the sub mosaic pair with higher overlap
 			ransac_mosaics = getBestOverlap(final_mosaics[n]);
 			// remove second sub mosaic, and update neighbors
+			cout << "removeNeighbor" << endl;
 			// second sub mosaic will be merged and save it in the first one
 			removeNeighbor(ransac_mosaics);
 			// remove second sub mosaic from array
@@ -178,6 +183,7 @@ int w=0;
 //blender->blendSubMosaic(ransac_mosaics[1]);
 //imwrite("/home/ros/dataset/output/temp/SR-Unref0-"+to_string(w)+".png", ransac_mosaics[0]->final_scene);
 //imwrite("/home/ros/dataset/output/temp/SR-Unref1-"+to_string(w)+".png", ransac_mosaics[1]->final_scene);
+			cout << "referenceMosaics" << endl;
 			referenceMosaics(ransac_mosaics);
 //blender->blendSubMosaic(ransac_mosaics[0]);
 //blender->blendSubMosaic(ransac_mosaics[1]);
@@ -186,6 +192,7 @@ int w=0;
 //ransac_mosaics[0]->final_scene.release();
 //ransac_mosaics[1]->final_scene.release();
 			// align sub mosaics (translate and rotate)
+			cout << "alignMosaics" << endl;
 			alignMosaics(ransac_mosaics);
 			// find transformation which minimize overall geometric distortion
 			Mat best_H = getBestModel(ransac_mosaics, 4000);
