@@ -246,7 +246,7 @@ void Blender::correctColor(SubMosaic *_sub_mosaic)
 		sc_g_mean.push_back(mean(aux_img , over_masks[0]));
 
 		warp_imgs[i+1].copyTo(aux_img);
-		cvtColor(aux_img, gray_img, CV_BGR2GRAY);
+		cvtColor(aux_img, gray_img, cv::COLOR_BGR2GRAY);
 		ob_g_mean.push_back(mean(aux_img , over_masks[1]));
 	}
 	for (int i=0; i<warp_imgs.size()-2; i++)

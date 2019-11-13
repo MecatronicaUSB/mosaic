@@ -24,11 +24,11 @@ Frame::Frame(Mat _img, bool _pre, int _width, int _height)
 
 	// resize image to default size
 	float ratio = (float) _width / (float)_img.cols;
-	resize(_img, color, cv::Size(ratio * _img.cols, ratio * _img.rows), 0, 0, CV_INTER_LINEAR);
+	resize(_img, color, cv::Size(ratio * _img.cols, ratio * _img.rows), 0, 0, cv::INTER_LINEAR);
 
 	// resize(_img, color, Size(_width, _height));
 	// create a gray scale version of image
-	cvtColor(color, gray, CV_BGR2GRAY);
+	cvtColor(color, gray, cv::COLOR_BGR2GRAY);
 	// apply scb to gray image
 	if (_pre)
 		imgChannelStretch(gray, gray, 1, 99, Mat());

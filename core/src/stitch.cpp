@@ -158,7 +158,7 @@ vector<Mat> Stitcher::stitch(Frame *_object, Frame *_scene)
 	}
 	cout << "[stitcher] Finding homography" << endl;
 	// find perspective transformation from object to scene
-	Mat H = findHomography(Mat(object_points), Mat(scene_points), CV_RANSAC);
+	Mat H = findHomography(Mat(object_points), Mat(scene_points), cv::RANSAC);
 	// if possible, force bottom-right element to 1
 	if (!H.empty())
 		H.at<double>(2, 2) = 1;

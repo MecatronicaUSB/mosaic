@@ -392,25 +392,25 @@ Mat SubMosaic::buildMap(int _type, Scalar _color)
 		{
 			center_point = Point(frame->bound_points[PERSPECTIVE][4].x,
 								 frame->bound_points[PERSPECTIVE][4].y) * factor;
-			//putText(scene_map, to_string(w++), Point(center_point.x+3, center_point.y+((w==3)?8:2)), FONT_HERSHEY_PLAIN, 2, cvScalar(0, 0, 0), 2);
+			//putText(scene_map, to_string(w++), Point(center_point.x+3, center_point.y+((w==3)?8:2)), FONT_HERSHEY_PLAIN, 2, cv::Scalar(0, 0, 0), 2);
 			circle(scene_map, center_point, point_size, _color, -1);
 		}
 	}
     	copyMakeBorder(scene_map, scene_map, 40, 50, 100, 30, BORDER_CONSTANT,Scalar(255,255,255));
 	// y-axis labels
-	rectangle(scene_map, Point(70, 30), Point(width+110, height+50), cvScalar(0, 0, 0), 1);
-	putText(scene_map, to_string(0), Point(5, 50), FONT_HERSHEY_PLAIN, 1, cvScalar(0, 0, 0), 1);
-	putText(scene_map, to_string((int)(height/factor)/4), Point(5, (height-50) / 4), FONT_HERSHEY_PLAIN, 1, cvScalar(0, 0, 0), 1);
-	putText(scene_map, to_string((int)(height/factor)/2), Point(5, (height-50) / 2), FONT_HERSHEY_PLAIN, 1, cvScalar(0, 0, 0), 1);
-	putText(scene_map, to_string((int)(height/factor)*3/4), Point(5, (height-50) * 3 / 4), FONT_HERSHEY_PLAIN, 1, cvScalar(0, 0, 0), 1);
-	putText(scene_map, to_string((int)(height/factor)), Point(5, height-50), FONT_HERSHEY_PLAIN, 1, cvScalar(0, 0, 0), 1);
+	rectangle(scene_map, Point(70, 30), Point(width+110, height+50), cv::Scalar(0, 0, 0), 1);
+	putText(scene_map, to_string(0), Point(5, 50), FONT_HERSHEY_PLAIN, 1, cv::Scalar(0, 0, 0), 1);
+	putText(scene_map, to_string((int)(height/factor)/4), Point(5, (height-50) / 4), FONT_HERSHEY_PLAIN, 1, cv::Scalar(0, 0, 0), 1);
+	putText(scene_map, to_string((int)(height/factor)/2), Point(5, (height-50) / 2), FONT_HERSHEY_PLAIN, 1, cv::Scalar(0, 0, 0), 1);
+	putText(scene_map, to_string((int)(height/factor)*3/4), Point(5, (height-50) * 3 / 4), FONT_HERSHEY_PLAIN, 1, cv::Scalar(0, 0, 0), 1);
+	putText(scene_map, to_string((int)(height/factor)), Point(5, height-50), FONT_HERSHEY_PLAIN, 1, cv::Scalar(0, 0, 0), 1);
 	// x-axis labels
-	putText(scene_map, to_string(0), Point(65, height+65), FONT_HERSHEY_PLAIN, 1, cvScalar(0, 0, 0), 1);
-	putText(scene_map, to_string((int)(width/factor)/4), Point((width+20)/4+60, height+65), FONT_HERSHEY_PLAIN, 1, cvScalar(0, 0, 0), 1);
-	putText(scene_map, to_string((int)(width/factor)/2), Point((width+20)/2+60, height+65), FONT_HERSHEY_PLAIN, 1, cvScalar(0, 0, 0), 1);
-	putText(scene_map, to_string((int)(width/factor)*3/4), Point((width+20)*3/4+60, height+65), FONT_HERSHEY_PLAIN, 1, cvScalar(0, 0, 0), 1);
-	putText(scene_map, to_string((int)(width/factor)), Point(width+80, height+65), FONT_HERSHEY_PLAIN, 1, cvScalar(0, 0, 0), 1);
-	putText(scene_map, "Unidades en Pixeles", Point((int)(width/2)-20, 20), FONT_HERSHEY_PLAIN, 1, cvScalar(0, 0, 0), 1);
+	putText(scene_map, to_string(0), Point(65, height+65), FONT_HERSHEY_PLAIN, 1, cv::Scalar(0, 0, 0), 1);
+	putText(scene_map, to_string((int)(width/factor)/4), Point((width+20)/4+60, height+65), FONT_HERSHEY_PLAIN, 1, cv::Scalar(0, 0, 0), 1);
+	putText(scene_map, to_string((int)(width/factor)/2), Point((width+20)/2+60, height+65), FONT_HERSHEY_PLAIN, 1, cv::Scalar(0, 0, 0), 1);
+	putText(scene_map, to_string((int)(width/factor)*3/4), Point((width+20)*3/4+60, height+65), FONT_HERSHEY_PLAIN, 1, cv::Scalar(0, 0, 0), 1);
+	putText(scene_map, to_string((int)(width/factor)), Point(width+80, height+65), FONT_HERSHEY_PLAIN, 1, cv::Scalar(0, 0, 0), 1);
+	putText(scene_map, "Unidades en Pixeles", Point((int)(width/2)-20, 20), FONT_HERSHEY_PLAIN, 1, cv::Scalar(0, 0, 0), 1);
 	return scene_map;
 }
 

@@ -124,7 +124,7 @@ void printHistogram(int histogram[256], std::string filename, cv::Scalar color)
 			max = histogram[i];
 	}
 	// Creating an image from the histogram.
-	cv::Mat imgHist(1480, 1580, CV_8UC3, cvScalar(255, 255, 255));
+	cv::Mat imgHist(1480, 1580, CV_8UC3, cv::Scalar(255, 255, 255));
 	cv::Point pt1, pt2;
 	pt1.y = 1380;
 	for (i = 0; i < 256; i++)
@@ -132,21 +132,21 @@ void printHistogram(int histogram[256], std::string filename, cv::Scalar color)
 		pt1.x = 150 + 5 * i + 1;
 		pt2.x = 150 + 5 * i + 3;
 		pt2.y = 1380 - 1280 * histogram[i] / max;
-		cv::rectangle(imgHist, pt1, pt2, color, CV_FILLED);
+		cv::rectangle(imgHist, pt1, pt2, color, cv::FILLED);
 	}
 	// y-axis labels
-	cv::rectangle(imgHist, cv::Point(130, 1400), cv::Point(1450, 80), cvScalar(0, 0, 0), 1);
-	cv::putText(imgHist, std::to_string(max), cv::Point(10, 100), cv::FONT_HERSHEY_PLAIN, 1.5, cvScalar(0, 0, 0), 2.0);
-	cv::putText(imgHist, std::to_string(max * 3 / 4), cv::Point(10, 420), cv::FONT_HERSHEY_PLAIN, 1.5, cvScalar(0, 0, 0), 2.0);
-	cv::putText(imgHist, std::to_string(max / 2), cv::Point(10, 740), cv::FONT_HERSHEY_PLAIN, 1.5, cvScalar(0, 0, 0), 2.0);
-	cv::putText(imgHist, std::to_string(max / 4), cv::Point(10, 1060), cv::FONT_HERSHEY_PLAIN, 1.5, cvScalar(0, 0, 0), 2.0);
-	cv::putText(imgHist, std::to_string(0), cv::Point(10, 1380), cv::FONT_HERSHEY_PLAIN, 1.5, cvScalar(0, 0, 0), 2.0);
+	cv::rectangle(imgHist, cv::Point(130, 1400), cv::Point(1450, 80), cv::Scalar(0, 0, 0), 1);
+	cv::putText(imgHist, std::to_string(max), cv::Point(10, 100), cv::FONT_HERSHEY_PLAIN, 1.5, cv::Scalar(0, 0, 0), 2.0);
+	cv::putText(imgHist, std::to_string(max * 3 / 4), cv::Point(10, 420), cv::FONT_HERSHEY_PLAIN, 1.5, cv::Scalar(0, 0, 0), 2.0);
+	cv::putText(imgHist, std::to_string(max / 2), cv::Point(10, 740), cv::FONT_HERSHEY_PLAIN, 1.5, cv::Scalar(0, 0, 0), 2.0);
+	cv::putText(imgHist, std::to_string(max / 4), cv::Point(10, 1060), cv::FONT_HERSHEY_PLAIN, 1.5, cv::Scalar(0, 0, 0), 2.0);
+	cv::putText(imgHist, std::to_string(0), cv::Point(10, 1380), cv::FONT_HERSHEY_PLAIN, 1.5, cv::Scalar(0, 0, 0), 2.0);
 	// x-axis labels
-	cv::putText(imgHist, std::to_string(0), cv::Point(152 - 7 * 1, 1430), cv::FONT_HERSHEY_PLAIN, 1.5, cvScalar(0, 0, 0), 2.0);
-	cv::putText(imgHist, std::to_string(63), cv::Point(467 - 7 * 2, 1430), cv::FONT_HERSHEY_PLAIN, 1.5, cvScalar(0, 0, 0), 2.0);
-	cv::putText(imgHist, std::to_string(127), cv::Point(787 - 7 * 3, 1430), cv::FONT_HERSHEY_PLAIN, 1.5, cvScalar(0, 0, 0), 2.0);
-	cv::putText(imgHist, std::to_string(191), cv::Point(1107 - 7 * 3, 1430), cv::FONT_HERSHEY_PLAIN, 1.5, cvScalar(0, 0, 0), 2.0);
-	cv::putText(imgHist, std::to_string(255), cv::Point(1427 - 7 * 3, 1430), cv::FONT_HERSHEY_PLAIN, 1.5, cvScalar(0, 0, 0), 2.0);
+	cv::putText(imgHist, std::to_string(0), cv::Point(152 - 7 * 1, 1430), cv::FONT_HERSHEY_PLAIN, 1.5, cv::Scalar(0, 0, 0), 2.0);
+	cv::putText(imgHist, std::to_string(63), cv::Point(467 - 7 * 2, 1430), cv::FONT_HERSHEY_PLAIN, 1.5, cv::Scalar(0, 0, 0), 2.0);
+	cv::putText(imgHist, std::to_string(127), cv::Point(787 - 7 * 3, 1430), cv::FONT_HERSHEY_PLAIN, 1.5, cv::Scalar(0, 0, 0), 2.0);
+	cv::putText(imgHist, std::to_string(191), cv::Point(1107 - 7 * 3, 1430), cv::FONT_HERSHEY_PLAIN, 1.5, cv::Scalar(0, 0, 0), 2.0);
+	cv::putText(imgHist, std::to_string(255), cv::Point(1427 - 7 * 3, 1430), cv::FONT_HERSHEY_PLAIN, 1.5, cv::Scalar(0, 0, 0), 2.0);
 
 	// Saving the image
 	cv::imwrite(filename, imgHist);
