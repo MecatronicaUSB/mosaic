@@ -104,10 +104,10 @@ vector<Mat> Stitcher::stitch(Frame *_object, Frame *_scene)
 	// to store matches temporarily
 	vector<vector<DMatch>> aux_matches;
 	// match using desired matcher
-	cout << "[stitcher] Starting knnMatch" << endl;
+	cout << endl << "[stitcher] Starting knnMatch" << endl;
 	matcher->knnMatch(img[OBJECT]->descriptors, img[SCENE]->descriptors, aux_matches, 2);
 	// save in global class variable
-	cout << "[stitcher] push back matches" << endl;
+	//cout << "[stitcher] push back matches" << endl;
 	matches.push_back(aux_matches);
 	// if scene frame have neighbors, try to match key points with them
 	for (Frame *neighbor : img[SCENE]->neighbors)
@@ -120,7 +120,7 @@ vector<Mat> Stitcher::stitch(Frame *_object, Frame *_scene)
 	float thresh = 0.8;
 	bool good_thresh = true;
 	// loop until enough key points are found (>4)
-	cout << "[stitcher] sifting good matches" << endl;
+	//cout << "[stitcher] sifting good matches" << endl;
 	while (good_thresh)
 	{
 		// Discard outliers based on euclidean distance between descriptor's vectors
@@ -133,7 +133,7 @@ vector<Mat> Stitcher::stitch(Frame *_object, Frame *_scene)
 		// WARNING: j formerly starting at 1, blame?
 		for (int j=1; j<good_matches.size(); j++)
 			{
-				cout << j << "/" << good_matches.size() << endl;
+//				cout << j << "/" << good_matches.size() << endl;
 
 				if (good_matches[j].size() > 8)
 					//cout << "[stitcher] Pushing [" << j << "] into good_neighbors" << endl;
@@ -159,7 +159,7 @@ vector<Mat> Stitcher::stitch(Frame *_object, Frame *_scene)
 			img[OBJECT]->good_neighbors.clear();
 		}
 	}
-	cout << "[stitcher] Finding homography" << endl;
+	//cout << "[stitcher] Finding homography" << endl;
 	// find perspective transformation from object to scene
 	Mat H = findHomography(Mat(object_points), Mat(scene_points), cv::RANSAC);
 	// if possible, force bottom-right element to 1

@@ -21,6 +21,7 @@ SubMosaic::SubMosaic()
 	scene_size = Size2f(TARGET_WIDTH, TARGET_HEIGHT);
 	next_H = Mat::eye(3, 3, CV_64F);
 	next_E = Mat::eye(3, 3, CV_64F);
+	neighbors.clear();
 }
 
 // See description in header file
