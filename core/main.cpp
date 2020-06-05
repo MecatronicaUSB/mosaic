@@ -29,6 +29,7 @@ int main( int argc, char** argv ) {
     }
     catch (args::Help) {
         std::cout << parser;
+        cout << "  Built with OpenCV\t" <<cyan<< CV_VERSION << reset << endl;
         return 1;
     }
     catch (args::ParseError e) {
