@@ -1,13 +1,19 @@
-cmake_minimum_required(VERSION 3.0)
+cmake_minimum_required(VERSION 2.8)
+project( core-mosaic )
 
-# Enable C++11
 set(CMAKE_CXX_STANDARD 11)
 set(CMAKE_CXX_STANDARD_REQUIRED TRUE)
 
-project( core-mosaic )
-find_package( OpenCV REQUIRED )
+find_package(OpenCV 4.2 REQUIRED )
+message("OpenCV_LIBS: " ${OpenCV_LIBS} )
 
-include_directories( ${OpenCV_INCLUDE_DIRS} )
+# if(DEFINED ENV{OPENCV_INSTALL_DIR})
+#     message("OPENCV_INSTALL_DIR set by ENV variable, searching...")
+#     find_package(OpenCV 4.2 REQUIRED PATHS $ENV{OPENCV_INSTALL_DIR} )
+# else()
+#     message("OPENCV_INSTALL_DIR not set, searching in default location(s)")
+#     find_package(OpenCV 4.2 REQUIRED )
+# endif(DEFINED ENV{OPENCV_INSTALL_DIR})
 
 file(GLOB mosaic-files
     "include/*.h"
@@ -17,14 +23,6 @@ file(GLOB mosaic-files
     "main.cpp"
 )
 
-message(STATUS "OpenCV library status:")
-message(STATUS " config: ${OPENCV_DIR}")
-message(STATUS " version: ${OpenCV_VERSION}")
-message(STATUS " libraries: ${OpenCV_LIBS}")
-message(STATUS " include_path: ${OpenCV_INCLUDE_DIRS}")
-
-
-add_executable( mosaic ${mosaic-files} )
-target_compile_options( mosaic PUBLIC -std=c++11)
-target_link_libraries( mosaic ${OpenCV_LIBS})
-
+add_executable( mosaic ${mosaic-files} )	# bind all together
+target_compile_options( mosaic PUBLIC -std=c++11)	# c++11 requried
+target_link_libraries( mosaic ${OpenCV_LIBS})		# link libraries
