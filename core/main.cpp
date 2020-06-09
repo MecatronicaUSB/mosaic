@@ -24,12 +24,15 @@ int main( int argc, char** argv ) {
     string input_directory, output_directory, calibration_file;
     vector<string> file_names;
 
+    cout << cyan << "mosaic" << reset << endl;
+    cout << "\tOpenCV version:\t" << yellow << CV_VERSION << reset << endl;
+    cout << "\tGit commit:\t" << yellow << GIT_COMMIT << reset << endl;
+
     try{
         parser.ParseCLI(argc, argv);
     }
     catch (args::Help) {
         std::cout << parser;
-        cout << "  Built with OpenCV\t" <<cyan<< CV_VERSION << reset << endl;
         return 1;
     }
     catch (args::ParseError e) {
@@ -38,6 +41,7 @@ int main( int argc, char** argv ) {
         return 1;
     }
     catch (args::ValidationError e) {
+//        std::cout << "mosaic:  Built with OpenCV\t" <<cyan<< CV_VERSION << reset << endl;
         std::cerr << "Bad input commands" << std::endl;
         std::cerr << "Use -h, --help command to see usage" << std::endl;
         return 1;
