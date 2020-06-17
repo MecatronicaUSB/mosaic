@@ -36,12 +36,14 @@ void Mosaic::compute(bool _euclidean_mode)
 	float distortion, best_distortion;
 	vector<Point2f> best_grid_points;
 	vector<Mat> transform(2);
+	cout << "[mosaic.compute]: detect features in the first frame" << endl;
 	// detect and compute features for all images
 	stitcher->detectFeatures(frames);
 	//create initial sub mosaic and add it the first frame
 	sub_mosaics.push_back(new SubMosaic());
 	sub_mosaics[0]->addFrame(frames[0]);
 	// loop over all frames to build sub mosaics
+	cout << "[mosaic.compute]: Created pivot frame [0]" << endl;
 	for (int i = 0; i<frames.size()-1; i++)
 	{
 		best_distortion = 100;
@@ -130,6 +132,8 @@ void Mosaic::compute(bool _euclidean_mode)
 		cout<<"\rBuilding sub-mosaics:\t[" <<green<<((i+2)*100)/frames.size()<<reset<<"%]"<<flush;
 	}
 	cout<<endl;
+	cout << "[mosaic.compute]: Populating sub_mosaic vector" << endl;
+
 	// save resulting sub mosaics to be merged together
 	if (sub_mosaics[n_subs]->n_frames > 0 )
 	{
@@ -137,6 +141,7 @@ void Mosaic::compute(bool _euclidean_mode)
 		sub_mosaics.clear();
 	}
 	// compute the overlap between sub mosaics (hierarchy to merge)
+	cout << "[mosaic.compute]: Updating estimated overlap" << endl;
 	for (vector<SubMosaic *> &final_mosaic : final_mosaics)
 		updateOverlap(final_mosaic);
 	// merge sub mosaics

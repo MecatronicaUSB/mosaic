@@ -119,11 +119,13 @@ int main( int argc, char** argv ) {
         fs["camera_matrix"] >> camera_matrix;
         fs["distortion_coefficients"] >> distortion_coeff;
     }
-    
+    cout << "[main]" << "Setting camera matrix" << endl;
     mosaic.SetCameraMatrix(camera_matrix, distortion_coeff);
 
     t = (double) getTickCount();
     // There is an error when non-image files are contained in the source directory
+
+    cout << "[main]" << "Reading input images" << endl;
     file_names = read_filenames(input_directory);
     for (int i=0; i<file_names.size(); i++) {
         img = imread(file_names[i], IMREAD_COLOR);
@@ -133,8 +135,11 @@ int main( int argc, char** argv ) {
         }
         mosaic.feed(img);
     }
-    mosaic.compute(euclidean_mode);
+    cout << green << "[main]" << reset << "\tmosaic.compute" << endl;
+    mosaic.compute(euclidean_mode); 
+    cout << green << "[main]" << reset << "\tmosaic.merge" << endl;
     mosaic.merge(true);
+    cout << green << "[main]" << reset << "\tmosaic.save" << endl;
     mosaic.save(output_directory);
     
     t = ((double)getTickCount() - t) / getTickFrequency();
