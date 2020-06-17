@@ -28,6 +28,7 @@ int main( int argc, char** argv ) {
     cout << cyan << "mosaic" << reset << endl;
     cout << "\tOpenCV version:\t" << yellow << CV_VERSION << reset << endl;
     cout << "\tGit commit:\t" << yellow << GIT_COMMIT << reset << endl;
+    cout << "\tBuilt:\t" << __DATE__ << " - " << __TIME__ << endl;
 
     try{
         parser.ParseCLI(argc, argv);
