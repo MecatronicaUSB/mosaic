@@ -74,11 +74,13 @@ Stitcher::Stitcher(bool _grid, int _detector, int _matcher)
 // See description in header file
 void Stitcher::detectFeatures(vector<Frame *> &_frames)
 {
-	int i=0;
+	int i=0, k=0;
 	cout<<endl;
+//	cout << "[stitcher:detectFeatures] iterating through frames" << endl; 
 	// loop over all frames
 	for (Frame *frame : _frames)
 	{
+		//cout << "[stitcher:detectFeatures] Frame k=" << k++ << endl; 
 		// detect features
 		detector->detectAndCompute(frame->gray, Mat(), frame->keypoints, frame->descriptors);
 		// release gray image since wont be used

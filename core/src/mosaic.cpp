@@ -459,8 +459,11 @@ float Mosaic::getOverlap(SubMosaic *_object, SubMosaic *_scene)
 void Mosaic::save(string _dir)
 {
 	int n=0;
+	cout << "[mosaic::save] Total submosaics: " << final_mosaics.size() << endl;
+
 	for (vector<SubMosaic *> final_mosaic: final_mosaics)
 	{
+		cout << "[mosaic::save] blending submosaic n = " << yellow << n << reset << endl;
 		// blend mosaic and save it, using provided filename
 		blender->blendSubMosaic(final_mosaic[0]);
 		imwrite(_dir+"-000"+to_string(n)+".jpg", final_mosaic[0]->final_scene);

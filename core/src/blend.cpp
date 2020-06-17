@@ -44,16 +44,22 @@ void Blender::blendSubMosaic(SubMosaic *_sub_mosaic)
 		bound_rect.push_back(frames[i]->bound_rect);
 		// corners in array mode
 		corners.push_back(Point(frames[i]->bound_rect.x, frames[i]->bound_rect.y));
+		cout << "corners:" << i << " content: " << frames[i]->bound_rect.x << "\t" << frames[i]->bound_rect.y << endl;
 	}
 	int j=0;
 	// apply graph cur algorithm
 	if (graph_cut)
 	{
-		cout<<"\rFinding cut line..."<<yellow<< "\tthis may take some time..."<<reset<<flush;
+		cout<<"\rFinding cut line, "<<yellow<< " this may take some time..."<<reset<<flush;
 		GraphCutSeamFinder *seam_finder = new GraphCutSeamFinder(GraphCutSeamFinderBase::COST_COLOR_GRAD);
+		cout << "[blend] seam_finder" << endl;
+		cout << "[blend] warp_imgs.size() " << warp_imgs.size() << endl;
+		cout << "[blend] corners.size() " << corners.size() << endl;
+		cout << "[blend] masks.size() " << masks.size() << endl;
 		seam_finder->find(warp_imgs, corners, masks);
-		cout<<"\rFinding cut line\t"<<green<<"OK                          "<<reset<<flush<<endl;
+		cout<<"\rFinding cut line, "<<green<<"OK                          "<<reset<<flush<<endl;
 	}
+
 	Mat aux_img;
 
 	for (int i = 0; i < warp_imgs.size(); i++)
@@ -105,7 +111,7 @@ void Blender::blendSubMosaic(SubMosaic *_sub_mosaic)
 		result_16s.convertTo(_sub_mosaic->final_scene, CV_8U);
 		//final_mask = result_mask;
 	}
-	cout<<flush << "\rBlending\t\t"<<green<<"OK"<<reset;
+	cout << flush << "\rBlending\t\t" << green << "OK"<<reset;
 	// clear used data
 	warp_imgs.clear();
 	masks.clear();
