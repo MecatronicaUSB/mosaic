@@ -36,14 +36,14 @@ void Mosaic::compute(bool _euclidean_mode)
 	float distortion, best_distortion;
 	vector<Point2f> best_grid_points;
 	vector<Mat> transform(2);
-	cout << "[mosaic.compute]: detect features in the first frame" << endl;
+//	cout << "[mosaic.compute]: detect features in the first frame" << endl;
 	// detect and compute features for all images
 	stitcher->detectFeatures(frames);
-	//create initial sub mosaic and add it the first frame
+	//create initial sub mosaic and add to it the first frame
 	sub_mosaics.push_back(new SubMosaic());
 	sub_mosaics[0]->addFrame(frames[0]);
 	// loop over all frames to build sub mosaics
-	cout << "[mosaic.compute]: Created pivot frame [0]" << endl;
+//	cout << "[mosaic.compute]: Created pivot frame [0]" << endl;
 	for (int i = 0; i<frames.size()-1; i++)
 	{
 		best_distortion = 100;
@@ -157,7 +157,7 @@ void Mosaic::merge(bool _euclidean_correction)
 	// a mosaic is a vector with all sub mosaics that can be merged
 	for (int n=0; n<final_mosaics.size(); n++)
 	{
-int w=0;
+		int w=0;
 		// loop over sub mosaics of same mosaic
 		while(final_mosaics[n].size() > 1)
 		{

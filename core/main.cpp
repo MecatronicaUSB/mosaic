@@ -133,12 +133,12 @@ int main( int argc, char** argv ) {
     for (int i=0; i<file_names.size(); i++) {
         img = imread(file_names[i], IMREAD_COLOR);
         if (!img.data) {
-            cout<< red <<" --(!) Error reading image "<< reset << endl;
+            cout<< red <<" --(!) Error reading image "<< reset << file_names[i] << endl;
             continue;
         }
-        cout << "[main] Reading file " << file_names[i] << endl;
+//        cout << "[main] Reading file " << file_names[i] << endl;
         mosaic.feed(img);
-        cout << "[main] mosaic.feed: " << i << endl;
+//        cout << "[main] mosaic.feed: " << i << endl;
 
     }
     cout << green << "[main]" << reset << " mosaic.compute" << endl;

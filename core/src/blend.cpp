@@ -52,10 +52,10 @@ void Blender::blendSubMosaic(SubMosaic *_sub_mosaic)
 	{
 		cout<<"\rFinding cut line, "<<yellow<< " this may take some time..."<<reset<<flush;
 		GraphCutSeamFinder *seam_finder = new GraphCutSeamFinder(GraphCutSeamFinderBase::COST_COLOR_GRAD);
-		cout << "[blend] seam_finder" << endl;
-		cout << "[blend] warp_imgs.size() " << warp_imgs.size() << endl;
-		cout << "[blend] corners.size() " << corners.size() << endl;
-		cout << "[blend] masks.size() " << masks.size() << endl;
+		cout << endl << "[blend] seam_finder" << endl;
+		cout << "[blend] warp_imgs.size(): " << warp_imgs.size() << endl;
+		cout << "[blend] corners.size(): " << corners.size() << endl;
+		cout << "[blend] masks.size(): " << masks.size() << endl;
 		seam_finder->find(warp_imgs, corners, masks);
 		cout<<"\rFinding cut line, "<<green<<"OK                          "<<reset<<flush<<endl;
 	}
