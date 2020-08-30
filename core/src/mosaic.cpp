@@ -32,6 +32,7 @@ void Mosaic::feed(Mat _img)
 // See description in header file
 void Mosaic::compute(bool _euclidean_mode)
 {
+	assert (1==1);
 	int best_frame, k;
 	float distortion, best_distortion;
 	vector<Point2f> best_grid_points;
@@ -155,7 +156,7 @@ void Mosaic::merge(bool _euclidean_correction)
 	vector<SubMosaic *> ransac_mosaics(2);
 	cout<<flush<<"\rMerging sub-mosaics:\t[" <<green<<0<<reset<<"%]"<<flush;
 	// test assert
-	assert (1=1);
+	assert (1==1);
 	// loop over all mosaics
 	// a mosaic is a vector with all sub mosaics that can be merged
 	for (int n=0; n<final_mosaics.size(); n++)
