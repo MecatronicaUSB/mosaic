@@ -32,7 +32,6 @@ void Mosaic::feed(Mat _img)
 // See description in header file
 void Mosaic::compute(bool _euclidean_mode)
 {
-	assert (1==1);
 	int best_frame, k;
 	float distortion, best_distortion;
 	vector<Point2f> best_grid_points;
@@ -81,7 +80,7 @@ void Mosaic::compute(bool _euclidean_mode)
 				
 			}
 		}
-		cout << "[mosaic.compute]: added frame ["+i+"]" << endl;
+		cout << "[mosaic.compute]: added frame ["<< i <<"]" << endl;
 		// delete frames previous to best one (if best is next to scene+1)
 		for (int j = best_frame-1; j>i; j--)
 		{
@@ -156,7 +155,7 @@ void Mosaic::merge(bool _euclidean_correction)
 	vector<SubMosaic *> ransac_mosaics(2);
 	cout<<flush<<"\rMerging sub-mosaics:\t[" <<green<<0<<reset<<"%]"<<flush;
 	// test assert
-	assert (1==1);
+	assert (("No mosaics to merge", final_mosaics.size() >= 0));
 	// loop over all mosaics
 	// a mosaic is a vector with all sub mosaics that can be merged
 	for (int n=0; n<final_mosaics.size(); n++)
@@ -167,9 +166,11 @@ void Mosaic::merge(bool _euclidean_correction)
 		{
 //cout << "Entrooo" << endl;
 			// get the sub mosaic pair with higher overlap
+			cout << "getBestOverlap" << endl;
 			ransac_mosaics = getBestOverlap(final_mosaics[n]);
 			// remove second sub mosaic, and update neighbors
 			// second sub mosaic will be merged and save it in the first one
+			cout << "removeneighbor" << endl;
 			removeNeighbor(ransac_mosaics);
 			// remove second sub mosaic from array
 			for (int i=0; i<final_mosaics[n].size(); i++)
@@ -180,6 +181,7 @@ void Mosaic::merge(bool _euclidean_correction)
 //blender->blendSubMosaic(ransac_mosaics[1]);
 //imwrite("/home/ros/dataset/output/temp/SR-Unref0-"+to_string(w)+".png", ransac_mosaics[0]->final_scene);
 //imwrite("/home/ros/dataset/output/temp/SR-Unref1-"+to_string(w)+".png", ransac_mosaics[1]->final_scene);
+			cout << "referenceMosaics" << endl;
 			referenceMosaics(ransac_mosaics);
 //blender->blendSubMosaic(ransac_mosaics[0]);
 //blender->blendSubMosaic(ransac_mosaics[1]);
@@ -188,6 +190,7 @@ void Mosaic::merge(bool _euclidean_correction)
 //ransac_mosaics[0]->final_scene.release();
 //ransac_mosaics[1]->final_scene.release();
 			// align sub mosaics (translate and rotate)
+			cout << "alignMosaics" << endl;
 			alignMosaics(ransac_mosaics);
 			// find transformation which minimize overall geometric distortion
 			Mat best_H = getBestModel(ransac_mosaics, 4000);
@@ -200,6 +203,7 @@ void Mosaic::merge(bool _euclidean_correction)
 			// delete second sub mosaic
 			delete ransac_mosaics[1];
 			// update overlap between remains sub mosaics
+			cout << "updateOverlap" << endl;
 			updateOverlap(final_mosaics[n]);
 		}
 		//blender->blendSubMosaic(ransac_mosaics[0]);
@@ -226,6 +230,7 @@ vector<SubMosaic *> Mosaic::getBestOverlap(vector<SubMosaic *> _sub_mosaics)
 		// loop over all neighbors
 		for (Hierarchy neighbor: sub_mosaic->neighbors)
 		{
+			// assert(("No overlap between two neighbors", neighbor.overlap > 0));
 			// find the neighbor with higher overlap
 			if (neighbor.overlap > best_overlap)
 			{
@@ -236,6 +241,7 @@ vector<SubMosaic *> Mosaic::getBestOverlap(vector<SubMosaic *> _sub_mosaics)
 			}
 		}
 	}
+	assert(("best overlap < 0", best_overlap > 0));
 	return ransac_mosaics;
 }
 
