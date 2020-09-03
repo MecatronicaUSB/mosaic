@@ -1,6 +1,57 @@
 { 
     "version": "0.2.0", 
     "configurations": [
+        {
+            "name": "(gdb) Launch",
+            "type": "cppdbg",
+            "request": "launch",
+            "program": "${workspaceRoot}/core/build/mosaic",
+            "args": ["/home/mosaic/dataset/03_ACFR/ScottReef_TEST/",
+                "../results/03_ACFR",
+                "--grid",
+                "--sift"],
+            "stopAtEntry": false,
+            "cwd": "${workspaceFolder}",
+            "environment": [],
+            "externalConsole": false,
+            "MIMode": "gdb",
+            "setupCommands": [
+                {
+                    "description": "Enable pretty-printing for gdb",
+                    "text": "-enable-pretty-printing",
+                    "ignoreFailures": true
+                }
+            ]
+        },
+        
+        
+        {
+            "name": "(gdb) Remote",
+            "type": "cppdbg",
+            "request": "launch",
+            "program": "${workspaceRoot}/core/build/mosaic",
+            "args": [],
+            "stopAtEntry": false,
+            "cwd": "${workspaceFolder}",
+            "environment": [],
+            "externalConsole": true,
+            "targetArchitecture": "x64",
+            "pipeTransport": {
+                "debuggerPath": "/usr/bin/gdb",
+                "pipeProgram": "/usr/bin/ssh",
+                "pipeArgs": ["mosaic@159.90.170.198"],
+                "pipeCwd": "${workspaceRoot}"
+            },
+            "miDebuggerPath": "C:\\Program Files (x86)\\mingw-w64\\i686-8.1.0-posix-dwarf-rt_v6-rev0\\mingw32\bin\\gdb.exe",
+            "MIMode": "gdb",
+            "setupCommands": [
+                {
+                    "description": "Enable pretty-printing for gdb",
+                    "text": "-enable-pretty-printing",
+                    "ignoreFailures": true
+                }
+            ]
+        },
 
         {
             "name": "(gdb) Launch FCOMP",
@@ -44,10 +95,11 @@
             "name": "(gdb) Launch CORE",
             "type": "cppdbg",
             "request": "launch",
-            "program": "${workspaceRoot}/core/mosaic",
-            "args": ["/home/victor/dataset/frames/MVI_0234-3",
-                     "/home/victor/dataset/output/compile-tests/x",
-                     "-o"],
+            "program": "/home/mosaic/github/mosaic/core/build/mosaic",
+            "args": ["/home/mosaic/dataset/03_ACFR/ScottReef_TEST/",
+                     "../results/03_ACFR",
+                     "--grid",
+                     "--sift"],
             "stopAtEntry": false,
             "cwd": "${workspaceRoot}",
             "environment": [],
