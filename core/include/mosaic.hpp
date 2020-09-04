@@ -51,7 +51,7 @@ class Mosaic
      * @brief merge all sub mosaics based on overlap area
      * @param _euclidean_mode if true, no global euclidean correction is needed
      */
-    void merge(bool _euclidean_correction = false);
+    void merge(bool _euclidean_correction = true);
     /**
      * @brief get the two sub mosaics with more overlap
      * @param _sub_mosaics all sub mosaics
