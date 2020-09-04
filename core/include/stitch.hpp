@@ -36,6 +36,13 @@ enum Matcher
     USE_FLANN
 };
 
+/// Level of euclidean correction
+enum Correction
+{
+    SOFT,
+    HARD
+};
+
 class Stitcher
 {
   public:
@@ -98,7 +105,7 @@ class Stitcher
      * @param _H perspective transformation
      * @param _E best euclidean transformation
      */
-    void correctHomography(Mat &_H, Mat _E);
+    void correctHomography(Mat &_H, Mat _E, int _level = HARD);
     /**
      * @brief clean all used data
      */

@@ -44,7 +44,7 @@ void Blender::blendSubMosaic(SubMosaic *_sub_mosaic)
 		bound_rect.push_back(frames[i]->bound_rect);
 		// corners in array mode
 		corners.push_back(Point(frames[i]->bound_rect.x, frames[i]->bound_rect.y));
-		cout << "corners:" << i << " content: " << frames[i]->bound_rect.x << "\t" << frames[i]->bound_rect.y << endl;
+		// cout << "corners:" << i << " content: " << frames[i]->bound_rect.x << "\t" << frames[i]->bound_rect.y << endl;
 	}
 	int j=0;
 	// apply graph cur algorithm

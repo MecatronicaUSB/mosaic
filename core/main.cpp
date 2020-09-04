@@ -119,13 +119,13 @@ int main( int argc, char** argv ) {
         fs["camera_matrix"] >> camera_matrix;
         fs["distortion_coefficients"] >> distortion_coeff;
     }
-    cout << "[main]" << " Setting camera matrix" << endl;
+    // cout << "[main]" << " Setting camera matrix" << endl;
     mosaic.SetCameraMatrix(camera_matrix, distortion_coeff);
 
     t = (double) getTickCount();
     // There is an error when non-image files are contained in the source directory
 
-    cout << "[main]" << " Reading input images" << endl;
+    // cout << "[main]" << " Reading input images" << endl;
     file_names = read_filenames(input_directory);
     if (file_names.size() == 0){
         cout << red << "[main] No image file detected for:" << input_directory << reset << endl;
@@ -136,16 +136,13 @@ int main( int argc, char** argv ) {
             cout<< red <<" --(!) Error reading image "<< reset << file_names[i] << endl;
             continue;
         }
-//        cout << "[main] Reading file " << file_names[i] << endl;
         mosaic.feed(img);
-//        cout << "[main] mosaic.feed: " << i << endl;
-
     }
-    cout << green << "[main]" << reset << " mosaic.compute" << endl;
+    //cout << green << "[main]" << reset << " mosaic.compute" << endl;
     mosaic.compute(euclidean_mode); 
-    cout << green << "[main]" << reset << "\tmosaic.merge" << endl;
+    //cout << green << "[main]" << reset << "\tmosaic.merge" << endl;
     mosaic.merge(true);
-    cout << green << "[main]" << reset << "\tmosaic.save" << endl;
+    //cout << green << "[main]" << reset << "\tmosaic.save" << endl;
     mosaic.save(output_directory);
     
     t = ((double)getTickCount() - t) / getTickFrequency();
