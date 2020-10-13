@@ -1,4 +1,5 @@
 # Automated mosaic generation pipeline
+(OpenCV 4 version is in BETA phase)
 Monocular video based Mosaic Generation System for mobile robots implemented in OpenCV 3.2.
 
 ## Requirements
