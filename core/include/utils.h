@@ -28,6 +28,7 @@
 #include <string>
 #include <vector>
 #include <cmath>
+#include <assert.h>
 
 using namespace cv;
 using namespace std;
