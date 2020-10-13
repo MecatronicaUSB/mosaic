@@ -185,7 +185,7 @@ void Mosaic::merge(bool _euclidean_correction)
 				cout << "for: i/n" << i << " / " << final_mosaics[n].size() << endl;
 				if (ransac_mosaics[1] == final_mosaics[n][i])
 					final_mosaics[n].erase(final_mosaics[n].begin() + i);
-
+				}
 			// join two sub mosaics based on each reference transformation
 			cout << "referenceMosaics" << endl;
 			referenceMosaics(ransac_mosaics);
