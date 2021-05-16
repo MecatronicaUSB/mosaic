@@ -9,7 +9,6 @@ build_3.4/
 modules/fcomp/build
 modules/stitch/build
 build
-results
 
 # data files
 modules/stitch/homography-data.txt
