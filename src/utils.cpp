@@ -211,6 +211,7 @@ std::vector<std::string> read_filenames(const std::string dir_ent)
 	}
 	// Sorting the vector of strings so it is alphabetically ordered
 	std::sort(file_names.begin(), file_names.end());
+	// delete: "." ".." directories
 	file_names.erase(file_names.begin(), file_names.begin() + 2);
 
 	return file_names;

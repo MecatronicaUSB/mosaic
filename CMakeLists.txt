@@ -13,7 +13,6 @@ file(GLOB mosaic-files
     "include/*.hxx"
     "include/*.hpp"
     "src/*.cpp"
-    "main.cpp"
 )
 exec_program(
     "git"

@@ -106,7 +106,7 @@ vector<Mat> Stitcher::stitch(Frame *_object, Frame *_scene)
 	// to store matches temporarily
 	vector<vector<DMatch>> aux_matches;
 	// match using desired matcher
-	cout << endl << "[stitcher] Starting knnMatch" << endl;
+	// cout << endl << "[stitcher] Starting knnMatch" << endl;
 	matcher->knnMatch(img[OBJECT]->descriptors, img[SCENE]->descriptors, aux_matches, 2);
 	// save in global class variable
 	//cout << "[stitcher] push back matches" << endl;
@@ -154,7 +154,7 @@ vector<Mat> Stitcher::stitch(Frame *_object, Frame *_scene)
 		else
 		{
 			// else, update threshold (allow less strong matches) and clean used data
-			cout << "[stitcher] Decreased threshold: " << thresh << endl;
+			// cout << "[stitcher] Decreased threshold: " << thresh << endl;
 			thresh -= 0.1;
 			good_matches.clear();
 			neighbors_kp.clear();

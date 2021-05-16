@@ -1,17 +1,15 @@
 # VS-code settings
-.vscode/c_cpp_properties.json
-.vscode/settings.json
+.vscode/*
 
 # executables
-core/mosaic
 modules/fcomp/fcomp
 modules/stitch/stitch
-core/build_3.4/
-
+build_3.4/
 modules/fcomp/build
 modules/stitch/build
-core/build
-core/results
+build
+results
 
 # data files
 modules/stitch/homography-data.txt
+dataset
