@@ -55,7 +55,7 @@ void Mosaic::compute(bool _euclidean_mode)
 		{
 			// find perspective and best euclidean transformations
 			transform = stitcher->stitch(frames[k], frames[i]);
-			cout << "[mosaic] Stitched frames ["<<k<<" + "<< i << "]" << endl;
+			// cout << "[mosaic] Stitched frames ["<<k<<" + "<< i << "]" << endl;
 			// check if transformations are valid
 			if (!transform[PERSPECTIVE].empty() && !transform[EUCLIDEAN].empty())
 			{
