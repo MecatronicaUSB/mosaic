@@ -105,8 +105,8 @@ In both cases the resulting mosaic and track map will be saved in the provided o
 - Perspective transformations.
 
 <p align="center">
-  <img src="https://github.com/MecatronicaUSB/mosaic/tree/master/results/0234-1.jpg" width="400"/>
-  <img src="https://github.com/MecatronicaUSB/mosaic/tree/master/results/0234-map.jpg" width="450"/>
+  <img src="results/0234-1.jpg" width="400"/>
+  <img src="results/0234-map.jpg" width="450"/>
 </p>
 - Lef. Final Mosaic.<br />
 - Right. Final Map.<br />
@@ -117,8 +117,8 @@ ScottReef 25 dataset from ACFR.
 - Euclidean transformations.
 
 <p align="center">
-  <img src="https://github.com/MecatronicaUSB/mosaic/tree/master/results/SR2-1.jpg" width="350"/>
-  <img src="https://github.com/MecatronicaUSB/mosaic/tree/master/results/SR2-map.jpg" width="550"/>
+  <img src="results/SR2-1.jpg" width="350"/>
+  <img src="results/SR2-map.jpg" width="550"/>
 </p>
 - Left. Mosaic in BGR.<br />
 - Right. Mosaic map, in pixels.<br />
