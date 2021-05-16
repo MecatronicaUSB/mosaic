@@ -60,10 +60,13 @@ int main(int argc, char **argv) {
   cout << "  Built with OpenCV\t" << cyan << CV_VERSION << reset << endl;
   cout << "  Input directory:\t" << cyan << input_directory << reset << endl;
   cout << "  Output directory:\t" << cyan << output_directory << reset << endl;
+
+  /* TODO: apply undistort from calibration file
   calibration_dir ? cout << "  Calibration file:\t" << cyan << calibration_file
                          << reset << endl
                   : cout << "  No calibration file given\t" << yellow
                          << "(Assuming undistorted images)" << reset << endl;
+                         */
   //-- Feature Extractor
   cout << "  Feature extractor:\t";
   detector_surf
@@ -103,8 +106,8 @@ int main(int argc, char **argv) {
       detector_surf
           ? m2d::USE_SURF
           : detector_kaze ? m2d::USE_KAZE
-                          : detector_akaze ? m2d::USE_AKAZE : m2d::USE_SIFT,
-      matcher_flann ? m2d::USE_FLANN : m2d::USE_BRUTE_FORCE);
+                          : detector_akaze ? m2d::USE_AKAZE : m2d::USE_SIFT /*(default)*/,
+      matcher_brutef ? m2d::USE_BRUTE_FORCE : m2d::USE_FLANN /*(default)*/);
   mosaic.blender =
       new m2d::Blender(blender_bands ? args::get(blender_bands) : 5, color_c,
                        graph_cut, final_scb);
