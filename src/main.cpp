@@ -48,7 +48,7 @@ int main(int argc, char **argv) {
 
   input_directory = args::get(input_dir);
   output_directory = args::get(output_dir);
-  calibration_file = args::get(calibration_dir);
+  //calibration_file = args::get(calibration_dir);
 
   //-- VERBOSE SECTION --//
   cout << endl
@@ -62,7 +62,7 @@ int main(int argc, char **argv) {
   cout << "  Output directory:\t" << cyan << output_directory << reset << endl;
 
   /* TODO: apply undistort from calibration file
-  calibration_dir ? cout << "  Calibration file:\t" << cyan << calibration_file
+  calibration_dir ? cout << "  Calibration file:\t" << cyan << //
                          << reset << endl
                   : cout << "  No calibration file given\t" << yellow
                          << "(Assuming undistorted images)" << reset << endl;
@@ -95,19 +95,34 @@ int main(int argc, char **argv) {
   //-- Optional commands
   cout << boolalpha;
   cout << "  Use grid detection:\t" << cyan << use_grid << reset << endl;
-  // cout << "  Eclidean correction:\t"<<cyan<< euclidean_correction <<reset <<
-  // endl;
-  cout << "  Apply SCB:\t\t" << cyan << final_scb << reset << endl << endl;
+  cout << "  Local correction:\t";
+  int _euclidean_local_correction = m2d::Correction::SOFT; /*SOFT*/;
+  if(euclidean_local_correction && args::get(euclidean_local_correction) >= 0 && args::get(euclidean_local_correction) <= 2)
+  {
+    args::get(euclidean_local_correction) == m2d::Correction::SOFT ?
+    cout<<cyan<<"SOFT"<<reset<<endl:
+    args::get(euclidean_local_correction) == m2d::Correction::HARD ?
+    cout<<cyan<<"HARD"<<reset<<endl: cout<<cyan<< "ANY"<<reset<<endl;
+    _euclidean_local_correction = args::get(euclidean_local_correction);
+  }
+  else
+  {
+    cout<<cyan<< "SOFT (default)"<<reset<<endl;
+  }
+
 
   // create mosaic object
   m2d::Mosaic mosaic(true);
+  cout << "create mosaic" << endl;
   mosaic.stitcher = new m2d::Stitcher(
-      use_grid, // grid detection
+      use_grid,
       detector_surf
           ? m2d::USE_SURF
           : detector_kaze ? m2d::USE_KAZE
                           : detector_akaze ? m2d::USE_AKAZE : m2d::USE_SIFT /*(default)*/,
-      matcher_brutef ? m2d::USE_BRUTE_FORCE : m2d::USE_FLANN /*(default)*/);
+      matcher_brutef ? m2d::USE_BRUTE_FORCE : m2d::USE_FLANN /*(default)*/,
+      _euclidean_local_correction);
+  cout << "create stitcher" << endl;
   mosaic.blender =
       new m2d::Blender(blender_bands ? args::get(blender_bands) : 5, color_c,
                        graph_cut, final_scb);
@@ -115,11 +130,13 @@ int main(int argc, char **argv) {
   FileStorage fs;
   cv::Mat camera_matrix;
   cv::Mat distortion_coeff;
+  /* TODO: apply undistort from calibration file
   if (!calibration_dir) {
     cout << "Using default path for <calibration.xml>" << endl;
     calibration_file = "../calibration.xml";
-  }
+  }*/
 
+  /* TODO: apply undistort from calibration file
   fs.open(calibration_file, FileStorage::READ);
   if (!fs.isOpened()) {
     cout << "No calibration file. Assuming undistorted images" << endl;
@@ -128,6 +145,8 @@ int main(int argc, char **argv) {
     fs["camera_matrix"] >> camera_matrix;
     fs["distortion_coefficients"] >> distortion_coeff;
   }
+  */
+
   // cout << "[main]" << " Setting camera matrix" << endl;
   mosaic.SetCameraMatrix(camera_matrix, distortion_coeff);
 

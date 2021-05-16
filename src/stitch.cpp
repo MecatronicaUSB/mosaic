@@ -16,11 +16,12 @@ namespace m2d //!< mosaic 2d namespace
 {
 
 // See description in header file
-Stitcher::Stitcher(bool _grid, int _detector, int _matcher)
+Stitcher::Stitcher(bool _grid, int _detector, int _matcher, int _correction_level)
 {
 	// save configuration
 	use_grid = _grid;
 	cells_div = CELLS_DIV;
+	correction_level = _correction_level;
 	//select input detector
 	switch (_detector)
 	{
@@ -177,7 +178,10 @@ vector<Mat> Stitcher::stitch(Frame *_object, Frame *_scene)
 		// remove scale factor from rotation matrix
 		removeScale(E);
 		// correct perspective transformation based on best euclidean
-		correctHomography(H, E, HARD);
+		if(this->correction_level != ANY)
+		{
+			correctHomography(H, E, this->correction_level);
+		}
 	}
 	// find best euclidean transformation from the euclidean model (all frames tracked by euclidean transformation)
 	R = estimateRigidTransform(Mat(object_points), Mat(euclidean_points), false);

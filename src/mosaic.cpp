@@ -150,7 +150,7 @@ void Mosaic::compute(bool _euclidean_mode)
 }
 
 // See description in header file
-void Mosaic::merge(bool _euclidean_correction)
+void Mosaic::merge(bool _euclidean_global_correction)
 {
 	float best_overlap = 0;
 	vector<SubMosaic *> ransac_mosaics(2);
@@ -167,31 +167,22 @@ void Mosaic::merge(bool _euclidean_correction)
 		while(final_mosaics[n].size() > 1)
 		{
 			// get the sub mosaic pair with higher overlap
-			cout << "getBestOverlap" << endl;
 			ransac_mosaics = getBestOverlap(final_mosaics[n]);
 
 			// remove second sub mosaic, and update neighbors
-			cout << "removeNeighbor" << endl;
-			cout << "ransac_mosaics.size(): " << ransac_mosaics.size() << endl;
-			//cout << "ransac_mosaics[0]->size(): " << ransac_mosaics[0]->neighbors.size() << endl;
 			// second sub mosaic will be merged and save it in the first one
-			cout << "removeneighbor" << endl;
 			removeNeighbor(ransac_mosaics);
 
 			// remove second sub mosaic from array
-//			cout << "final_mosaics[n].erase" << endl;
 			for (int i=0; i<final_mosaics[n].size(); i++)
-				{
-				cout << "for: i/n" << i << " / " << final_mosaics[n].size() << endl;
+			{
 				if (ransac_mosaics[1] == final_mosaics[n][i])
 					final_mosaics[n].erase(final_mosaics[n].begin() + i);
-				}
+			}
 			// join two sub mosaics based on each reference transformation
-			cout << "referenceMosaics" << endl;
 			referenceMosaics(ransac_mosaics);
 
 			// align sub mosaics (translate and rotate)
-			cout << "alignMosaics" << endl;
 			alignMosaics(ransac_mosaics);
 
 			// find transformation which minimize overall geometric distortion
@@ -202,7 +193,6 @@ void Mosaic::merge(bool _euclidean_correction)
 			ransac_mosaics[0]->next_H = best_H * ransac_mosaics[0]->next_H;
 
 			// update overlap between remains sub mosaics
-			cout << "updateOverlap" << endl;
 			//test: do not perfom updateOverlap()
 			updateOverlap(final_mosaics[n]);
 
@@ -216,7 +206,7 @@ void Mosaic::merge(bool _euclidean_correction)
 		cout<<"\rMerging sub-mosaics:\t["<<green<<((n+1)*100)/final_mosaics.size()<<reset<<"%]"<<flush;
 
 		// apply global euclidean correction
-		if (_euclidean_correction)
+		if (_euclidean_global_correction)
 			final_mosaics[n][0]->correct();
 	}
 	cout << endl;
@@ -254,16 +244,11 @@ vector<SubMosaic *> Mosaic::getBestOverlap(vector<SubMosaic *> _sub_mosaics)
 // See description in header file
 void Mosaic::removeNeighbor(vector<SubMosaic *> &_sub_mosaics){
 	// loop over SM0 neighbors
-	cout << "Paso -1" << endl;
-	cout << "N sub-mosaics: " << _sub_mosaics.size() << endl;
-	cout << "N vecinos: " << _sub_mosaics[1]->neighbors.size() << endl;
 	for (int i=0; i<_sub_mosaics[0]->neighbors.size(); i++)
 	{
-		cout << "Paso 0" << endl;
 		// find the neighbor link o SM1
 		if (_sub_mosaics[1] == _sub_mosaics[0]->neighbors[i].mosaic)
 		{
-			cout << "Paso 1" << endl;
 			// erase it
 			_sub_mosaics[0]->neighbors.erase(_sub_mosaics[0]->neighbors.begin()+i);
 			// loop over SM1 neighbors
@@ -272,7 +257,6 @@ void Mosaic::removeNeighbor(vector<SubMosaic *> &_sub_mosaics){
 				// find the neighbors different to SM0
 				if (_sub_mosaics[1]->neighbors[j].mosaic != _sub_mosaics[0])
 				{
-					cout << "Paso 2" << endl;
 					// for this neighbor, update pointer of SM2. from SM1 to SM0
 					_sub_mosaics[0]->neighbors.push_back(_sub_mosaics[1]->neighbors[j]);
 					for (int k=0; k<_sub_mosaics[1]->neighbors[j].mosaic->neighbors.size(); k++)
@@ -280,7 +264,6 @@ void Mosaic::removeNeighbor(vector<SubMosaic *> &_sub_mosaics){
 						{
 							_sub_mosaics[1]->neighbors[j].mosaic->neighbors[k].mosaic = _sub_mosaics[0];
 							_sub_mosaics[1]->neighbors[j].mosaic->neighbors[k].overlap = 0;
-							cout << "Paso 3" << endl;
 						}
 							
 				}
@@ -500,17 +483,17 @@ float Mosaic::getOverlap(SubMosaic *_object, SubMosaic *_scene)
 void Mosaic::save(string _dir)
 {
 	int n=0;
-	cout << "[mosaic::save] Total submosaics: " << final_mosaics.size() << endl;
+	// cout << "[mosaic::save] Total submosaics: " << final_mosaics.size() << endl;
 
 	for (vector<SubMosaic *> final_mosaic: final_mosaics)
 	{
-		cout << "[mosaic::save] blending submosaic n = " << yellow << n+1 << reset << endl;
+		// cout << "[mosaic::save] blending submosaic n = " << yellow << n+1 << reset << endl;
 		// blend mosaic and save it, using provided filename
 		blender->blendSubMosaic(final_mosaic[0]);
-		imwrite(_dir+"-"+to_string(n)+".jpg", final_mosaic[0]->final_scene);
+		imwrite(_dir+"mosaic_"+to_string(n)+".jpg", final_mosaic[0]->final_scene);
 		// create track map and save it
 		map.push_back(final_mosaic[n]->buildMap(CIRCLE));
-		imwrite(_dir+"-"+to_string(n)+"-MAP.jpg", map[n]);
+		imwrite(_dir+"mosaic_"+to_string(n)+"-MAP.jpg", map[n]);
 		n++;
 	}
 }

@@ -1,5 +1,6 @@
 # VS-code settings
-.vscode/*
+.vscode
+.vscode
 
 # executables
 modules/fcomp/fcomp
