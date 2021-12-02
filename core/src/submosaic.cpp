@@ -8,6 +8,8 @@
 
 #include "../include/submosaic.hpp"
 
+#include <fstream>
+
 using namespace std;
 using namespace cv;
 
@@ -418,7 +420,7 @@ Mat SubMosaic::buildMap(int _type, Scalar _color)
 // See description in header file
 void saveHomographyData(Mat _h, vector<KeyPoint> keypoints[2], vector<DMatch> matches)
 {
-	ofstream file;
+	std::ofstream file;
 	file.open("homography-data.txt");
 	for (int i = 0; i < _h.cols; i++)
 	{
