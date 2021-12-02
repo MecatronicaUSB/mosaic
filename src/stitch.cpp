@@ -16,11 +16,12 @@ namespace m2d //!< mosaic 2d namespace
 {
 
 // See description in header file
-Stitcher::Stitcher(bool _grid, int _detector, int _matcher)
+Stitcher::Stitcher(bool _grid, int _detector, int _matcher, int _correction_level)
 {
 	// save configuration
 	use_grid = _grid;
 	cells_div = CELLS_DIV;
+	correction_level = _correction_level;
 	//select input detector
 	switch (_detector)
 	{
@@ -74,11 +75,13 @@ Stitcher::Stitcher(bool _grid, int _detector, int _matcher)
 // See description in header file
 void Stitcher::detectFeatures(vector<Frame *> &_frames)
 {
-	int i=0;
+	int i=0, k=0;
 	cout<<endl;
+//	cout << "[stitcher:detectFeatures] iterating through frames" << endl; 
 	// loop over all frames
 	for (Frame *frame : _frames)
 	{
+		//cout << "[stitcher:detectFeatures] Frame k=" << k++ << endl; 
 		// detect features
 		detector->detectAndCompute(frame->gray, Mat(), frame->keypoints, frame->descriptors);
 		// release gray image since wont be used
@@ -104,7 +107,7 @@ vector<Mat> Stitcher::stitch(Frame *_object, Frame *_scene)
 	// to store matches temporarily
 	vector<vector<DMatch>> aux_matches;
 	// match using desired matcher
-	cout << endl << "[stitcher] Starting knnMatch" << endl;
+	// cout << endl << "[stitcher] Starting knnMatch" << endl;
 	matcher->knnMatch(img[OBJECT]->descriptors, img[SCENE]->descriptors, aux_matches, 2);
 	// save in global class variable
 	//cout << "[stitcher] push back matches" << endl;
@@ -152,7 +155,7 @@ vector<Mat> Stitcher::stitch(Frame *_object, Frame *_scene)
 		else
 		{
 			// else, update threshold (allow less strong matches) and clean used data
-			cout << "[stitcher] Decreased threshold: " << thresh << endl;
+			// cout << "[stitcher] Decreased threshold: " << thresh << endl;
 			thresh -= 0.1;
 			good_matches.clear();
 			neighbors_kp.clear();
@@ -175,7 +178,10 @@ vector<Mat> Stitcher::stitch(Frame *_object, Frame *_scene)
 		// remove scale factor from rotation matrix
 		removeScale(E);
 		// correct perspective transformation based on best euclidean
-		correctHomography(H, E);
+		if(this->correction_level != ANY)
+		{
+			correctHomography(H, E, this->correction_level);
+		}
 	}
 	// find best euclidean transformation from the euclidean model (all frames tracked by euclidean transformation)
 	R = estimateRigidTransform(Mat(object_points), Mat(euclidean_points), false);
@@ -359,7 +365,7 @@ void Stitcher::trackKeypoints()
 }
 
 // See description in header file
-void Stitcher::correctHomography(Mat &_H, Mat _E)
+void Stitcher::correctHomography(Mat &_H, Mat _E, int _level)
 {
 	// corner points for object frame (default points)
 	vector<Point2f> h_points = {
@@ -374,16 +380,25 @@ void Stitcher::correctHomography(Mat &_H, Mat _E)
 	// multiply points by euclidean transformation	
 	perspectiveTransform(e_points, e_points, _E);
 	// get the mid points between perspective and euclidean points
-	vector<Point2f> mid_points = {
-		getMidPoint(getMidPoint(h_points[0], e_points[0]), h_points[0]),
-		getMidPoint(getMidPoint(h_points[1], e_points[1]), h_points[1]),
-		getMidPoint(getMidPoint(h_points[2], e_points[2]), h_points[2]),
-		getMidPoint(getMidPoint(h_points[3], e_points[3]), h_points[3])
-		// getMidPoint(h_points[0], e_points[0]),
-		// getMidPoint(h_points[1], e_points[1]),
-		// getMidPoint(h_points[2], e_points[2]),
-		// getMidPoint(h_points[3], e_points[3])
-	};
+	vector<Point2f> mid_points;
+	if(_level == SOFT){
+		mid_points = {
+			getMidPoint(getMidPoint(h_points[0], e_points[0]), h_points[0]),
+			getMidPoint(getMidPoint(h_points[1], e_points[1]), h_points[1]),
+			getMidPoint(getMidPoint(h_points[2], e_points[2]), h_points[2]),
+			getMidPoint(getMidPoint(h_points[3], e_points[3]), h_points[3])
+		};
+	}
+	else
+	{
+		mid_points = {
+			getMidPoint(h_points[0], e_points[0]),
+			getMidPoint(h_points[1], e_points[1]),
+			getMidPoint(h_points[2], e_points[2]),
+			getMidPoint(h_points[3], e_points[3])
+		};
+	}
+
 	// get the perspective transformation between perspective points and calculated mid points
 	Mat correct_H = getPerspectiveTransform(h_points, mid_points);
 	// apply correction to original perspective transformation

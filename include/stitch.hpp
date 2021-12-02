@@ -36,6 +36,14 @@ enum Matcher
     USE_FLANN
 };
 
+/// Level of euclidean correction
+enum Correction
+{
+    ANY,
+    SOFT,
+    HARD
+};
+
 class Stitcher
 {
   public:
@@ -45,6 +53,7 @@ class Stitcher
     vector<vector<vector<DMatch>>> matches;     //!< Vector of OpenCV Matches
     vector<vector<DMatch>> good_matches;        //!< Vector of OpenCV good Matches (after discard outliers)
     vector<Frame *> img = vector<Frame *>(2);   //!< Vector of two frames to stitch (Pointers)
+    int correction_level;
     // ---------- Methods
     /**
      * @brief Default Stitcher constructor
@@ -52,7 +61,7 @@ class Stitcher
      * @param _detector enumeration value to set the desired feature Detector and descriptor
      * @param _matcher enumeration value to set the desired feature matcher
      */
-    Stitcher(bool _grid = false, int _detector = USE_KAZE, int _matcher = USE_BRUTE_FORCE);
+    Stitcher(bool _grid = false, int _detector = USE_KAZE, int _matcher = USE_BRUTE_FORCE, int _correction_level = Correction::SOFT);
     /**
      * @brief Calculate the transformation matrix to map _object frame into _scene
      * @param _object frame to be map
@@ -98,7 +107,7 @@ class Stitcher
      * @param _H perspective transformation
      * @param _E best euclidean transformation
      */
-    void correctHomography(Mat &_H, Mat _E);
+    void correctHomography(Mat &_H, Mat _E, int _level = HARD);
     /**
      * @brief clean all used data
      */

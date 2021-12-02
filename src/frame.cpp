@@ -247,6 +247,10 @@ void Frame::setHReference(Mat _H, int _ref)
 
 		// updateBoundRect();
 		bound_rect = boundingRectFloat(bound_points[PERSPECTIVE]);
+		// debug
+		if(bound_rect.area() == 0){
+			int a = 0;
+		}
 		H = _H * H;
 	}
 	// for euclidean model, modify only transformation matrix

@@ -8,6 +8,7 @@
 
 #pragma once
 #include "frame.hpp"
+#include <fstream>
 
 using namespace std;
 using namespace cv;
