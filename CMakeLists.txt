@@ -86,7 +86,7 @@ add_executable( mosaic ${mosaic-headers}        # being strict, we only add the 
                         src/utils.cpp
                         src/frame.cpp
                         src/blend.cpp
-                        main.cpp)	# bind all together
+                        src/main.cpp)	# bind all together
 
 target_compile_options( mosaic PUBLIC -std=c++11)	# c++11 requried
 target_link_libraries( mosaic ${OpenCV_LIBS})		# link libraries
