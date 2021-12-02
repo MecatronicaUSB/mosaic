@@ -1,6 +1,5 @@
 # Automated Video Mosaic
 
-(OpenCV 4 version is in BETA phase)
 Monocular video based Mosaic Generation System for mobile robots.
 Currently under development as part of undergrad project of Víctor García
 
@@ -23,13 +22,10 @@ Each module contains information describing its usage, with (usually) some usefu
 
 ## Directory Layout
 
-    ├──core                # Core module
-     \ ├── src             # source files
+     ├── src             # source files
           └── ...
-     \ ├── include         # header files
+     ├── include         # header files
           └── ...  
-     \ main.cpp
-     \ ...
     ├── modules
      \ ├── fcomp           # module for festure extractor comparison
           ├── src          # source files
@@ -44,8 +40,10 @@ Each module contains information describing its usage, with (usually) some usefu
 
 The current release has been developed and tested in Ubuntu 16.04 LTS 64 bits
 
-- [OpenCV 3.2+](http://opencv.org) and extra modules (OpenCV contrib).
-- [cmake 2.8](https://cmake.org/) - cmake making it happen again
+- [OpenCV 4.2+](http://opencv.org) and extra modules (OpenCV contrib).
+- [cmake 3.1X](https://cmake.org/) - cmake making it happen again
+
+CUDA support is available (still in beta)
 
 ## Getting Started
 
@@ -64,6 +62,11 @@ mkdir build
 cd build
 cmake ..
 make
+```
+
+If you want to enable (still in beta) CUDA support, please add the *USE_CUDA* flag when invoking cmake:
+```bash
+cmake -DUSE_CUDA=1 ..
 ```
 
 ## How to run?
